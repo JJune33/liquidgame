@@ -3,825 +3,192 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Liquid Absorb Pro</title>
+  <title>Liquid Absorb v10 Stable</title>
   <style>
-    :root {
-      --text: #f7fbff;
-      --muted: rgba(247, 251, 255, .66);
-      --panel: rgba(7, 10, 22, .48);
-      --line: rgba(255, 255, 255, .18);
-      --mint: #8fffea;
-      --danger: #ff4778;
-      --gold: #ffd26f;
+    :root{
+      --hud-bg:rgba(3,6,16,.82);
+      --hud-line:rgba(255,255,255,.24);
+      --text:#f8fcff;
+      --muted:rgba(248,252,255,.68);
+      --mint:#76ffe7;
+      --red:#ff336b;
+      --gold:#ffe48a;
     }
-
-    * { box-sizing: border-box; }
-
-    html, body {
-      margin: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      color: var(--text);
-      background: #050715;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      user-select: none;
-      touch-action: none;
+    *{box-sizing:border-box}
+    html,body{
+      width:100%;height:100%;margin:0;overflow:hidden;background:#050714;color:var(--text);
+      font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      touch-action:none;user-select:none;
     }
-
-    button { font: inherit; }
-
-    #game {
-      position: fixed;
-      inset: 0;
-      overflow: hidden;
-      isolation: isolate;
-      background: #050715;
-      cursor: none;
-    }
-
-    #vfxStage {
-      position: absolute;
-      inset: 0;
-      z-index: 1;
-      overflow: hidden;
-      pointer-events: none;
+    button{font:inherit}
+    #fxStage{
+      position:fixed!important;inset:0!important;z-index:1!important;overflow:hidden!important;pointer-events:none!important;
       background:
-        radial-gradient(circle at 18% 22%, rgba(96, 255, 225, .40), transparent 24%),
-        radial-gradient(circle at 82% 16%, rgba(160, 115, 255, .32), transparent 25%),
-        radial-gradient(circle at 62% 88%, rgba(255, 210, 111, .28), transparent 27%),
-        linear-gradient(135deg, #060816 0%, #111d3f 42%, #061b24 100%);
-      transform: translateZ(0);
+        radial-gradient(circle at 12% 18%,rgba(90,255,232,.46),transparent 25%),
+        radial-gradient(circle at 84% 14%,rgba(172,128,255,.44),transparent 25%),
+        radial-gradient(circle at 78% 80%,rgba(255,221,118,.32),transparent 30%),
+        radial-gradient(circle at 28% 90%,rgba(255,72,130,.24),transparent 29%),
+        linear-gradient(135deg,#060818 0%,#0e1743 43%,#061b25 100%);
+      transform:translateZ(0);
     }
-
-    #vfxStage::before {
-      content: "";
-      position: absolute;
-      inset: -20%;
+    #fxStage:before{
+      content:"";position:absolute;inset:-24%;opacity:.94;
       background:
-        linear-gradient(rgba(255,255,255,.075) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,.075) 1px, transparent 1px),
-        repeating-linear-gradient(135deg, rgba(255,255,255,.055) 0 2px, transparent 2px 22px);
-      background-size: 48px 48px, 48px 48px, 100% 100%;
-      mask-image: radial-gradient(circle at 50% 50%, black 0%, transparent 76%);
-      animation: drift 28s linear infinite;
-      opacity: .9;
+        linear-gradient(rgba(255,255,255,.085) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(255,255,255,.085) 1px,transparent 1px),
+        repeating-linear-gradient(135deg,rgba(255,255,255,.065) 0 2px,transparent 2px 22px),
+        repeating-radial-gradient(circle at 30% 30%,rgba(255,255,255,.05) 0 1px,transparent 1px 18px);
+      background-size:52px 52px,52px 52px,100% 100%,220px 220px;
+      mask-image:radial-gradient(circle at 50% 50%,black 0%,transparent 78%);
+      animation:bgDrift 22s linear infinite;
     }
-
-    #vfxStage::after {
-      content: "";
-      position: absolute;
-      inset: 0;
+    #fxStage:after{
+      content:"";position:absolute;inset:0;mix-blend-mode:screen;
       background:
-        radial-gradient(circle at 50% 0%, rgba(255,255,255,.22), transparent 34%),
-        linear-gradient(to bottom, rgba(255,255,255,.08), transparent 40%, rgba(0,0,0,.22));
-      mix-blend-mode: screen;
+        radial-gradient(circle at 50% 0%,rgba(255,255,255,.25),transparent 34%),
+        linear-gradient(to bottom,rgba(255,255,255,.08),transparent 42%,rgba(0,0,0,.28));
     }
-
-    .contrast-card {
-      position: absolute;
-      border: 1px solid rgba(255,255,255,.16);
-      border-radius: 34px;
-      background: linear-gradient(135deg, rgba(255,255,255,.16), rgba(255,255,255,.045));
-      box-shadow: inset 0 0 70px rgba(255,255,255,.04), 0 30px 110px rgba(0,0,0,.22);
-    }
-
-    .contrast-card.one { width: 38vw; height: 22vh; left: 7vw; top: 22vh; transform: rotate(-10deg); }
-    .contrast-card.two { width: 32vw; height: 28vh; right: 5vw; bottom: 12vh; transform: rotate(12deg); }
-    .contrast-card.three { width: 22vw; height: 18vh; left: 46vw; top: 8vh; transform: rotate(8deg); }
-
-    .bg-word {
-      position: absolute;
-      left: 4vw;
-      bottom: 9vh;
-      font-size: clamp(72px, 14vw, 210px);
-      line-height: .8;
-      font-weight: 900;
-      letter-spacing: -.09em;
-      color: rgba(255,255,255,.08);
-      text-shadow: 0 0 42px rgba(255,255,255,.13);
-      white-space: nowrap;
-    }
-
-    @keyframes drift {
-      from { transform: translate3d(0,0,0) rotate(0deg); }
-      to { transform: translate3d(-48px,-48px,0) rotate(1.5deg); }
-    }
-
-    #targetCanvas {
-      position: absolute;
-      inset: 0;
-      z-index: 4;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-    }
-
-    #fallbackPlayer {
-      position: absolute;
-      z-index: 3;
-      left: 50%;
-      top: 50%;
-      width: 140px;
-      height: 140px;
-      border-radius: 999px;
-      transform: translate3d(-50%, -50%, 0);
-      opacity: 0;
-      pointer-events: none;
+    @keyframes bgDrift{from{transform:translate3d(0,0,0) rotate(0deg)}to{transform:translate3d(-52px,-52px,0) rotate(1.7deg)}}
+    .glass-card{position:absolute;border:1px solid rgba(255,255,255,.17);border-radius:38px;background:linear-gradient(135deg,rgba(255,255,255,.18),rgba(255,255,255,.045));box-shadow:inset 0 0 80px rgba(255,255,255,.06),0 34px 120px rgba(0,0,0,.24)}
+    .glass-card.a{width:36vw;height:23vh;left:7vw;top:23vh;transform:rotate(-9deg)}
+    .glass-card.b{width:33vw;height:29vh;right:4vw;bottom:12vh;transform:rotate(12deg)}
+    .glass-card.c{width:22vw;height:16vh;left:49vw;top:9vh;transform:rotate(7deg)}
+    .bg-title{position:absolute;left:3vw;bottom:7vh;font-size:clamp(72px,15vw,230px);line-height:.78;font-weight:950;letter-spacing:-.09em;color:rgba(255,255,255,.075);text-shadow:0 0 44px rgba(255,255,255,.14);white-space:nowrap}
+    #objectCanvas,#particleCanvas{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;pointer-events:none!important}
+    #objectCanvas{z-index:30!important}
+    #particleCanvas{z-index:40!important}
+    #fallbackOrb{
+      position:fixed!important;z-index:15!important;left:50%;top:72%;width:150px;height:150px;border-radius:999px;pointer-events:none;opacity:0;
+      transform:translate3d(-50%,-50%,0);
       background:
-        radial-gradient(circle at 30% 24%, rgba(255,255,255,.95), rgba(255,255,255,.12) 22%, transparent 36%),
-        radial-gradient(circle at 65% 72%, rgba(255,255,255,.22), transparent 44%),
-        radial-gradient(circle, rgba(145,255,238,.38), rgba(125,160,255,.13) 64%, rgba(255,255,255,.06));
-      box-shadow: inset 18px 22px 46px rgba(255,255,255,.26), inset -20px -24px 48px rgba(0,0,0,.24), 0 0 80px rgba(120,255,232,.26);
-      transition: opacity .18s ease;
+        radial-gradient(circle at 30% 24%,rgba(255,255,255,.98),rgba(255,255,255,.14) 20%,transparent 34%),
+        radial-gradient(circle at 66% 74%,rgba(255,255,255,.22),transparent 44%),
+        radial-gradient(circle,rgba(145,255,238,.42),rgba(120,160,255,.14) 64%,rgba(255,255,255,.06));
+      box-shadow:inset 18px 22px 46px rgba(255,255,255,.28),inset -20px -24px 48px rgba(0,0,0,.24),0 0 88px rgba(120,255,232,.28);
+      animation:fallbackWobble 2.2s ease-in-out infinite;
     }
-
-    .no-vfx #fallbackPlayer { opacity: .65; }
-
-    #hud {
-      position: absolute;
-      left: max(10px, env(safe-area-inset-left));
-      right: max(10px, env(safe-area-inset-right));
-      top: max(10px, env(safe-area-inset-top));
-      z-index: 20;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      pointer-events: none;
+    .no-vfx #fallbackOrb{opacity:.78}
+    @keyframes fallbackWobble{0%,100%{border-radius:50% 48% 52% 49%;transform:translate3d(-50%,-50%,0) scale(1.03,.97)}50%{border-radius:45% 55% 48% 54%;transform:translate3d(-50%,-50%,0) scale(.96,1.04)}}
+    #hud{
+      position:fixed!important;left:max(8px,env(safe-area-inset-left))!important;right:max(8px,env(safe-area-inset-right))!important;top:max(8px,env(safe-area-inset-top))!important;
+      z-index:2147483647!important;display:flex!important;align-items:center!important;gap:8px!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;
+      transform:translateZ(0)!important;contain:none!important;
     }
-
-    .statusbar {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      flex-wrap: wrap;
-      max-width: calc(100vw - 126px);
-      padding: 6px;
-      border: 1px solid var(--line);
-      border-radius: 999px;
-      background: var(--panel);
-      backdrop-filter: blur(18px) saturate(150%);
-      box-shadow: 0 14px 44px rgba(0,0,0,.24);
+    #statusbar{
+      flex:1 1 auto;min-width:0;display:flex!important;align-items:center!important;gap:6px!important;padding:6px!important;border:1px solid var(--hud-line)!important;border-radius:999px!important;
+      background:var(--hud-bg)!important;box-shadow:0 16px 46px rgba(0,0,0,.34)!important;backdrop-filter:blur(18px) saturate(160%)!important;overflow:hidden!important;
     }
-
-    .chip {
-      min-width: 58px;
-      padding: 6px 9px;
-      border-radius: 999px;
-      background: rgba(255,255,255,.08);
-      color: rgba(247,251,255,.72);
-      font-size: 11px;
-      line-height: 1;
-      letter-spacing: .01em;
-      white-space: nowrap;
-    }
-
-    .chip strong {
-      display: inline-block;
-      margin-left: 4px;
-      color: #fff;
-      font-size: 13px;
-      font-weight: 850;
-      letter-spacing: -.02em;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .progress {
-      width: clamp(86px, 16vw, 170px);
-      height: 8px;
-      border-radius: 999px;
-      background: rgba(255,255,255,.12);
-      overflow: hidden;
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,.08);
-    }
-
-    #progressFill {
-      display: block;
-      width: 0%;
-      height: 100%;
-      border-radius: inherit;
-      background: linear-gradient(90deg, var(--mint), #fff, var(--gold));
-      box-shadow: 0 0 22px rgba(143,255,234,.48);
-      transition: width .15s ease;
-    }
-
-    .controls {
-      display: flex;
-      gap: 6px;
-      pointer-events: auto;
-    }
-
-    .btn {
-      border: 1px solid var(--line);
-      border-radius: 999px;
-      padding: 9px 11px;
-      color: var(--text);
-      background: var(--panel);
-      backdrop-filter: blur(18px) saturate(150%);
-      cursor: pointer;
-      box-shadow: 0 12px 36px rgba(0,0,0,.22);
-    }
-
-    .btn.primary {
-      color: #061018;
-      border-color: rgba(255,255,255,.7);
-      background: linear-gradient(135deg, #8fffea, #fff4a7);
-      font-weight: 850;
-    }
-
-    #toast {
-      position: absolute;
-      z-index: 22;
-      left: 50%;
-      bottom: max(16px, env(safe-area-inset-bottom));
-      transform: translateX(-50%);
-      max-width: min(520px, calc(100vw - 24px));
-      padding: 10px 14px;
-      border: 1px solid var(--line);
-      border-radius: 999px;
-      color: rgba(247,251,255,.86);
-      background: rgba(7,10,22,.48);
-      backdrop-filter: blur(18px) saturate(150%);
-      box-shadow: 0 12px 44px rgba(0,0,0,.22);
-      font-size: 13px;
-      text-align: center;
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity .18s ease, transform .18s ease;
-    }
-
-    #toast.show { opacity: 1; transform: translateX(-50%) translateY(-4px); }
-
-    #shaderStatus {
-      position: absolute;
-      z-index: 19;
-      left: max(10px, env(safe-area-inset-left));
-      bottom: max(10px, env(safe-area-inset-bottom));
-      max-width: min(420px, calc(100vw - 20px));
-      color: rgba(247,251,255,.56);
-      font-size: 11px;
-      pointer-events: none;
-    }
-
-    .no-vfx #shaderStatus { color: var(--gold); }
-
-    @media (max-width: 720px) {
-      #hud { align-items: flex-start; }
-      .statusbar { max-width: calc(100vw - 92px); border-radius: 20px; }
-      .chip { min-width: auto; padding: 6px 8px; }
-      .chip.hide-small { display: none; }
-      .controls { flex-direction: column; }
-      .btn { padding: 8px 10px; }
-      .progress { width: 92px; }
-    }
-
-    @media (max-height: 520px) {
-      #toast { display: none; }
-      .chip.hide-landscape { display: none; }
-      .statusbar { max-width: calc(100vw - 154px); }
-    }
+    .chip{min-width:58px;padding:6px 9px;border-radius:999px;background:rgba(255,255,255,.10);color:var(--muted);font-size:11px;font-weight:800;line-height:1;white-space:nowrap}
+    .chip strong{color:#fff;margin-left:4px;font-size:13px;font-variant-numeric:tabular-nums}.chip.warn strong{color:var(--red)}
+    #goalWrap{flex:1 1 96px;min-width:80px;max-width:180px;height:10px;border-radius:999px;background:rgba(255,255,255,.14);overflow:hidden;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+    #goalFill{display:block;height:100%;width:0%;border-radius:inherit;background:linear-gradient(90deg,var(--mint),#fff,var(--gold));box-shadow:0 0 22px rgba(118,255,231,.6)}
+    #controls{display:flex;gap:6px;flex:0 0 auto}.btn{border:1px solid var(--hud-line);border-radius:999px;padding:9px 12px;color:var(--text);background:var(--hud-bg);box-shadow:0 12px 36px rgba(0,0,0,.28);cursor:pointer;font-weight:900}.btn.primary{color:#051018;border-color:rgba(255,255,255,.72);background:linear-gradient(135deg,#8fffea,#fff4a7)}
+    #message{position:fixed!important;z-index:2147483646!important;left:50%;bottom:max(12px,env(safe-area-inset-bottom));transform:translateX(-50%);max-width:min(620px,calc(100vw - 20px));padding:9px 13px;border:1px solid var(--hud-line);border-radius:999px;background:rgba(3,6,16,.72);backdrop-filter:blur(18px) saturate(160%);font-size:12px;text-align:center;pointer-events:none;opacity:0;transition:opacity .15s ease,transform .15s ease;box-shadow:0 14px 44px rgba(0,0,0,.30)}
+    #message.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+    #shaderNote{position:fixed!important;z-index:2147483645!important;left:max(10px,env(safe-area-inset-left));bottom:max(10px,env(safe-area-inset-bottom));max-width:min(430px,calc(100vw - 20px));font-size:10px;color:rgba(248,252,255,.50);pointer-events:none}.no-vfx #shaderNote{color:var(--gold)}
+    @media(max-width:760px){#hud{align-items:flex-start!important}.chip{min-width:auto;padding:6px 8px}.chip.optional{display:none}#statusbar{border-radius:20px!important;flex-wrap:wrap!important}#goalWrap{max-width:132px}#controls{flex-direction:column}.btn{padding:8px 10px}}
+    @media(max-height:520px){.chip.landscapeHide{display:none}#message{display:none!important}#statusbar{flex-wrap:nowrap!important;max-width:calc(100vw - 152px)}}
   </style>
 </head>
 <body>
-  <main id="game" aria-label="Liquid Absorb Pro">
-    <section id="vfxStage" aria-hidden="true">
-      <div class="contrast-card one"></div>
-      <div class="contrast-card two"></div>
-      <div class="contrast-card three"></div>
-      <div class="bg-word">LIQUID</div>
-    </section>
-
-    <div id="fallbackPlayer" aria-hidden="true"></div>
-    <canvas id="targetCanvas" aria-hidden="true"></canvas>
-
-    <header id="hud">
-      <div class="statusbar">
-        <span class="chip">Score<strong id="score">0</strong></span>
-        <span class="chip">Level<strong id="level">1</strong></span>
-        <span class="chip hide-small">Vorm<strong id="shapeName">Bol</strong></span>
-        <span class="chip">Levens<strong id="lives">3</strong></span>
-        <span class="chip hide-landscape">Groei<strong id="size">76</strong></span>
-        <span class="progress" aria-hidden="true"><span id="progressFill"></span></span>
-      </div>
-      <nav class="controls">
-        <button id="pauseButton" class="btn" type="button">Pauze</button>
-        <button id="resetButton" class="btn primary" type="button">Reset</button>
-      </nav>
-    </header>
-
-    <div id="toast" class="show">Vang de witte vorm. Ontwijk rood. Na 10 absorpties verandert je liquid vorm.</div>
-    <div id="shaderStatus">Liquid shader laden...</div>
-  </main>
+  <section id="fxStage" aria-hidden="true">
+    <div class="glass-card a"></div><div class="glass-card b"></div><div class="glass-card c"></div><div class="bg-title">LIQUID</div>
+  </section>
+  <div id="fallbackOrb" aria-hidden="true"></div>
+  <canvas id="objectCanvas" aria-hidden="true"></canvas>
+  <canvas id="particleCanvas" aria-hidden="true"></canvas>
+  <header id="hud" aria-label="Statusbalk">
+    <div id="statusbar">
+      <span class="chip">Score<strong id="score">0</strong></span>
+      <span class="chip">Level<strong id="level">1</strong></span>
+      <span class="chip optional">Doel<strong id="targetName">Bol</strong></span>
+      <span class="chip warn">Levens<strong id="lives">3</strong></span>
+      <span class="chip landscapeHide">Combo<strong id="combo">x1</strong></span>
+      <span class="chip landscapeHide">Vijanden<strong id="enemyCount">0</strong></span>
+      <span id="goalWrap" aria-hidden="true"><span id="goalFill"></span></span>
+    </div>
+    <nav id="controls"><button id="pauseBtn" class="btn" type="button">Pauze</button><button id="resetBtn" class="btn primary" type="button">Reset</button></nav>
+  </header>
+  <div id="message" class="show">Vang witte vormen. Ontwijk rode vijanden. Na 10 absorpties ga je door.</div>
+  <div id="shaderNote">Liquid shader laden...</div>
 
   <script type="module">
-    const SHADER = "\n      precision highp float;\n\n      uniform sampler2D src;\n      uniform vec2 resolution;\n      uniform vec2 offset;\n      uniform float time;\n      uniform vec2 playerPx;\n      uniform float playerR;\n      uniform float distortion;\n      uniform int shapeIndex;\n      uniform float clickTime;\n      uniform int clickCount;\n      uniform float bubbleData[112];\n\n      out vec4 outColor;\n\n      const int MAX_ITEMS = 28;\n\n      float smin(float a, float b, float k) {\n        float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);\n        return mix(b, a, h) - k * h * (1.0 - h);\n      }\n\n      mat2 rot(float a) {\n        float c = cos(a);\n        float s = sin(a);\n        return mat2(c, -s, s, c);\n      }\n\n      float sdSphere(vec3 p, float r) {\n        return length(p) - r;\n      }\n\n      float sdBox(vec3 p, vec3 b, float r) {\n        vec3 q = abs(p) - b + r;\n        return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0) - r;\n      }\n\n      float sdTorus(vec3 p, vec2 t) {\n        vec2 q = vec2(length(p.xy) - t.x, p.z);\n        return length(q) - t.y;\n      }\n\n      float sdCapsule(vec3 p, vec3 a, vec3 b, float r) {\n        vec3 pa = p - a;\n        vec3 ba = b - a;\n        float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);\n        return length(pa - ba * h) - r;\n      }\n\n      float sdOctahedron(vec3 p, float s) {\n        p = abs(p);\n        return (p.x + p.y + p.z - s) * 0.57735027;\n      }\n\n      vec3 centerWorld() {\n        vec2 uv = playerPx / resolution;\n        float aspect = resolution.y / resolution.x;\n        return vec3((uv - 0.5) * vec2(1.0, aspect), 0.0);\n      }\n\n      float scene(vec3 p) {\n        vec3 c = centerWorld();\n        vec3 q = p - c;\n\n        float pulseAge = min(clickTime, 0.8);\n        float pulse = exp(-pulseAge * 5.5) * sin(pulseAge * 25.0) * 0.09;\n        float r = playerR * (1.0 + pulse);\n\n        q.xy *= rot(sin(time * 0.8) * 0.12);\n        q.xz *= rot(cos(time * 0.7) * 0.08);\n        q.z += sin(q.x * 34.0 + q.y * 12.0 + time * 3.2) * 0.006;\n\n        float d = sdSphere(q, r);\n\n        if (shapeIndex == 1) {\n          d = sdBox(q, vec3(r * 0.72), r * 0.23);\n        } else if (shapeIndex == 2) {\n          d = sdTorus(q, vec2(r * 0.78, r * 0.23));\n        } else if (shapeIndex == 3) {\n          d = sdCapsule(q, vec3(-r * 0.88, 0.0, 0.0), vec3(r * 0.88, 0.0, 0.0), r * 0.44);\n        } else if (shapeIndex == 4) {\n          d = sdOctahedron(q, r * 1.1);\n        }\n\n        for (int i = 0; i < MAX_ITEMS; i++) {\n          int k = i * 4;\n          float br = bubbleData[k + 3];\n          if (br > 0.0001) {\n            vec3 bp = vec3(bubbleData[k], bubbleData[k + 1], bubbleData[k + 2]);\n            float bd = sdSphere(p - bp, br);\n            d = smin(d, bd, max(0.012, br * 0.7));\n          }\n        }\n\n        return d;\n      }\n\n      vec3 calcNormal(vec3 p) {\n        vec2 e = vec2(0.0015, 0.0);\n        return normalize(vec3(\n          scene(p + e.xyy) - scene(p - e.xyy),\n          scene(p + e.yxy) - scene(p - e.yxy),\n          scene(p + e.yyx) - scene(p - e.yyx)\n        ));\n      }\n\n      vec4 readSrc(vec2 uv) {\n        vec2 safeUv = clamp(uv, vec2(0.001), vec2(0.999));\n        vec4 c = texture(src, safeUv);\n        vec4 base = vec4(0.03, 0.05, 0.10, 1.0);\n        return mix(base, c, c.a);\n      }\n\n      void main() {\n        vec2 uv = (gl_FragCoord.xy - offset) / resolution;\n        float aspect = resolution.y / resolution.x;\n        vec2 p2 = (uv - 0.5) * vec2(1.0, aspect);\n\n        vec3 ro = vec3(0.0, 0.0, -1.9);\n        vec3 rd = normalize(vec3(p2, 1.65));\n\n        float t = 0.0;\n        bool hit = false;\n        vec3 pos = vec3(0.0);\n\n        for (int i = 0; i < 56; i++) {\n          pos = ro + rd * t;\n          float d = scene(pos);\n          if (d < 0.0012) {\n            hit = true;\n            break;\n          }\n          t += d * 0.78;\n          if (t > 4.0) {\n            break;\n          }\n        }\n\n        if (!hit) {\n          outColor = readSrc(uv);\n          return;\n        }\n\n        vec3 n = calcNormal(pos);\n        float ndv = max(dot(n, -rd), 0.0);\n        float fres = pow(1.0 - ndv, 4.0);\n\n        vec2 wobble = vec2(\n          sin(uv.y * 80.0 + time * 2.4),\n          cos(uv.x * 70.0 - time * 2.1)\n        ) * 0.0015;\n\n        vec2 refractUv = uv - n.xy * distortion * (0.75 + fres * 1.8) + wobble;\n        vec3 col;\n        col.r = readSrc(refractUv + n.xy * distortion * 0.26).r;\n        col.g = readSrc(refractUv).g;\n        col.b = readSrc(refractUv - n.xy * distortion * 0.20).b;\n\n        vec3 lightA = normalize(vec3(-0.45, 0.7, -0.55));\n        vec3 lightB = normalize(vec3(0.7, -0.25, -0.25));\n        float specA = pow(max(dot(reflect(-lightA, n), -rd), 0.0), 160.0);\n        float specB = pow(max(dot(reflect(-lightB, n), -rd), 0.0), 48.0);\n\n        col = mix(col, vec3(1.0), 0.10 + fres * 0.28);\n        col += vec3(0.45, 0.98, 0.9) * fres * 0.28;\n        col += vec3(1.0) * specA * 1.8 + vec3(0.7, 0.9, 1.0) * specB * 0.45;\n        col = clamp(col, 0.0, 1.0);\n\n        outColor = vec4(col, 1.0);\n      }\n    ";
+    const SHADER=`
+      precision highp float;
+      uniform sampler2D src;uniform vec2 resolution;uniform vec2 offset;uniform float time;uniform vec2 playerPx;uniform float playerR;uniform float distortion;uniform int shapeIndex;uniform float pulseAge;uniform float bubbleData[96];out vec4 outColor;const int MAX_ITEMS=24;
+      float smin(float a,float b,float k){float h=clamp(.5+.5*(b-a)/k,0.,1.);return mix(b,a,h)-k*h*(1.-h);}mat2 rot(float a){float c=cos(a),s=sin(a);return mat2(c,-s,s,c);}float sdSphere(vec3 p,float r){return length(p)-r;}
+      float sdBox(vec3 p,vec3 b,float r){vec3 q=abs(p)-b+r;return length(max(q,0.))+min(max(q.x,max(q.y,q.z)),0.)-r;}float sdTorus(vec3 p,vec2 t){vec2 q=vec2(length(p.xy)-t.x,p.z);return length(q)-t.y;}
+      float sdCapsule(vec3 p,vec3 a,vec3 b,float r){vec3 pa=p-a,ba=b-a;float h=clamp(dot(pa,ba)/dot(ba,ba),0.,1.);return length(pa-ba*h)-r;}float sdOctahedron(vec3 p,float s){p=abs(p);return(p.x+p.y+p.z-s)*.57735027;}
+      vec3 playerCenter(){vec2 uv=playerPx/resolution;float aspect=resolution.y/resolution.x;return vec3((uv-.5)*vec2(1.,aspect),0.);} 
+      float shapeDistance(vec3 q,float r){q.xy*=rot(sin(time*1.13)*.13+sin(time*2.7)*.03);q.xz*=rot(cos(time*.91)*.10);q.yz*=rot(sin(time*.73)*.08);q.z+=sin(q.x*35.+q.y*18.+time*4.4)*.007;q.x+=sin(q.y*27.+time*2.8)*.0045;if(shapeIndex==1)return sdTorus(q,vec2(r*.75,r*.24));if(shapeIndex==2)return sdBox(q,vec3(r*.70),r*.22);if(shapeIndex==3)return sdCapsule(q,vec3(-r*.86,0.,0.),vec3(r*.86,0.,0.),r*.43);if(shapeIndex==4)return sdOctahedron(q,r*1.12);return sdSphere(q,r);} 
+      float scene(vec3 p){vec3 c=playerCenter();float pulse=exp(-pulseAge*4.6)*sin(pulseAge*24.)*.13;float breathe=sin(time*2.05)*.018+sin(time*3.7)*.010;float d=shapeDistance(p-c,playerR*(1.+pulse+breathe));for(int i=0;i<MAX_ITEMS;i++){int k=i*4;float br=bubbleData[k+3];if(br>.0001){vec3 bp=vec3(bubbleData[k],bubbleData[k+1],bubbleData[k+2]);vec3 q=p-bp;q.xy*=rot(time*.45+float(i)*.47);float bd=sdSphere(q,br*(1.+sin(time*3.+float(i))*.04));d=smin(d,bd,max(.014,br*.86));}}return d;} 
+      vec3 normalAt(vec3 p){vec2 e=vec2(.0013,0.);return normalize(vec3(scene(p+e.xyy)-scene(p-e.xyy),scene(p+e.yxy)-scene(p-e.yxy),scene(p+e.yyx)-scene(p-e.yyx)));}vec4 sampleSrc(vec2 uv){vec2 safeUv=clamp(uv,vec2(.001),vec2(.999));vec4 c=texture(src,safeUv);return mix(vec4(.018,.030,.070,1.),c,c.a);} 
+      void main(){vec2 uv=(gl_FragCoord.xy-offset)/resolution;float aspect=resolution.y/resolution.x;vec2 p2=(uv-.5)*vec2(1.,aspect);vec3 ro=vec3(0.,0.,-1.95),rd=normalize(vec3(p2,1.62));float t=0.;bool hit=false;vec3 pos=vec3(0.);for(int i=0;i<72;i++){pos=ro+rd*t;float d=scene(pos);if(d<.0011){hit=true;break;}t+=d*.72;if(t>4.2)break;}if(!hit){outColor=sampleSrc(uv);return;}vec3 n=normalAt(pos);float ndv=max(dot(n,-rd),0.);float fres=pow(1.-ndv,3.4);float thickness=clamp(1.-t*.27,0.,1.);vec2 micro=vec2(sin(uv.y*86.+time*3.15)+sin(uv.x*37.-time*1.8),cos(uv.x*74.-time*2.85)+cos(uv.y*31.+time*1.65))*.00115;vec2 refr=uv-n.xy*distortion*(.78+fres*2.+thickness*.34)+micro;float disp=distortion*(.26+fres*.18);vec3 col;col.r=sampleSrc(refr+n.xy*disp*1.15).r;col.g=sampleSrc(refr).g;col.b=sampleSrc(refr-n.xy*disp*.92).b;vec3 lightA=normalize(vec3(-.38,.74,-.56)),lightB=normalize(vec3(.68,-.24,-.35));float specA=pow(max(dot(reflect(-lightA,n),-rd),0.),170.);float specB=pow(max(dot(reflect(-lightB,n),-rd),0.),54.);float rim=smoothstep(.18,.95,fres);col=mix(col,vec3(1.),.09+fres*.26);col+=vec3(.52,1.,.92)*rim*.22;col+=vec3(1.)*specA*1.95;col+=vec3(.72,.92,1.)*specB*.58;col-=vec3(0.,.03,.02)*thickness*.12;outColor=vec4(clamp(col,0.,1.),1.);} 
+    `;
 
-    const MAX_SHADER_BUBBLES = 28;
-    const TARGET_GOAL = 10;
-
-    const LEVELS = [
-      { name: "Bol", shaderShape: 0, targetShape: "circle" },
-      { name: "Donut", shaderShape: 2, targetShape: "donut" },
-      { name: "Cube", shaderShape: 1, targetShape: "cube" },
-      { name: "Capsule", shaderShape: 3, targetShape: "capsule" },
-      { name: "Diamant", shaderShape: 4, targetShape: "diamond" }
-    ];
-
-    const game = document.getElementById("game");
-    const vfxStage = document.getElementById("vfxStage");
-    const canvas = document.getElementById("targetCanvas");
-    const ctx = canvas.getContext("2d");
-    const fallbackPlayer = document.getElementById("fallbackPlayer");
-
-    const scoreEl = document.getElementById("score");
-    const levelEl = document.getElementById("level");
-    const livesEl = document.getElementById("lives");
-    const shapeNameEl = document.getElementById("shapeName");
-    const sizeEl = document.getElementById("size");
-    const progressFill = document.getElementById("progressFill");
-    const pauseButton = document.getElementById("pauseButton");
-    const resetButton = document.getElementById("resetButton");
-    const toast = document.getElementById("toast");
-    const shaderStatus = document.getElementById("shaderStatus");
-
-    const player = {
-      x: window.innerWidth / 2,
-      y: window.innerHeight * 0.72,
-      tx: window.innerWidth / 2,
-      ty: window.innerHeight * 0.72,
-      r: 76
-    };
-
-    const state = {
-      running: true,
-      score: 0,
-      lives: 3,
-      level: 0,
-      absorbed: 0,
-      combo: 1,
-      spawnTimer: 0,
-      lastPulse: performance.now() / 1000,
-      clickCount: 0,
-      hasPointer: false,
-      gameOver: false,
-      shaderReady: false
-    };
-
-    const targets = [];
-    const bubbleUniform = new Float32Array(MAX_SHADER_BUBBLES * 4);
-    let lastFrame = performance.now();
-    let toastTimer = 4.5;
-
-    function clamp(value, min, max) {
-      return Math.max(min, Math.min(max, value));
+    const GOAL=10,MAX_SHADER_BUBBLES=24,MAX_OBJECTS=34;
+    const LEVELS=[{name:"Bol",shape:"circle",shader:0},{name:"Donut",shape:"donut",shader:1},{name:"Cube",shape:"cube",shader:2},{name:"Capsule",shape:"capsule",shader:3},{name:"Diamant",shape:"diamond",shader:4}];
+    const fxStage=document.getElementById("fxStage"),objectCanvas=document.getElementById("objectCanvas"),particleCanvas=document.getElementById("particleCanvas"),octx=objectCanvas.getContext("2d",{alpha:true}),pctx=particleCanvas.getContext("2d",{alpha:true}),fallbackOrb=document.getElementById("fallbackOrb"),hud=document.getElementById("hud"),scoreEl=document.getElementById("score"),levelEl=document.getElementById("level"),targetNameEl=document.getElementById("targetName"),livesEl=document.getElementById("lives"),comboEl=document.getElementById("combo"),enemyCountEl=document.getElementById("enemyCount"),goalFill=document.getElementById("goalFill"),pauseBtn=document.getElementById("pauseBtn"),resetBtn=document.getElementById("resetBtn"),message=document.getElementById("message"),shaderNote=document.getElementById("shaderNote");
+    const player={x:innerWidth/2,y:innerHeight*.72,tx:innerWidth/2,ty:innerHeight*.72,r:76};
+    const state={running:true,over:false,score:0,lives:3,level:1,absorbed:0,combo:1,comboTime:0,spawnGood:.15,spawnEnemy:.6,hasPointer:false,lastPulse:performance.now()/1000};
+    const objects=[],particles=[],bubbleUniform=new Float32Array(MAX_SHADER_BUBBLES*4);let dpr=1,lastNow=performance.now(),msgTimer=4,vfxReady=false;
+    const clamp=(v,min,max)=>Math.max(min,Math.min(max,v)),rand=(min,max)=>min+Math.random()*(max-min),levelData=()=>LEVELS[(state.level-1)%LEVELS.length],cycle=()=>Math.floor((state.level-1)/LEVELS.length);
+    function showMessage(t,s=2.4){message.textContent=t;message.classList.add("show");msgTimer=s;}
+    function bringLayersForward(){
+      if(hud.parentElement!==document.body)document.body.appendChild(hud);
+      hud.style.setProperty("z-index","2147483647","important");hud.style.setProperty("display","flex","important");hud.style.setProperty("visibility","visible","important");hud.style.setProperty("opacity","1","important");
+      document.querySelectorAll("canvas").forEach(c=>{if(c===objectCanvas||c===particleCanvas)return;c.style.setProperty("position","fixed","important");c.style.setProperty("inset","0","important");c.style.setProperty("width","100vw","important");c.style.setProperty("height","100vh","important");c.style.setProperty("z-index","12","important");c.style.setProperty("pointer-events","none","important");});
     }
-
-    function rand(min, max) {
-      return min + Math.random() * (max - min);
+    new MutationObserver(bringLayersForward).observe(document.body,{childList:true,subtree:true});
+    function resize(){dpr=clamp(devicePixelRatio||1,1,2);for(const c of [objectCanvas,particleCanvas]){c.width=Math.round(innerWidth*dpr);c.height=Math.round(innerHeight*dpr);c.style.width=innerWidth+"px";c.style.height=innerHeight+"px";}octx.setTransform(dpr,0,0,dpr,0,0);pctx.setTransform(dpr,0,0,dpr,0,0);player.x=clamp(player.x,0,innerWidth);player.y=clamp(player.y,0,innerHeight);player.tx=clamp(player.tx,0,innerWidth);player.ty=clamp(player.ty,0,innerHeight);bringLayersForward();}
+    function counts(){let good=0,enemy=0;for(const o of objects){if(!o.alive)continue;o.kind==="good"?good++:enemy++;}return{good,enemy};}
+    function spawnGood(initial=false){if(objects.length>=MAX_OBJECTS)return;const data=levelData(),size=rand(34,50)+Math.min(state.level*1.3,18);objects.push({alive:true,kind:"good",shape:data.shape,x:rand(48,Math.max(50,innerWidth-48)),y:initial?rand(90,Math.min(innerHeight*.48,390)):-size-rand(0,120),vx:rand(-22,22),vy:rand(76,118)+cycle()*14+state.level*4,size,angle:rand(0,Math.PI*2),spin:rand(-1.8,1.8),pulse:rand(0,Math.PI*2),age:0});}
+    function spawnEnemy(initial=false){if(objects.length>=MAX_OBJECTS)return;const size=rand(38,58)+Math.min(state.level*1.2,18),side=Math.random()<.28;objects.push({alive:true,kind:"enemy",shape:Math.random()<.58?"spike":"wrong",wrongShape:LEVELS[(state.level+Math.floor(rand(1,LEVELS.length)))%LEVELS.length].shape,x:side?(Math.random()<.5?-size:innerWidth+size):rand(48,Math.max(50,innerWidth-48)),y:initial?rand(100,Math.min(innerHeight*.43,340)):-size-rand(0,140),vx:side?(Math.random()<.5?rand(64,105):rand(-105,-64)):rand(-32,32),vy:rand(88,138)+cycle()*15+state.level*5,size,angle:rand(0,Math.PI*2),spin:rand(-2.5,2.5),pulse:rand(0,Math.PI*2),age:0});}
+    function seedLevel(){objects.length=0;particles.length=0;for(let i=0;i<6;i++)spawnGood(true);for(let i=0;i<3;i++)spawnEnemy(true);state.spawnGood=.25;state.spawnEnemy=.55;}
+    function resetGame(){state.running=true;state.over=false;state.score=0;state.lives=3;state.level=1;state.absorbed=0;state.combo=1;state.comboTime=0;player.r=76;player.x=innerWidth/2;player.y=innerHeight*.72;player.tx=player.x;player.ty=player.y;pauseBtn.textContent="Pauze";state.lastPulse=performance.now()/1000;seedLevel();showMessage("Vang witte bollen. Rode vijanden geven schade. Doel: 10 absorpties.",3);updateHud();}
+    function nextLevel(){state.level++;state.absorbed=0;state.combo=1;player.r=clamp(76+state.level*3.4,70,136);state.lastPulse=performance.now()/1000;seedLevel();showMessage(`Level ${state.level}: vang ${levelData().name.toLowerCase()} vormen.`,2.6);}
+    function addParticles(x,y,kind){const color=kind==="enemy"?"255,51,107":"255,255,255",n=kind==="enemy"?18:14;for(let i=0;i<n;i++){const a=i/n*Math.PI*2+rand(-.18,.18),s=rand(90,230);particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:rand(.38,.66),max:.66,size:rand(3,7),color});}if(particles.length>120)particles.splice(0,particles.length-120);}
+    function absorb(o){o.alive=false;state.lastPulse=performance.now()/1000;state.absorbed++;state.score+=100+state.level*20+state.combo*22;state.combo=clamp(state.combo+1,1,12);state.comboTime=2.5;player.r=clamp(player.r+4.2,50,140);addParticles(o.x,o.y,"good");if(state.absorbed>=GOAL)nextLevel();}
+    function damage(o){o.alive=false;state.lastPulse=performance.now()/1000;state.lives--;state.combo=1;state.comboTime=0;player.r=clamp(player.r-18,48,140);addParticles(o.x,o.y,"enemy");document.body.animate([{transform:"translate3d(0,0,0)"},{transform:"translate3d(-8px,0,0)"},{transform:"translate3d(7px,0,0)"},{transform:"translate3d(0,0,0)"}],{duration:220,easing:"ease-out"});if(state.lives<=0){state.over=true;state.running=false;pauseBtn.textContent="Verder";showMessage(`Game over. Score ${Math.round(state.score)}. Tik reset om opnieuw te starten.`,999);}}
+    function updateHud(){const c=counts();scoreEl.textContent=Math.round(state.score);levelEl.textContent=state.level;targetNameEl.textContent=levelData().name;livesEl.textContent=state.lives;comboEl.textContent=`x${state.combo}`;enemyCountEl.textContent=c.enemy;goalFill.style.width=clamp(state.absorbed/GOAL*100,0,100)+"%";}
+    function pointer(x,y){player.tx=clamp(x,0,innerWidth);player.ty=clamp(y,0,innerHeight);state.hasPointer=true;}
+    addEventListener("pointermove",e=>pointer(e.clientX,e.clientY),{passive:true});addEventListener("pointerdown",e=>{if(e.target.closest("button"))return;pointer(e.clientX,e.clientY);state.lastPulse=performance.now()/1000;if(state.over)resetGame();},{passive:true});
+    pauseBtn.onclick=()=>{if(state.over){resetGame();return;}state.running=!state.running;pauseBtn.textContent=state.running?"Pauze":"Verder";showMessage(state.running?"Verder.":"Gepauzeerd.",1.1);};resetBtn.onclick=resetGame;addEventListener("keydown",e=>{if(e.code==="Space"){e.preventDefault();pauseBtn.click();}if(e.key.toLowerCase()==="r")resetGame();});
+    function updateObjects(dt,now){if(!state.running)return;state.spawnGood-=dt;state.spawnEnemy-=dt;const c=counts();if((state.spawnGood<=0||c.good<2)&&c.good<clamp(5+Math.floor(state.level*.55),5,10)){spawnGood(false);state.spawnGood=clamp(.58-state.level*.014,.28,.58);}if((state.spawnEnemy<=0||c.enemy<1)&&c.enemy<clamp(2+Math.floor(state.level*.42),2,7)){spawnEnemy(false);state.spawnEnemy=clamp(1.1-state.level*.02,.42,1.1);}const magnet=player.r*2.75,hitGood=player.r*.64,hitEnemy=player.r*.59,data=levelData();for(const o of objects){if(!o.alive)continue;o.age+=dt;o.angle+=o.spin*dt;const dx=player.x-o.x,dy=player.y-o.y,d=Math.hypot(dx,dy)||1;if(o.kind==="good"&&d<magnet){const pull=(1-d/magnet)*(360+state.level*16);o.vx+=dx/d*pull*dt;o.vy+=dy/d*pull*dt;}if(o.kind==="enemy"&&d<player.r*3.0){const chase=(1-d/(player.r*3.0))*(75+state.level*5);o.vx+=dx/d*chase*dt;}o.x+=o.vx*dt;o.y+=o.vy*dt;o.vx+=Math.sin(now*.0018+o.pulse)*3*dt;o.vx*=.996;o.vy=clamp(o.vy,58,310+state.level*13);if(o.kind==="good"&&o.shape===data.shape&&d<hitGood+o.size*.55)absorb(o);else if(o.kind==="enemy"&&d<hitEnemy+o.size*.52)damage(o);if(o.y>innerHeight+140||o.x<-180||o.x>innerWidth+180)o.alive=false;}for(let i=objects.length-1;i>=0;i--)if(!objects[i].alive)objects.splice(i,1);}
+    function updateParticles(dt){for(const p of particles){p.life-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=220*dt;p.vx*=.985;}for(let i=particles.length-1;i>=0;i--)if(particles[i].life<=0)particles.splice(i,1);}
+    function drawRoundedRect(ctx,x,y,w,h,r){const rr=Math.min(r,w/2,h/2);ctx.beginPath();ctx.moveTo(x+rr,y);ctx.arcTo(x+w,y,x+w,y+h,rr);ctx.arcTo(x+w,y+h,x,y+h,rr);ctx.arcTo(x,y+h,x,y,rr);ctx.arcTo(x,y,x+rr,y,rr);ctx.closePath();}
+    function shapePath(ctx,shape,size){const r=size/2;ctx.beginPath();if(shape==="circle")ctx.arc(0,0,r,0,Math.PI*2);else if(shape==="donut"){ctx.arc(0,0,r,0,Math.PI*2);ctx.moveTo(r*.44,0);ctx.arc(0,0,r*.44,0,Math.PI*2,true);}else if(shape==="cube")drawRoundedRect(ctx,-r,-r,size,size,size*.18);else if(shape==="capsule")drawRoundedRect(ctx,-size*.74,-size*.31,size*1.48,size*.62,size*.31);else{ctx.moveTo(0,-r);ctx.lineTo(r,0);ctx.lineTo(0,r);ctx.lineTo(-r,0);ctx.closePath();}}
+    function enemyPath(ctx,o,size){if(o.shape==="wrong"){shapePath(ctx,o.wrongShape,size);return;}const r=size/2;ctx.beginPath();for(let i=0;i<12;i++){const a=i/12*Math.PI*2,rr=i%2===0?r:r*.47,x=Math.cos(a)*rr,y=Math.sin(a)*rr;if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);}ctx.closePath();}
+    function drawObject(o,now){const size=o.size*(1+Math.sin(now*.006+o.pulse)*.045);octx.save();octx.translate(o.x,o.y);octx.rotate(o.angle);if(o.kind==="good"){octx.shadowBlur=34;octx.shadowColor="rgba(255,255,255,.76)";shapePath(octx,o.shape,size);octx.fillStyle="rgba(255,255,255,.20)";octx.fill(o.shape==="donut"?"evenodd":"nonzero");shapePath(octx,o.shape,size);octx.lineWidth=2.8;octx.strokeStyle="rgba(255,255,255,.96)";octx.stroke();octx.rotate(-o.angle);octx.beginPath();octx.arc(-size*.18,-size*.22,Math.max(4,size*.10),0,Math.PI*2);octx.fillStyle="rgba(255,255,255,.98)";octx.shadowBlur=22;octx.fill();}else{octx.shadowBlur=28;octx.shadowColor="rgba(255,51,107,.90)";enemyPath(octx,o,size);octx.fillStyle="rgba(255,51,107,.30)";octx.fill(o.shape==="wrong"&&o.wrongShape==="donut"?"evenodd":"nonzero");enemyPath(octx,o,size);octx.lineWidth=3;octx.strokeStyle="rgba(255,51,107,.98)";octx.stroke();octx.rotate(-o.angle);octx.lineWidth=3.2;octx.strokeStyle="rgba(255,255,255,.92)";octx.beginPath();octx.moveTo(-size*.16,-size*.16);octx.lineTo(size*.16,size*.16);octx.moveTo(size*.16,-size*.16);octx.lineTo(-size*.16,size*.16);octx.stroke();}octx.restore();}
+    function drawCanvasHud(){
+      const c=counts(),data=levelData(),pad=8,h=34,w=Math.min(innerWidth-16,650);
+      octx.save();
+      octx.setTransform(dpr,0,0,dpr,0,0);
+      octx.shadowBlur=18;octx.shadowColor="rgba(0,0,0,.45)";
+      octx.fillStyle="rgba(3,6,16,.82)";
+      octx.strokeStyle="rgba(255,255,255,.24)";
+      octx.lineWidth=1;
+      drawRoundedRect(octx,pad,pad,w,h,17);
+      octx.fill();octx.stroke();
+      const prog=clamp(state.absorbed/GOAL,0,1);
+      octx.fillStyle="rgba(255,255,255,.10)";
+      drawRoundedRect(octx,pad+10,pad+23,Math.max(88,w-20),5,3);octx.fill();
+      const grad=octx.createLinearGradient(pad+10,0,pad+w-10,0);
+      grad.addColorStop(0,"#76ffe7");grad.addColorStop(.55,"#ffffff");grad.addColorStop(1,"#ffe48a");
+      octx.fillStyle=grad;drawRoundedRect(octx,pad+10,pad+23,Math.max(4,(w-20)*prog),5,3);octx.fill();
+      octx.shadowBlur=0;octx.font="800 12px system-ui, -apple-system, Segoe UI, sans-serif";octx.textBaseline="middle";
+      octx.fillStyle="rgba(248,252,255,.96)";
+      const txt=`Score ${Math.round(state.score)}   Level ${state.level}   Doel ${data.name}   Levens ${state.lives}   Combo x${state.combo}   Vijanden ${c.enemy}`;
+      octx.fillText(txt,pad+12,pad+13);
+      octx.restore();
     }
-
-    function choose(array) {
-      return array[Math.floor(Math.random() * array.length)];
-    }
-
-    function distance(ax, ay, bx, by) {
-      return Math.hypot(ax - bx, ay - by);
-    }
-
-    function currentLevel() {
-      return LEVELS[state.level % LEVELS.length];
-    }
-
-    function showToast(message, seconds = 2.4) {
-      toast.textContent = message;
-      toast.classList.add("show");
-      toastTimer = seconds;
-    }
-
-    function resizeCanvas() {
-      const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
-      canvas.width = Math.round(window.innerWidth * dpr);
-      canvas.height = Math.round(window.innerHeight * dpr);
-      canvas.style.width = `${window.innerWidth}px`;
-      canvas.style.height = `${window.innerHeight}px`;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      player.tx = clamp(player.tx, 0, window.innerWidth);
-      player.ty = clamp(player.ty, 0, window.innerHeight);
-      player.x = clamp(player.x, 0, window.innerWidth);
-      player.y = clamp(player.y, 0, window.innerHeight);
-    }
-
-    function targetCount() {
-      return clamp(7 + state.level * 2, 7, 15);
-    }
-
-    function spawnTarget(forceCorrect = false) {
-      const level = currentLevel();
-      const correctRoll = forceCorrect || Math.random() > clamp(0.38 + state.level * 0.03, 0.38, 0.58);
-      const shapePool = LEVELS.map((item) => item.targetShape);
-      let shape = level.targetShape;
-      let kind = "good";
-
-      if (!correctRoll) {
-        kind = "bad";
-        const wrongShapes = shapePool.filter((item) => item !== level.targetShape);
-        shape = choose(wrongShapes);
-      }
-
-      const size = rand(34, 54) + Math.min(state.level * 3, 14);
-      const speed = rand(78, 124) + state.level * 14;
-      targets.push({
-        x: rand(60, Math.max(61, window.innerWidth - 60)),
-        y: -size - rand(0, 160),
-        vx: rand(-18, 18),
-        vy: speed,
-        size,
-        shape,
-        kind,
-        active: true,
-        spin: rand(-1.8, 1.8),
-        angle: rand(0, Math.PI * 2),
-        age: 0,
-        absorbed: false,
-        alpha: 1,
-        pulse: rand(0, Math.PI * 2)
-      });
-    }
-
-    function resetGame() {
-      state.running = true;
-      state.gameOver = false;
-      state.score = 0;
-      state.lives = 3;
-      state.level = 0;
-      state.absorbed = 0;
-      state.combo = 1;
-      state.spawnTimer = 0;
-      state.clickCount += 1;
-      state.lastPulse = performance.now() / 1000;
-      player.r = 76;
-      targets.length = 0;
-      for (let i = 0; i < 8; i++) spawnTarget(i < 5);
-      pauseButton.textContent = "Pauze";
-      showToast("Vang de witte bol. Ontwijk rood. Groei naar level 2.", 3.2);
-      updateHud();
-    }
-
-    function pulse() {
-      state.clickCount += 1;
-      state.lastPulse = performance.now() / 1000;
-    }
-
-    function absorbTarget(target) {
-      if (!target.active) return;
-      target.active = false;
-      pulse();
-      state.absorbed += 1;
-      state.score += 100 + state.level * 25 + state.combo * 12;
-      state.combo = clamp(state.combo + 1, 1, 8);
-      player.r = clamp(player.r + 4.8, 54, 138);
-      makeBurst(target.x, target.y, "good");
-
-      if (state.absorbed >= TARGET_GOAL) {
-        state.level += 1;
-        state.absorbed = 0;
-        state.combo = 1;
-        player.r = clamp(74 + state.level * 7, 74, 132);
-        pulse();
-        showToast(`Level ${state.level + 1}: vang nu ${currentLevel().name.toLowerCase()} vormen.`, 2.8);
-        for (let i = 0; i < 3; i++) spawnTarget(true);
-      }
-    }
-
-    function damageTarget(target) {
-      if (!target.active) return;
-      target.active = false;
-      pulse();
-      state.lives -= 1;
-      state.combo = 1;
-      player.r = clamp(player.r - 20, 44, 138);
-      makeBurst(target.x, target.y, "bad");
-      game.animate([
-        { transform: "translate3d(0,0,0)" },
-        { transform: "translate3d(-9px,0,0)" },
-        { transform: "translate3d(8px,0,0)" },
-        { transform: "translate3d(0,0,0)" }
-      ], { duration: 220, easing: "ease-out" });
-      if (state.lives <= 0) endGame();
-    }
-
-    function endGame() {
-      state.running = false;
-      state.gameOver = true;
-      pauseButton.textContent = "Verder";
-      showToast(`Game over. Score ${Math.round(state.score)}. Druk Reset voor een nieuwe ronde.`, 999);
-    }
-
-    function makeBurst(x, y, kind) {
-      const color = kind === "bad" ? "rgba(255,71,120,.95)" : "rgba(255,255,255,.95)";
-      const count = kind === "bad" ? 18 : 14;
-      for (let i = 0; i < count; i++) {
-        const dot = document.createElement("i");
-        const angle = (i / count) * Math.PI * 2 + rand(-0.16, 0.16);
-        const dist = rand(26, kind === "bad" ? 86 : 70);
-        dot.style.cssText = `
-          position:absolute;z-index:18;left:${x}px;top:${y}px;width:7px;height:7px;border-radius:999px;
-          pointer-events:none;background:${color};box-shadow:0 0 18px ${color};transform:translate(-50%,-50%);`;
-        game.appendChild(dot);
-        dot.animate([
-          { transform: "translate(-50%,-50%) scale(1)", opacity: 1 },
-          { transform: `translate(calc(-50% + ${Math.cos(angle) * dist}px), calc(-50% + ${Math.sin(angle) * dist}px)) scale(.15)`, opacity: 0 }
-        ], { duration: 520, easing: "cubic-bezier(.1,.7,.2,1)" }).finished.finally(() => dot.remove());
-      }
-    }
-
-    function updateHud() {
-      const level = currentLevel();
-      scoreEl.textContent = Math.round(state.score).toString();
-      levelEl.textContent = String(state.level + 1);
-      livesEl.textContent = String(state.lives);
-      shapeNameEl.textContent = level.name;
-      sizeEl.textContent = String(Math.round(player.r));
-      progressFill.style.width = `${(state.absorbed / TARGET_GOAL) * 100}%`;
-    }
-
-    function handlePointer(clientX, clientY) {
-      const rect = game.getBoundingClientRect();
-      player.tx = clamp(clientX - rect.left, 0, rect.width);
-      player.ty = clamp(clientY - rect.top, 0, rect.height);
-      state.hasPointer = true;
-    }
-
-    game.addEventListener("pointermove", (event) => handlePointer(event.clientX, event.clientY), { passive: true });
-    game.addEventListener("pointerdown", (event) => {
-      if (event.target.closest("button")) return;
-      handlePointer(event.clientX, event.clientY);
-      pulse();
-      if (state.gameOver) resetGame();
-    });
-
-    pauseButton.addEventListener("click", () => {
-      if (state.gameOver) { resetGame(); return; }
-      state.running = !state.running;
-      pauseButton.textContent = state.running ? "Pauze" : "Verder";
-      showToast(state.running ? "Verder." : "Gepauzeerd.", 1.2);
-    });
-
-    resetButton.addEventListener("click", resetGame);
-
-    window.addEventListener("keydown", (event) => {
-      if (event.code === "Space") {
-        event.preventDefault();
-        pauseButton.click();
-      }
-      if (event.key.toLowerCase() === "r") resetGame();
-    });
-
-    function updateTargets(dt, now) {
-      if (!state.running) return;
-
-      state.spawnTimer -= dt;
-      if (state.spawnTimer <= 0) {
-        if (targets.filter((target) => target.active).length < targetCount()) spawnTarget(false);
-        state.spawnTimer = clamp(0.55 - state.level * 0.035, 0.27, 0.55);
-      }
-
-      const level = currentLevel();
-      const magnetRange = player.r * 2.6;
-      const hitBase = player.r * 0.62;
-
-      for (const target of targets) {
-        if (!target.active) continue;
-        target.age += dt;
-        target.angle += target.spin * dt;
-
-        const dx = player.x - target.x;
-        const dy = player.y - target.y;
-        const d = Math.hypot(dx, dy) || 1;
-        const isCorrect = target.kind === "good" && target.shape === level.targetShape;
-
-        if (isCorrect && d < magnetRange) {
-          const pull = (1 - d / magnetRange) * (340 + state.level * 30);
-          target.vx += (dx / d) * pull * dt;
-          target.vy += (dy / d) * pull * dt;
-        }
-
-        target.x += target.vx * dt;
-        target.y += target.vy * dt;
-        target.vx += Math.sin(now * 0.0017 + target.pulse) * 2.3 * dt;
-        target.vx *= 0.996;
-        target.vy = clamp(target.vy, 54, 330 + state.level * 18);
-
-        if (d < hitBase + target.size * 0.52) {
-          if (isCorrect) absorbTarget(target);
-          else damageTarget(target);
-        }
-
-        if (target.y > window.innerHeight + 110 || target.x < -130 || target.x > window.innerWidth + 130) {
-          target.active = false;
-        }
-      }
-
-      for (let i = targets.length - 1; i >= 0; i--) {
-        if (!targets[i].active) targets.splice(i, 1);
-      }
-    }
-
-    function drawRoundedRect(ctx, x, y, w, h, r) {
-      const rr = Math.min(r, w / 2, h / 2);
-      ctx.beginPath();
-      ctx.moveTo(x + rr, y);
-      ctx.arcTo(x + w, y, x + w, y + h, rr);
-      ctx.arcTo(x + w, y + h, x, y + h, rr);
-      ctx.arcTo(x, y + h, x, y, rr);
-      ctx.arcTo(x, y, x + w, y, rr);
-      ctx.closePath();
-    }
-
-    function drawShapePath(shape, s) {
-      const r = s / 2;
-      ctx.beginPath();
-      if (shape === "circle") {
-        ctx.arc(0, 0, r, 0, Math.PI * 2);
-      } else if (shape === "donut") {
-        ctx.arc(0, 0, r, 0, Math.PI * 2);
-        ctx.moveTo(r * .45, 0);
-        ctx.arc(0, 0, r * .45, 0, Math.PI * 2, true);
-      } else if (shape === "cube") {
-        drawRoundedRect(ctx, -r, -r, s, s, s * .18);
-      } else if (shape === "capsule") {
-        drawRoundedRect(ctx, -s * .72, -s * .31, s * 1.44, s * .62, s * .31);
-      } else if (shape === "diamond") {
-        ctx.moveTo(0, -r);
-        ctx.lineTo(r, 0);
-        ctx.lineTo(0, r);
-        ctx.lineTo(-r, 0);
-        ctx.closePath();
-      }
-    }
-
-    function drawTarget(target, now) {
-      const level = currentLevel();
-      const isCorrect = target.kind === "good" && target.shape === level.targetShape;
-      const s = target.size * (1 + Math.sin(now * 0.005 + target.pulse) * 0.045);
-      ctx.save();
-      ctx.translate(target.x, target.y);
-      ctx.rotate(target.angle);
-      ctx.globalAlpha = target.alpha;
-
-      ctx.shadowBlur = isCorrect ? 28 : 22;
-      ctx.shadowColor = isCorrect ? "rgba(255,255,255,.75)" : "rgba(255,71,120,.75)";
-      drawShapePath(target.shape, s);
-      ctx.fillStyle = isCorrect ? "rgba(255,255,255,.16)" : "rgba(255,71,120,.22)";
-      ctx.fill(target.shape === "donut" ? "evenodd" : "nonzero");
-
-      drawShapePath(target.shape, s);
-      ctx.lineWidth = isCorrect ? 2.7 : 2.4;
-      ctx.strokeStyle = isCorrect ? "rgba(255,255,255,.92)" : "rgba(255,71,120,.95)";
-      ctx.stroke();
-
-      if (isCorrect) {
-        ctx.rotate(-target.angle);
-        ctx.beginPath();
-        ctx.arc(-s * .18, -s * .22, Math.max(3, s * .11), 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(255,255,255,.92)";
-        ctx.shadowBlur = 18;
-        ctx.shadowColor = "rgba(255,255,255,.95)";
-        ctx.fill();
-      } else {
-        ctx.rotate(-target.angle);
-        ctx.lineWidth = 3;
-        ctx.strokeStyle = "rgba(255,255,255,.82)";
-        ctx.beginPath();
-        ctx.moveTo(-s * .18, -s * .18);
-        ctx.lineTo(s * .18, s * .18);
-        ctx.moveTo(s * .18, -s * .18);
-        ctx.lineTo(-s * .18, s * .18);
-        ctx.stroke();
-      }
-
-      ctx.restore();
-    }
-
-    function renderTargets(now) {
-      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-      for (const target of targets) drawTarget(target, now);
-    }
-
-    function updateBubbleUniforms(now) {
-      const w = Math.max(1, window.innerWidth);
-      const h = Math.max(1, window.innerHeight);
-      const aspect = h / w;
-      let j = 0;
-      const level = currentLevel();
-
-      for (const target of targets) {
-        if (j >= MAX_SHADER_BUBBLES) break;
-        const isCorrect = target.active && target.kind === "good" && target.shape === level.targetShape;
-        if (!isCorrect) continue;
-        const k = j * 4;
-        bubbleUniform[k] = target.x / w - 0.5;
-        bubbleUniform[k + 1] = ((h - target.y) / h - 0.5) * aspect;
-        bubbleUniform[k + 2] = Math.sin(now * 0.0014 + target.pulse) * 0.026;
-        bubbleUniform[k + 3] = (target.size * 0.52) / w;
-        j++;
-      }
-
-      for (; j < MAX_SHADER_BUBBLES; j++) {
-        const k = j * 4;
-        bubbleUniform[k] = 0;
-        bubbleUniform[k + 1] = 0;
-        bubbleUniform[k + 2] = 0;
-        bubbleUniform[k + 3] = 0;
-      }
-    }
-
-    function update(dt, now) {
-      if (!state.hasPointer && state.running) {
-        player.tx = window.innerWidth / 2 + Math.sin(now * 0.00035) * window.innerWidth * 0.16;
-        player.ty = window.innerHeight * 0.72 + Math.cos(now * 0.00046) * window.innerHeight * 0.06;
-      }
-
-      const smoothing = state.hasPointer ? 0.21 : 0.035;
-      player.x += (player.tx - player.x) * smoothing;
-      player.y += (player.ty - player.y) * smoothing;
-
-      if (toastTimer > 0) {
-        toastTimer -= dt;
-        if (toastTimer <= 0 && !state.gameOver) toast.classList.remove("show");
-      }
-
-      updateTargets(dt, now);
-      updateBubbleUniforms(now);
-      updateHud();
-    }
-
-    function render(now) {
-      fallbackPlayer.style.left = `${player.x}px`;
-      fallbackPlayer.style.top = `${player.y}px`;
-      fallbackPlayer.style.width = `${player.r * 2}px`;
-      fallbackPlayer.style.height = `${player.r * 2}px`;
-      renderTargets(now);
-    }
-
-    function frame(now) {
-      const dt = Math.min(0.04, (now - lastFrame) / 1000);
-      lastFrame = now;
-      update(dt, now);
-      render(now);
-      requestAnimationFrame(frame);
-    }
-
-    function lockVfxCanvasLayer() {
-      for (const item of document.querySelectorAll("canvas")) {
-        if (item === canvas) continue;
-        item.style.pointerEvents = "none";
-        item.style.zIndex = "2";
-      }
-    }
-
-    async function setupVfx() {
-      try {
-        const { VFX } = await import("https://esm.sh/@vfx-js/core@0.11.1");
-        const vfx = new VFX({
-          postEffect: {
-            shader: SHADER,
-            uniforms: {
-              playerPx: () => [
-                player.x * window.devicePixelRatio,
-                (window.innerHeight - player.y) * window.devicePixelRatio
-              ],
-              playerR: () => player.r / Math.max(1, window.innerWidth),
-              distortion: () => 0.068,
-              shapeIndex: () => currentLevel().shaderShape,
-              clickTime: () => performance.now() / 1000 - state.lastPulse,
-              clickCount: () => state.clickCount,
-              bubbleData: () => bubbleUniform
-            }
-          }
-        });
-
-        await vfx.addHTML(vfxStage, { shader: "none" });
-        vfx.play();
-        state.shaderReady = true;
-        shaderStatus.textContent = "Liquid shader actief. Doelen worden apart getekend zodat ze zichtbaar blijven.";
-        lockVfxCanvasLayer();
-        setTimeout(lockVfxCanvasLayer, 250);
-        setTimeout(lockVfxCanvasLayer, 1000);
-      } catch (error) {
-        console.warn("VFX JS kon niet laden", error);
-        game.classList.add("no-vfx");
-        shaderStatus.textContent = "Shader kon niet laden. Game draait met fallback speler.";
-      }
-    }
-
-    window.addEventListener("resize", resizeCanvas);
-
-    resizeCanvas();
-    resetGame();
-    setupVfx();
-    requestAnimationFrame(frame);
+    function renderObjects(now){octx.clearRect(0,0,innerWidth,innerHeight);for(const o of objects)drawObject(o,now);drawCanvasHud();pctx.clearRect(0,0,innerWidth,innerHeight);for(const p of particles){const a=clamp(p.life/p.max,0,1);pctx.beginPath();pctx.arc(p.x,p.y,p.size*a,0,Math.PI*2);pctx.fillStyle=`rgba(${p.color},${a})`;pctx.shadowBlur=18;pctx.shadowColor=`rgba(${p.color},${a})`;pctx.fill();}pctx.shadowBlur=0;}
+    function updateShaderBubbles(now){const w=Math.max(1,innerWidth),h=Math.max(1,innerHeight),aspect=h/w;let j=0;for(const o of objects){if(j>=MAX_SHADER_BUBBLES)break;if(!o.alive||o.kind!=="good")continue;const k=j*4;bubbleUniform[k]=o.x/w-.5;bubbleUniform[k+1]=((h-o.y)/h-.5)*aspect;bubbleUniform[k+2]=Math.sin(now*.0015+o.pulse)*.026;bubbleUniform[k+3]=o.size*.48/w;j++;}for(;j<MAX_SHADER_BUBBLES;j++){const k=j*4;bubbleUniform[k]=0;bubbleUniform[k+1]=0;bubbleUniform[k+2]=0;bubbleUniform[k+3]=0;}}
+    function update(dt,now){if(!state.hasPointer&&state.running){player.tx=innerWidth/2+Math.sin(now*.00034)*innerWidth*.16;player.ty=innerHeight*.72+Math.cos(now*.00043)*innerHeight*.06;}const sm=state.hasPointer?.22:.045;player.x+=(player.tx-player.x)*sm;player.y+=(player.ty-player.y)*sm;if(state.comboTime>0&&state.running){state.comboTime-=dt;if(state.comboTime<=0)state.combo=1;}if(msgTimer>0){msgTimer-=dt;if(msgTimer<=0&&!state.over)message.classList.remove("show");}updateObjects(dt,now);updateParticles(dt);updateShaderBubbles(now);updateHud();}
+    function render(now){fallbackOrb.style.left=player.x+"px";fallbackOrb.style.top=player.y+"px";fallbackOrb.style.width=player.r*2+"px";fallbackOrb.style.height=player.r*2+"px";renderObjects(now);}
+    function frame(now){const dt=Math.min(.04,(now-lastNow)/1000||.016);lastNow=now;update(dt,now);render(now);if(Math.floor(now)%500<18)bringLayersForward();requestAnimationFrame(frame);} 
+    async function setupVfx(){try{const {VFX}=await import("https://esm.sh/@vfx-js/core@0.11.1");const vfx=new VFX({postEffect:{shader:SHADER,uniforms:{time:()=>performance.now()/1000,playerPx:()=>[player.x*dpr,(innerHeight-player.y)*dpr],playerR:()=>player.r/Math.max(1,innerWidth),distortion:()=>.076,shapeIndex:()=>levelData().shader,pulseAge:()=>performance.now()/1000-state.lastPulse,bubbleData:()=>bubbleUniform}}});await vfx.addHTML(fxStage,{shader:"none"});vfx.play();vfxReady=true;document.body.classList.remove("no-vfx");shaderNote.textContent="Liquid shader actief. Statusbar en vijanden staan boven de shader.";bringLayersForward();setInterval(bringLayersForward,500);}catch(err){console.warn("VFX JS kon niet laden",err);document.body.classList.add("no-vfx");shaderNote.textContent="Shader kon niet laden. Fallback orb actief, game blijft speelbaar.";}}
+    addEventListener("resize",resize);resize();resetGame();bringLayersForward();setupVfx();requestAnimationFrame(frame);
   </script>
 </body>
 </html>
