@@ -3,941 +3,782 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Liquid Absorb v7</title>
+  <title>Liquid Absorb Pro</title>
   <style>
     :root {
-      --ink: #f8fbff;
-      --muted: rgba(248, 251, 255, 0.76);
-      --glass: rgba(7, 12, 28, 0.62);
-      --line: rgba(255, 255, 255, 0.18);
-      --good: rgba(247, 255, 253, 0.96);
-      --good-glow: rgba(119, 255, 225, 0.82);
-      --danger: #ff3868;
-      --warn: rgba(255, 56, 104, 0.92);
-      --gold: #ffe079;
+      --text: #f7fbff;
+      --muted: rgba(247, 251, 255, .66);
+      --panel: rgba(7, 10, 22, .48);
+      --line: rgba(255, 255, 255, .18);
+      --mint: #8fffea;
+      --danger: #ff4778;
+      --gold: #ffd26f;
     }
 
     * { box-sizing: border-box; }
 
-    html,
-    body {
+    html, body {
+      margin: 0;
       width: 100%;
       height: 100%;
-      margin: 0;
       overflow: hidden;
-      background: #060815;
-      color: var(--ink);
-      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background: #050715;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       user-select: none;
       touch-action: none;
     }
 
     button { font: inherit; }
 
-    #app {
-      position: relative;
-      width: 100vw;
-      height: 100vh;
+    #game {
+      position: fixed;
+      inset: 0;
       overflow: hidden;
       isolation: isolate;
+      background: #050715;
       cursor: none;
-      background: #070a17;
     }
 
-    #effectTarget {
+    #vfxStage {
       position: absolute;
       inset: 0;
-      z-index: 0;
+      z-index: 1;
       overflow: hidden;
+      pointer-events: none;
       background:
-        radial-gradient(circle at 18% 18%, rgba(82, 255, 218, 0.42), transparent 26%),
-        radial-gradient(circle at 76% 20%, rgba(91, 89, 255, 0.38), transparent 30%),
-        radial-gradient(circle at 52% 90%, rgba(255, 220, 120, 0.32), transparent 34%),
-        linear-gradient(135deg, #081126 0%, #12285a 42%, #071021 100%);
+        radial-gradient(circle at 18% 22%, rgba(96, 255, 225, .40), transparent 24%),
+        radial-gradient(circle at 82% 16%, rgba(160, 115, 255, .32), transparent 25%),
+        radial-gradient(circle at 62% 88%, rgba(255, 210, 111, .28), transparent 27%),
+        linear-gradient(135deg, #060816 0%, #111d3f 42%, #061b24 100%);
+      transform: translateZ(0);
     }
 
-    #effectTarget::before {
+    #vfxStage::before {
       content: "";
       position: absolute;
-      inset: -18%;
+      inset: -20%;
       background:
-        linear-gradient(rgba(255,255,255,0.16) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.16) 1px, transparent 1px),
-        repeating-linear-gradient(135deg, rgba(255,255,255,0.06) 0 2px, transparent 2px 20px);
-      background-size: 46px 46px, 46px 46px, 100% 100%;
-      opacity: 0.78;
-      transform: rotate(-7deg);
-      animation: fieldDrift 28s linear infinite;
+        linear-gradient(rgba(255,255,255,.075) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.075) 1px, transparent 1px),
+        repeating-linear-gradient(135deg, rgba(255,255,255,.055) 0 2px, transparent 2px 22px);
+      background-size: 48px 48px, 48px 48px, 100% 100%;
+      mask-image: radial-gradient(circle at 50% 50%, black 0%, transparent 76%);
+      animation: drift 28s linear infinite;
+      opacity: .9;
     }
 
-    #effectTarget::after {
+    #vfxStage::after {
       content: "";
       position: absolute;
       inset: 0;
       background:
-        radial-gradient(circle at 50% 48%, transparent 0 34%, rgba(255,255,255,0.12) 35% 36%, transparent 37% 100%),
-        linear-gradient(90deg, transparent, rgba(255,255,255,0.16), transparent),
-        radial-gradient(circle at 50% 10%, rgba(255,255,255,0.2), transparent 34%);
+        radial-gradient(circle at 50% 0%, rgba(255,255,255,.22), transparent 34%),
+        linear-gradient(to bottom, rgba(255,255,255,.08), transparent 40%, rgba(0,0,0,.22));
       mix-blend-mode: screen;
-      opacity: 0.72;
+    }
+
+    .contrast-card {
+      position: absolute;
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 34px;
+      background: linear-gradient(135deg, rgba(255,255,255,.16), rgba(255,255,255,.045));
+      box-shadow: inset 0 0 70px rgba(255,255,255,.04), 0 30px 110px rgba(0,0,0,.22);
+    }
+
+    .contrast-card.one { width: 38vw; height: 22vh; left: 7vw; top: 22vh; transform: rotate(-10deg); }
+    .contrast-card.two { width: 32vw; height: 28vh; right: 5vw; bottom: 12vh; transform: rotate(12deg); }
+    .contrast-card.three { width: 22vw; height: 18vh; left: 46vw; top: 8vh; transform: rotate(8deg); }
+
+    .bg-word {
+      position: absolute;
+      left: 4vw;
+      bottom: 9vh;
+      font-size: clamp(72px, 14vw, 210px);
+      line-height: .8;
+      font-weight: 900;
+      letter-spacing: -.09em;
+      color: rgba(255,255,255,.08);
+      text-shadow: 0 0 42px rgba(255,255,255,.13);
+      white-space: nowrap;
+    }
+
+    @keyframes drift {
+      from { transform: translate3d(0,0,0) rotate(0deg); }
+      to { transform: translate3d(-48px,-48px,0) rotate(1.5deg); }
+    }
+
+    #targetCanvas {
+      position: absolute;
+      inset: 0;
+      z-index: 4;
+      width: 100%;
+      height: 100%;
       pointer-events: none;
     }
 
-    .bg-card {
+    #fallbackPlayer {
       position: absolute;
-      border-radius: 30px;
-      background:
-        linear-gradient(145deg, rgba(255,255,255,0.2), rgba(255,255,255,0.04)),
-        rgba(255,255,255,0.08);
-      box-shadow:
-        inset 0 0 0 1px rgba(255,255,255,0.22),
-        0 28px 90px rgba(0,0,0,0.18);
-      overflow: hidden;
-    }
-
-    .bg-card::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background:
-        linear-gradient(115deg, transparent 0 36%, rgba(255,255,255,0.34) 37% 38%, transparent 39% 100%),
-        radial-gradient(circle at 22% 18%, rgba(112,255,226,0.24), transparent 36%);
-    }
-
-    .bg-card.a { left: 5vw; top: 14vh; width: 24vw; height: 26vh; min-width: 180px; }
-    .bg-card.b { right: 7vw; top: 11vh; width: 28vw; height: 20vh; min-width: 210px; }
-    .bg-card.c { left: 12vw; bottom: 9vh; width: 31vw; height: 22vh; min-width: 230px; }
-    .bg-card.d { right: 10vw; bottom: 13vh; width: 22vw; height: 28vh; min-width: 170px; }
-
-    @keyframes fieldDrift {
-      from { transform: translate3d(0, 0, 0) rotate(-7deg); }
-      to { transform: translate3d(-46px, -46px, 0) rotate(-5deg); }
-    }
-
-    #targetsLayer {
-      position: absolute;
-      inset: 0;
-      z-index: 8;
-      overflow: hidden;
-      pointer-events: none;
-    }
-
-    .target {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: var(--size, 58px);
-      height: var(--size, 58px);
-      transform: translate3d(-50%, -50%, 0) rotate(var(--rot, 0deg)) scale(var(--scale, 1));
-      opacity: 0.98;
-      will-change: left, top, transform, opacity;
-      filter: drop-shadow(0 18px 28px rgba(0, 0, 0, 0.32));
-    }
-
-    .target::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      border-radius: inherit;
-      background:
-        radial-gradient(circle at 32% 24%, rgba(255,255,255,1), rgba(255,255,255,0.28) 18%, transparent 31%),
-        radial-gradient(circle at 72% 78%, rgba(255,255,255,0.22), transparent 32%),
-        linear-gradient(145deg, rgba(255,255,255,0.92), rgba(208,255,246,0.58));
-      box-shadow:
-        inset 12px 15px 24px rgba(255,255,255,0.52),
-        inset -16px -20px 28px rgba(10, 61, 86, 0.28),
-        0 0 28px var(--good-glow),
-        0 0 58px rgba(119,255,225,0.24);
-      border: 1px solid rgba(255,255,255,0.7);
-    }
-
-    .target.sphere { border-radius: 999px; }
-    .target.cube { border-radius: 28%; }
-    .target.ring { border-radius: 999px; }
-
-    .target.ring::after {
-      content: "";
-      position: absolute;
-      inset: 29%;
-      border-radius: 999px;
-      background: rgba(7, 12, 28, 0.74);
-      box-shadow:
-        inset 0 0 16px rgba(255,255,255,0.42),
-        0 0 16px rgba(255,255,255,0.18);
-    }
-
-    .target.bad::before {
-      background:
-        radial-gradient(circle at 32% 24%, rgba(255,255,255,0.95), rgba(255,255,255,0.19) 18%, transparent 31%),
-        linear-gradient(145deg, rgba(255,160,185,0.95), rgba(255,40,92,0.78));
-      box-shadow:
-        inset 12px 15px 24px rgba(255,255,255,0.34),
-        inset -16px -20px 28px rgba(72, 0, 24, 0.34),
-        0 0 34px rgba(255,56,104,0.82),
-        0 0 70px rgba(255,56,104,0.3);
-      border-color: rgba(255,255,255,0.48);
-    }
-
-    .target.bad.ring::after { background: rgba(74, 0, 28, 0.72); }
-
-    .target.absorbing {
-      opacity: 0.9;
-      filter: drop-shadow(0 0 24px rgba(140,255,231,0.9));
-    }
-
-    .target.absorbing::before {
-      box-shadow:
-        inset 12px 15px 24px rgba(255,255,255,0.62),
-        inset -16px -20px 28px rgba(10, 61, 86, 0.22),
-        0 0 42px rgba(160,255,236,0.96),
-        0 0 86px rgba(119,255,225,0.44);
-    }
-
-    #playerFallback {
-      position: absolute;
-      z-index: 7;
+      z-index: 3;
       left: 50%;
       top: 50%;
-      width: 150px;
-      height: 150px;
-      margin: -75px 0 0 -75px;
+      width: 140px;
+      height: 140px;
       border-radius: 999px;
-      pointer-events: none;
+      transform: translate3d(-50%, -50%, 0);
       opacity: 0;
+      pointer-events: none;
       background:
-        radial-gradient(circle at 29% 21%, rgba(255,255,255,0.94), rgba(255,255,255,0.14) 20%, transparent 33%),
-        radial-gradient(circle at 70% 80%, rgba(255,255,255,0.18), transparent 40%),
-        linear-gradient(145deg, rgba(255,255,255,0.22), rgba(121,255,229,0.18));
-      box-shadow:
-        inset 18px 22px 40px rgba(255,255,255,0.28),
-        inset -22px -28px 48px rgba(0, 30, 50, 0.36),
-        0 0 84px rgba(105,255,224,0.3);
-      backdrop-filter: blur(8px) saturate(150%);
+        radial-gradient(circle at 30% 24%, rgba(255,255,255,.95), rgba(255,255,255,.12) 22%, transparent 36%),
+        radial-gradient(circle at 65% 72%, rgba(255,255,255,.22), transparent 44%),
+        radial-gradient(circle, rgba(145,255,238,.38), rgba(125,160,255,.13) 64%, rgba(255,255,255,.06));
+      box-shadow: inset 18px 22px 46px rgba(255,255,255,.26), inset -20px -24px 48px rgba(0,0,0,.24), 0 0 80px rgba(120,255,232,.26);
+      transition: opacity .18s ease;
     }
 
-    .no-vfx #playerFallback { opacity: 0.5; }
+    .no-vfx #fallbackPlayer { opacity: .65; }
 
-    .statusbar {
+    #hud {
       position: absolute;
-      z-index: 30;
       left: max(10px, env(safe-area-inset-left));
       right: max(10px, env(safe-area-inset-right));
       top: max(10px, env(safe-area-inset-top));
-      min-height: 46px;
+      z-index: 20;
       display: flex;
       align-items: center;
-      gap: 9px;
-      padding: 7px;
+      justify-content: space-between;
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .statusbar {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      flex-wrap: wrap;
+      max-width: calc(100vw - 126px);
+      padding: 6px;
       border: 1px solid var(--line);
       border-radius: 999px;
-      background: var(--glass);
-      color: #fff;
-      backdrop-filter: blur(18px) saturate(170%);
-      box-shadow: 0 18px 50px rgba(0,0,0,0.28);
-      pointer-events: auto;
+      background: var(--panel);
+      backdrop-filter: blur(18px) saturate(150%);
+      box-shadow: 0 14px 44px rgba(0,0,0,.24);
     }
 
-    .stat {
-      display: flex;
-      align-items: baseline;
-      gap: 5px;
-      white-space: nowrap;
-      padding: 0 7px;
-      font-size: 12px;
-      color: var(--muted);
-    }
-
-    .stat strong {
-      color: #fff;
-      font-size: 16px;
+    .chip {
+      min-width: 58px;
+      padding: 6px 9px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      color: rgba(247,251,255,.72);
+      font-size: 11px;
       line-height: 1;
-      letter-spacing: -0.03em;
+      letter-spacing: .01em;
+      white-space: nowrap;
+    }
+
+    .chip strong {
+      display: inline-block;
+      margin-left: 4px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 850;
+      letter-spacing: -.02em;
       font-variant-numeric: tabular-nums;
     }
 
     .progress {
-      flex: 1 1 auto;
-      min-width: 58px;
-      height: 9px;
+      width: clamp(86px, 16vw, 170px);
+      height: 8px;
       border-radius: 999px;
-      background: rgba(255,255,255,0.16);
+      background: rgba(255,255,255,.12);
       overflow: hidden;
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.08);
     }
 
     #progressFill {
-      height: 100%;
+      display: block;
       width: 0%;
+      height: 100%;
       border-radius: inherit;
-      background: linear-gradient(90deg, #ffffff, #7dffe7, #ffe079);
-      box-shadow: 0 0 18px rgba(125,255,231,0.85);
-      transition: width 130ms ease;
+      background: linear-gradient(90deg, var(--mint), #fff, var(--gold));
+      box-shadow: 0 0 22px rgba(143,255,234,.48);
+      transition: width .15s ease;
     }
 
-    .barButton {
-      border: 1px solid rgba(255,255,255,0.18);
-      border-radius: 999px;
-      padding: 8px 12px;
-      color: #06101a;
-      background: linear-gradient(135deg, #ffffff, #89ffe8);
-      font-weight: 800;
-      cursor: pointer;
-      white-space: nowrap;
+    .controls {
+      display: flex;
+      gap: 6px;
+      pointer-events: auto;
     }
 
-    .barButton.secondary {
-      color: #fff;
-      background: rgba(255,255,255,0.1);
-    }
-
-    #miniHelp {
-      position: absolute;
-      z-index: 31;
-      left: 50%;
-      bottom: max(14px, env(safe-area-inset-bottom));
-      transform: translateX(-50%);
-      max-width: min(640px, calc(100vw - 22px));
-      padding: 10px 13px;
+    .btn {
       border: 1px solid var(--line);
       border-radius: 999px;
-      background: rgba(7, 12, 28, 0.62);
-      backdrop-filter: blur(18px) saturate(170%);
-      color: rgba(255,255,255,0.82);
-      font-size: 13px;
-      line-height: 1.25;
-      text-align: center;
-      box-shadow: 0 18px 48px rgba(0,0,0,0.28);
-      pointer-events: none;
+      padding: 9px 11px;
+      color: var(--text);
+      background: var(--panel);
+      backdrop-filter: blur(18px) saturate(150%);
+      cursor: pointer;
+      box-shadow: 0 12px 36px rgba(0,0,0,.22);
+    }
+
+    .btn.primary {
+      color: #061018;
+      border-color: rgba(255,255,255,.7);
+      background: linear-gradient(135deg, #8fffea, #fff4a7);
+      font-weight: 850;
     }
 
     #toast {
       position: absolute;
-      z-index: 32;
-      left: 50%;
-      top: max(68px, calc(env(safe-area-inset-top) + 68px));
-      transform: translate(-50%, -8px);
-      opacity: 0;
-      min-width: 160px;
-      max-width: calc(100vw - 30px);
-      text-align: center;
-      padding: 10px 14px;
-      border-radius: 999px;
-      color: #06101a;
-      background: linear-gradient(135deg, #ffffff, #8dffe9, #ffe079);
-      font-weight: 800;
-      box-shadow: 0 18px 48px rgba(0,0,0,0.26);
-      transition: opacity 170ms ease, transform 170ms ease;
-      pointer-events: none;
-    }
-
-    #toast.show {
-      opacity: 1;
-      transform: translate(-50%, 0);
-    }
-
-    .pulse {
-      position: absolute;
       z-index: 22;
-      left: 0;
-      top: 0;
-      width: 28px;
-      height: 28px;
+      left: 50%;
+      bottom: max(16px, env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      max-width: min(520px, calc(100vw - 24px));
+      padding: 10px 14px;
+      border: 1px solid var(--line);
       border-radius: 999px;
-      border: 2px solid rgba(255,255,255,0.94);
-      transform: translate3d(-50%, -50%, 0) scale(0.25);
+      color: rgba(247,251,255,.86);
+      background: rgba(7,10,22,.48);
+      backdrop-filter: blur(18px) saturate(150%);
+      box-shadow: 0 12px 44px rgba(0,0,0,.22);
+      font-size: 13px;
+      text-align: center;
       pointer-events: none;
-      animation: pulse 520ms ease-out forwards;
-      box-shadow: 0 0 34px rgba(126,255,231,0.9);
+      opacity: 0;
+      transition: opacity .18s ease, transform .18s ease;
     }
 
-    @keyframes pulse {
-      to { opacity: 0; transform: translate3d(-50%, -50%, 0) scale(5.6); }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(-4px); }
+
+    #shaderStatus {
+      position: absolute;
+      z-index: 19;
+      left: max(10px, env(safe-area-inset-left));
+      bottom: max(10px, env(safe-area-inset-bottom));
+      max-width: min(420px, calc(100vw - 20px));
+      color: rgba(247,251,255,.56);
+      font-size: 11px;
+      pointer-events: none;
     }
 
-    .shake { animation: shake 260ms ease-out; }
-    @keyframes shake {
-      20% { transform: translate3d(-8px, 0, 0); }
-      45% { transform: translate3d(7px, 0, 0); }
-      70% { transform: translate3d(-4px, 0, 0); }
-    }
+    .no-vfx #shaderStatus { color: var(--gold); }
 
-    @media (max-width: 760px) {
-      .statusbar {
-        gap: 5px;
-        padding: 6px;
-      }
-      .stat {
-        font-size: 10px;
-        padding: 0 3px;
-        gap: 3px;
-      }
-      .stat strong { font-size: 14px; }
-      .stat.optional { display: none; }
-      .barButton { padding: 8px 9px; font-size: 12px; }
-      #miniHelp { font-size: 12px; border-radius: 18px; }
-      .bg-card.a { left: -6vw; width: 42vw; }
-      .bg-card.b { right: -8vw; width: 50vw; }
-      .bg-card.c { left: 4vw; width: 54vw; }
-      .bg-card.d { right: 0; width: 42vw; }
+    @media (max-width: 720px) {
+      #hud { align-items: flex-start; }
+      .statusbar { max-width: calc(100vw - 92px); border-radius: 20px; }
+      .chip { min-width: auto; padding: 6px 8px; }
+      .chip.hide-small { display: none; }
+      .controls { flex-direction: column; }
+      .btn { padding: 8px 10px; }
+      .progress { width: 92px; }
     }
 
     @media (max-height: 520px) {
-      #miniHelp { display: none; }
-      .statusbar { min-height: 40px; }
+      #toast { display: none; }
+      .chip.hide-landscape { display: none; }
+      .statusbar { max-width: calc(100vw - 154px); }
     }
   </style>
 </head>
 <body>
-  <div id="app">
-    <div id="effectTarget" aria-hidden="true">
-      <div class="bg-card a"></div>
-      <div class="bg-card b"></div>
-      <div class="bg-card c"></div>
-      <div class="bg-card d"></div>
-    </div>
+  <main id="game" aria-label="Liquid Absorb Pro">
+    <section id="vfxStage" aria-hidden="true">
+      <div class="contrast-card one"></div>
+      <div class="contrast-card two"></div>
+      <div class="contrast-card three"></div>
+      <div class="bg-word">LIQUID</div>
+    </section>
 
-    <div id="targetsLayer" aria-hidden="true"></div>
-    <div id="playerFallback" aria-hidden="true"></div>
+    <div id="fallbackPlayer" aria-hidden="true"></div>
+    <canvas id="targetCanvas" aria-hidden="true"></canvas>
 
-    <div class="statusbar" aria-label="Spel status">
-      <div class="stat">Score <strong id="score">0</strong></div>
-      <div class="stat">Lvl <strong id="level">1</strong></div>
-      <div class="stat optional">Vang <strong id="shape">Bol</strong></div>
-      <div class="stat">❤ <strong id="lives">3</strong></div>
-      <div class="stat optional"><strong id="progressText">0/10</strong></div>
-      <div class="progress" aria-hidden="true"><div id="progressFill"></div></div>
-      <button id="startBtn" class="barButton" type="button">Start</button>
-      <button id="resetBtn" class="barButton secondary" type="button">Reset</button>
-    </div>
+    <header id="hud">
+      <div class="statusbar">
+        <span class="chip">Score<strong id="score">0</strong></span>
+        <span class="chip">Level<strong id="level">1</strong></span>
+        <span class="chip hide-small">Vorm<strong id="shapeName">Bol</strong></span>
+        <span class="chip">Levens<strong id="lives">3</strong></span>
+        <span class="chip hide-landscape">Groei<strong id="size">76</strong></span>
+        <span class="progress" aria-hidden="true"><span id="progressFill"></span></span>
+      </div>
+      <nav class="controls">
+        <button id="pauseButton" class="btn" type="button">Pauze</button>
+        <button id="resetButton" class="btn primary" type="button">Reset</button>
+      </nav>
+    </header>
 
-    <div id="toast">Level 1: vang bollen</div>
-    <div id="miniHelp">Beweeg de liquid orb met je vinger of muis. Absorbeer de witte juiste vorm, ontwijk rood.</div>
-  </div>
+    <div id="toast" class="show">Vang de witte vorm. Ontwijk rood. Na 10 absorpties verandert je liquid vorm.</div>
+    <div id="shaderStatus">Liquid shader laden...</div>
+  </main>
 
   <script type="module">
-    const PARAMS = {
-      sphereR: 0.12,
-      bubbleCount: 8,
-      bubbleRadiusMin: 0.03,
-      bubbleRadiusMax: 0.07,
-      bubbleSpeed: 0.7,
-      mouseSmoothing: 0.05
-    };
+    const SHADER = "\n      precision highp float;\n\n      uniform sampler2D src;\n      uniform vec2 resolution;\n      uniform vec2 offset;\n      uniform float time;\n      uniform vec2 playerPx;\n      uniform float playerR;\n      uniform float distortion;\n      uniform int shapeIndex;\n      uniform float clickTime;\n      uniform int clickCount;\n      uniform float bubbleData[112];\n\n      out vec4 outColor;\n\n      const int MAX_ITEMS = 28;\n\n      float smin(float a, float b, float k) {\n        float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);\n        return mix(b, a, h) - k * h * (1.0 - h);\n      }\n\n      mat2 rot(float a) {\n        float c = cos(a);\n        float s = sin(a);\n        return mat2(c, -s, s, c);\n      }\n\n      float sdSphere(vec3 p, float r) {\n        return length(p) - r;\n      }\n\n      float sdBox(vec3 p, vec3 b, float r) {\n        vec3 q = abs(p) - b + r;\n        return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0) - r;\n      }\n\n      float sdTorus(vec3 p, vec2 t) {\n        vec2 q = vec2(length(p.xy) - t.x, p.z);\n        return length(q) - t.y;\n      }\n\n      float sdCapsule(vec3 p, vec3 a, vec3 b, float r) {\n        vec3 pa = p - a;\n        vec3 ba = b - a;\n        float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);\n        return length(pa - ba * h) - r;\n      }\n\n      float sdOctahedron(vec3 p, float s) {\n        p = abs(p);\n        return (p.x + p.y + p.z - s) * 0.57735027;\n      }\n\n      vec3 centerWorld() {\n        vec2 uv = playerPx / resolution;\n        float aspect = resolution.y / resolution.x;\n        return vec3((uv - 0.5) * vec2(1.0, aspect), 0.0);\n      }\n\n      float scene(vec3 p) {\n        vec3 c = centerWorld();\n        vec3 q = p - c;\n\n        float pulseAge = min(clickTime, 0.8);\n        float pulse = exp(-pulseAge * 5.5) * sin(pulseAge * 25.0) * 0.09;\n        float r = playerR * (1.0 + pulse);\n\n        q.xy *= rot(sin(time * 0.8) * 0.12);\n        q.xz *= rot(cos(time * 0.7) * 0.08);\n        q.z += sin(q.x * 34.0 + q.y * 12.0 + time * 3.2) * 0.006;\n\n        float d = sdSphere(q, r);\n\n        if (shapeIndex == 1) {\n          d = sdBox(q, vec3(r * 0.72), r * 0.23);\n        } else if (shapeIndex == 2) {\n          d = sdTorus(q, vec2(r * 0.78, r * 0.23));\n        } else if (shapeIndex == 3) {\n          d = sdCapsule(q, vec3(-r * 0.88, 0.0, 0.0), vec3(r * 0.88, 0.0, 0.0), r * 0.44);\n        } else if (shapeIndex == 4) {\n          d = sdOctahedron(q, r * 1.1);\n        }\n\n        for (int i = 0; i < MAX_ITEMS; i++) {\n          int k = i * 4;\n          float br = bubbleData[k + 3];\n          if (br > 0.0001) {\n            vec3 bp = vec3(bubbleData[k], bubbleData[k + 1], bubbleData[k + 2]);\n            float bd = sdSphere(p - bp, br);\n            d = smin(d, bd, max(0.012, br * 0.7));\n          }\n        }\n\n        return d;\n      }\n\n      vec3 calcNormal(vec3 p) {\n        vec2 e = vec2(0.0015, 0.0);\n        return normalize(vec3(\n          scene(p + e.xyy) - scene(p - e.xyy),\n          scene(p + e.yxy) - scene(p - e.yxy),\n          scene(p + e.yyx) - scene(p - e.yyx)\n        ));\n      }\n\n      vec4 readSrc(vec2 uv) {\n        vec2 safeUv = clamp(uv, vec2(0.001), vec2(0.999));\n        vec4 c = texture(src, safeUv);\n        vec4 base = vec4(0.03, 0.05, 0.10, 1.0);\n        return mix(base, c, c.a);\n      }\n\n      void main() {\n        vec2 uv = (gl_FragCoord.xy - offset) / resolution;\n        float aspect = resolution.y / resolution.x;\n        vec2 p2 = (uv - 0.5) * vec2(1.0, aspect);\n\n        vec3 ro = vec3(0.0, 0.0, -1.9);\n        vec3 rd = normalize(vec3(p2, 1.65));\n\n        float t = 0.0;\n        bool hit = false;\n        vec3 pos = vec3(0.0);\n\n        for (int i = 0; i < 56; i++) {\n          pos = ro + rd * t;\n          float d = scene(pos);\n          if (d < 0.0012) {\n            hit = true;\n            break;\n          }\n          t += d * 0.78;\n          if (t > 4.0) {\n            break;\n          }\n        }\n\n        if (!hit) {\n          outColor = readSrc(uv);\n          return;\n        }\n\n        vec3 n = calcNormal(pos);\n        float ndv = max(dot(n, -rd), 0.0);\n        float fres = pow(1.0 - ndv, 4.0);\n\n        vec2 wobble = vec2(\n          sin(uv.y * 80.0 + time * 2.4),\n          cos(uv.x * 70.0 - time * 2.1)\n        ) * 0.0015;\n\n        vec2 refractUv = uv - n.xy * distortion * (0.75 + fres * 1.8) + wobble;\n        vec3 col;\n        col.r = readSrc(refractUv + n.xy * distortion * 0.26).r;\n        col.g = readSrc(refractUv).g;\n        col.b = readSrc(refractUv - n.xy * distortion * 0.20).b;\n\n        vec3 lightA = normalize(vec3(-0.45, 0.7, -0.55));\n        vec3 lightB = normalize(vec3(0.7, -0.25, -0.25));\n        float specA = pow(max(dot(reflect(-lightA, n), -rd), 0.0), 160.0);\n        float specB = pow(max(dot(reflect(-lightB, n), -rd), 0.0), 48.0);\n\n        col = mix(col, vec3(1.0), 0.10 + fres * 0.28);\n        col += vec3(0.45, 0.98, 0.9) * fres * 0.28;\n        col += vec3(1.0) * specA * 1.8 + vec3(0.7, 0.9, 1.0) * specB * 0.45;\n        col = clamp(col, 0.0, 1.0);\n\n        outColor = vec4(col, 1.0);\n      }\n    ";
 
-    const postEffectShader = `
-      precision highp float;
-      uniform sampler2D src;
-      uniform vec2 resolution;
-      uniform vec2 offset;
-      uniform vec2 mouse;
-      uniform vec2 lag;
-      uniform float time;
-      uniform float clickTime;
-      uniform int clickCount;
-      uniform int forcedShape;
-      uniform float sphereScale;
-      out vec4 outColor;
-      const float SPHERE_R = ${PARAMS.sphereR.toFixed(4)};
+    const MAX_SHADER_BUBBLES = 28;
+    const TARGET_GOAL = 10;
 
-      const float DISP = 0.025;
-      const int   DISP_STEPS = 12;
-      const float DISP_LO = 0.0;
-      const float DISP_HI = 1.0;
+    const LEVELS = [
+      { name: "Bol", shaderShape: 0, targetShape: "circle" },
+      { name: "Donut", shaderShape: 2, targetShape: "donut" },
+      { name: "Cube", shaderShape: 1, targetShape: "cube" },
+      { name: "Capsule", shaderShape: 3, targetShape: "capsule" },
+      { name: "Diamant", shaderShape: 4, targetShape: "diamond" }
+    ];
 
-      const float SCATTER = 0.03;
+    const game = document.getElementById("game");
+    const vfxStage = document.getElementById("vfxStage");
+    const canvas = document.getElementById("targetCanvas");
+    const ctx = canvas.getContext("2d");
+    const fallbackPlayer = document.getElementById("fallbackPlayer");
 
-      const int N_BUBBLES = ${PARAMS.bubbleCount};
-      const float BUBBLE_SMOOTH = 0.025;
-      uniform float bubbleData[${PARAMS.bubbleCount * 4}];
-
-      const vec3 ABSORB = vec3(2.0, 1.2, 1.0) * 3.;
-      float smin(float a, float b, float k) {
-        float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);
-        return mix(b, a, h) - k * h * (1.0 - h);
-      }
-
-      vec2 hash22(vec2 p) {
-        vec3 p3 = fract(vec3(p.xyx) * vec3(0.1031, 0.1030, 0.0973));
-        p3 += dot(p3, p3.yzx + 33.33);
-        return fract((p3.xx + p3.yz) * p3.zy) * 2.0 - 1.0;
-      }
-
-      mat2 rot(float t) {
-        float c = cos(t), s = sin(t);
-        return mat2(c, -s, s, c);
-      }
-      float sdSphere(vec3 p, float r) {
-        return length(p) - r;
-      }
-
-      float sdBox(vec3 p, vec3 b, float r) {
-        vec3 q = abs(p) - b + r;
-        return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)),0.0) - r;
-      }
-
-      float sdRing(vec3 p, vec2 r) {
-        float s = length(p.xy) - r.x;
-        return length(vec2(s, p.z)) - r.y;
-      }
-
-      float map(vec3 p, vec3 c) {
-        vec3 q = p - c;
-        float tt = clickTime * 5.0;
-        float bounce = exp(-tt) * sin(tt) * 5. + (1. - exp(-tt));
-        float s = bounce * 0.5 + 0.5;
-        q /= s;
-
-        q.xz *= rot(exp(-clickTime*3.0) * 8.);
-
-        vec3 sp = q;
-        sp.y += sin(sp.z * 29. + time * 6.5) * 0.01;
-        sp.z += sin(sp.x * 23. + sp.y * 11. + time * 7.) * 0.01;
-        sp.xy *= rot(time*1.3);
-        sp.xz *= rot(time*1.1);
-        float d;
-        int objType = forcedShape;
-        float rr = SPHERE_R * sphereScale;
-        if (objType == 0) {
-          d = sdSphere(sp, rr);
-        } else if (objType == 1) {
-          d = sdBox(sp, vec3(rr*0.8), 0.01);
-        } else {
-          d = sdRing(sp, vec2(rr*1.1, 0.015 * sphereScale));
-        }
-        for (int i = 0; i < N_BUBBLES; i++) {
-          int b = i * 4;
-          vec3 bPos = vec3(bubbleData[b], bubbleData[b+1], bubbleData[b+2]);
-          float r = bubbleData[b+3];
-          d = smin(d, sdSphere(q - bPos, max(r, 0.001)), BUBBLE_SMOOTH);
-        }
-
-        return d * s;
-      }
-      vec3 calcNormal(vec3 p, vec3 c) {
-        vec2 e = vec2(0.001, 0.0);
-        return normalize(vec3(
-          map(p + e.xyy, c) - map(p - e.xyy, c),
-          map(p + e.yxy, c) - map(p - e.yxy, c),
-          map(p + e.yyx, c) - map(p - e.yyx, c)
-        ));
-      }
-
-      vec3 spectrum(float x) {
-        return clamp(vec3(
-          1.5 - abs(4.0 * x - 1.0),
-          1.5 - abs(4.0 * x - 2.0),
-          1.5 - abs(4.0 * x - 3.0)
-        ), 0.0, 1.0);
-      }
-      vec4 getSrc(vec2 uv) {
-        vec4 c = texture(src, uv);
-        return mix(vec4(1), c, c.a);
-      }
-
-      void main() {
-        vec2 uv = (gl_FragCoord.xy - offset) / resolution;
-        float aspect = resolution.y / resolution.x;
-
-        vec2 p = (uv - 0.5) * vec2(1.0, aspect);
-        vec2 mp = ((mouse + lag) / resolution - 0.5) * vec2(1.0, aspect);
-
-        vec3 ro = vec3(0.0, 0.0, -2.0);
-        float focal = 2.0;
-        vec3 rd = normalize(vec3(p, focal));
-        vec3 c = vec3(mp, 0.0);
-
-        vec3 firstN = vec3(0.0);
-        vec3 lastN = vec3(0.0);
-        int hitCount = 0;
-
-        float thickness = 0.0;
-        float tEntry = 0.0;
-        float t = 0.0;
-        bool inside = false;
-        for (int i = 0; i < 50; i++) {
-          if (t > 10.0) break;
-
-          vec3 pos = ro + rd * t;
-          float d = map(pos, c);
-          float step = inside ? -d : d;
-          if (step < 3e-4) {
-            vec3 n = calcNormal(pos, c);
-            if (hitCount == 0) firstN = n;
-            lastN = n;
-            if (!inside) {
-              tEntry = t;
-            } else {
-              thickness += t - tEntry;
-            }
-
-            hitCount++;
-            if (hitCount >= 4) { break; }
-            inside = !inside;
-            t += 0.01;
-          } else {
-            t += step;
-          }
-        }
-
-        if (hitCount > 0) {
-          vec2 baseDisp = -(firstN.xy + lastN.xy) * 0.5 * DISP;
-
-          float NdotR = max(dot(firstN, -rd), 0.0);
-          float scatter = pow((1.0 - NdotR), 2.0) * SCATTER;
-          vec3 acc = vec3(0.0);
-          vec3 wsum = vec3(0.0);
-          for (int i = 0; i < DISP_STEPS; i++) {
-            float wl = float(i) / float(DISP_STEPS - 1);
-            float k = mix(DISP_LO, DISP_HI, wl) * (1.3 + float(hitCount) * 0.2);
-            vec2 h = hash22(uv * 1000.0 + float(i) * 7.13 + time) * scatter;
-            vec3 w = spectrum(wl);
-            acc += getSrc(uv + baseDisp * k + h).rgb * w;
-            wsum += w;
-          }
-          vec3 col = acc / wsum * 0.99;
-          col -= float(hitCount) * 0.05;
-          col += 0.1;
-
-          float fres = pow(1.0 - NdotR, 5.0);
-          col *= 1. + fres;
-
-          float f2 = 1. - pow(NdotR, 3.0);
-          col *= mix(vec3(1), exp(-ABSORB * thickness), f2);
-          col *= 1. + f2;
-
-          vec3 ld = normalize(vec3(0.5, 0.9, -0.3));
-          float spec = pow(max(dot(reflect(-ld, firstN), -rd), 0.0), 200.0);
-          col += spec * 30.;
-          ld = normalize(vec3(-0.9, 0.4, -0.3));
-          spec = pow(max(dot(reflect(-ld, firstN), -rd), 0.0), 300.0);
-          col += spec * 3.;
-
-          ld = normalize(vec3(-0.1, -0.9, -0.1));
-          spec = pow(max(dot(reflect(-ld, firstN), -rd), 0.0), 30.0);
-          col += spec * 0.5;
-
-          col = min(col, 1.);
-          col = 1. - abs(col + fres * .5 - 1.);
-          outColor = vec4(col, 1.0);
-        } else {
-          outColor = getSrc(uv);
-        }
-      }
-    `;
-
-    const app = document.getElementById("app");
-    const effectTarget = document.getElementById("effectTarget");
-    const targetsLayer = document.getElementById("targetsLayer");
-    const playerFallback = document.getElementById("playerFallback");
-    const startBtn = document.getElementById("startBtn");
-    const resetBtn = document.getElementById("resetBtn");
-    const toast = document.getElementById("toast");
     const scoreEl = document.getElementById("score");
     const levelEl = document.getElementById("level");
     const livesEl = document.getElementById("lives");
-    const shapeEl = document.getElementById("shape");
-    const progressText = document.getElementById("progressText");
+    const shapeNameEl = document.getElementById("shapeName");
+    const sizeEl = document.getElementById("size");
     const progressFill = document.getElementById("progressFill");
+    const pauseButton = document.getElementById("pauseButton");
+    const resetButton = document.getElementById("resetButton");
+    const toast = document.getElementById("toast");
+    const shaderStatus = document.getElementById("shaderStatus");
 
-    const shapeSequence = [
-      { shader: 0, name: "Bol", className: "sphere", plural: "bollen" },
-      { shader: 2, name: "Donut", className: "ring", plural: "donuts" },
-      { shader: 1, name: "Cube", className: "cube", plural: "cubes" }
-    ];
+    const player = {
+      x: window.innerWidth / 2,
+      y: window.innerHeight * 0.72,
+      tx: window.innerWidth / 2,
+      ty: window.innerHeight * 0.72,
+      r: 76
+    };
 
     const state = {
-      running: false,
+      running: true,
       score: 0,
       lives: 3,
       level: 0,
       absorbed: 0,
-      targetAbsorb: 10,
-      growth: 1,
-      lastPulseTime: performance.now() / 1000,
+      combo: 1,
+      spawnTimer: 0,
+      lastPulse: performance.now() / 1000,
       clickCount: 0,
       hasPointer: false,
-      toastTimer: 0
+      gameOver: false,
+      shaderReady: false
     };
 
-    const player = {
-      x: window.innerWidth / 2,
-      y: window.innerHeight * 0.72
-    };
-
-    const p0 = { x: player.x, y: window.innerHeight - player.y };
-    const p1 = { x: p0.x, y: p0.y };
-    const p2 = { x: p0.x, y: p0.y };
-    let centerBlend = 0;
-
-    const objects = [];
-    const shaderBubbles = new Float32Array(PARAMS.bubbleCount * 4);
-    const t0 = performance.now() / 1000;
+    const targets = [];
+    const bubbleUniform = new Float32Array(MAX_SHADER_BUBBLES * 4);
     let lastFrame = performance.now();
+    let toastTimer = 4.5;
 
-    const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
-    const rand = (min, max) => min + Math.random() * (max - min);
-    const dist = (ax, ay, bx, by) => Math.hypot(ax - bx, ay - by);
-    const fract = (x) => x - Math.floor(x);
-
-    function currentShape() {
-      return shapeSequence[state.level % shapeSequence.length];
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
     }
 
-    function otherShape() {
-      const active = currentShape();
-      const options = shapeSequence.filter((shape) => shape.shader !== active.shader);
-      return options[Math.floor(Math.random() * options.length)];
+    function rand(min, max) {
+      return min + Math.random() * (max - min);
     }
 
-    function setPointer(clientX, clientY) {
-      player.x = clamp(clientX, 0, window.innerWidth);
-      player.y = clamp(clientY, 0, window.innerHeight);
-      p0.x = player.x;
-      p0.y = window.innerHeight - player.y;
-      state.hasPointer = true;
-      centerBlend = 0;
+    function choose(array) {
+      return array[Math.floor(Math.random() * array.length)];
     }
 
-    function showToast(text) {
-      toast.textContent = text;
+    function distance(ax, ay, bx, by) {
+      return Math.hypot(ax - bx, ay - by);
+    }
+
+    function currentLevel() {
+      return LEVELS[state.level % LEVELS.length];
+    }
+
+    function showToast(message, seconds = 2.4) {
+      toast.textContent = message;
       toast.classList.add("show");
-      state.toastTimer = 1.5;
+      toastTimer = seconds;
     }
 
-    function makeObject() {
-      const el = document.createElement("div");
-      targetsLayer.appendChild(el);
-      const obj = {
-        el,
-        x: 0,
-        y: 0,
-        vx: 0,
-        vy: 0,
-        size: 58,
-        shape: currentShape(),
-        bad: false,
-        rot: 0,
-        spin: 0,
-        justSpawned: true
-      };
-      objects.push(obj);
-      resetObject(obj, true);
+    function resizeCanvas() {
+      const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+      canvas.width = Math.round(window.innerWidth * dpr);
+      canvas.height = Math.round(window.innerHeight * dpr);
+      canvas.style.width = `${window.innerWidth}px`;
+      canvas.style.height = `${window.innerHeight}px`;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      player.tx = clamp(player.tx, 0, window.innerWidth);
+      player.ty = clamp(player.ty, 0, window.innerHeight);
+      player.x = clamp(player.x, 0, window.innerWidth);
+      player.y = clamp(player.y, 0, window.innerHeight);
     }
 
-    function resetObject(obj, first = false) {
-      const active = currentShape();
-      const bad = Math.random() < 0.34;
-      obj.bad = bad;
-      obj.shape = bad ? otherShape() : active;
-      obj.size = rand(46, 70) * clamp(1 - state.level * 0.018, 0.82, 1.0);
-      obj.x = rand(obj.size * 0.7, Math.max(obj.size, window.innerWidth - obj.size * 0.7));
-      obj.y = first ? rand(-window.innerHeight * 0.9, -80) : rand(-260, -70);
-      obj.vx = rand(-14, 14);
-      obj.vy = rand(86, 132) + state.level * 11;
-      obj.rot = rand(-25, 25);
-      obj.spin = rand(-38, 38);
-      obj.justSpawned = true;
-      obj.el.className = `target ${obj.shape.className}${bad ? " bad" : ""}`;
-      obj.el.style.setProperty("--size", `${obj.size}px`);
-      obj.el.style.setProperty("--scale", "1");
-      obj.el.style.opacity = "0.98";
+    function targetCount() {
+      return clamp(7 + state.level * 2, 7, 15);
     }
 
-    function ensureObjects() {
-      const wanted = clamp(8 + Math.floor(state.level / 2), 8, 13);
-      while (objects.length < wanted) makeObject();
-      while (objects.length > wanted) {
-        const obj = objects.pop();
-        obj.el.remove();
+    function spawnTarget(forceCorrect = false) {
+      const level = currentLevel();
+      const correctRoll = forceCorrect || Math.random() > clamp(0.38 + state.level * 0.03, 0.38, 0.58);
+      const shapePool = LEVELS.map((item) => item.targetShape);
+      let shape = level.targetShape;
+      let kind = "good";
+
+      if (!correctRoll) {
+        kind = "bad";
+        const wrongShapes = shapePool.filter((item) => item !== level.targetShape);
+        shape = choose(wrongShapes);
       }
-    }
 
-    function pulse(x, y, color = "rgba(126,255,231,0.95)") {
-      const el = document.createElement("div");
-      el.className = "pulse";
-      el.style.left = `${x}px`;
-      el.style.top = `${y}px`;
-      el.style.borderColor = color;
-      el.style.boxShadow = `0 0 34px ${color}`;
-      app.appendChild(el);
-      el.addEventListener("animationend", () => el.remove());
-    }
-
-    function absorb(obj) {
-      state.score += 100 + state.level * 25;
-      state.absorbed += 1;
-      state.growth = 1 + state.absorbed * 0.042;
-      state.lastPulseTime = performance.now() / 1000;
-      state.clickCount += 1;
-      pulse(player.x, player.y);
-      resetObject(obj, false);
-
-      if (state.absorbed >= state.targetAbsorb) {
-        state.level += 1;
-        state.absorbed = 0;
-        state.growth = 1;
-        state.lastPulseTime = performance.now() / 1000;
-        state.clickCount += 1;
-        showToast(`Level ${state.level + 1}: vang ${currentShape().plural}`);
-        pulse(player.x, player.y, "rgba(255,224,121,0.98)");
-        ensureObjects();
-        for (const item of objects) resetObject(item, true);
-      }
-    }
-
-    function damage(obj) {
-      state.lives -= 1;
-      state.absorbed = clamp(state.absorbed - 3, 0, state.targetAbsorb);
-      state.growth = 1 + state.absorbed * 0.042;
-      state.lastPulseTime = performance.now() / 1000;
-      state.clickCount += 1;
-      pulse(obj.x, obj.y, "rgba(255,56,104,0.95)");
-      app.classList.remove("shake");
-      void app.offsetWidth;
-      app.classList.add("shake");
-      resetObject(obj, false);
-      if (state.lives <= 0) {
-        state.running = false;
-        startBtn.textContent = "Opnieuw";
-        showToast(`Game over: ${state.score}`);
-      }
+      const size = rand(34, 54) + Math.min(state.level * 3, 14);
+      const speed = rand(78, 124) + state.level * 14;
+      targets.push({
+        x: rand(60, Math.max(61, window.innerWidth - 60)),
+        y: -size - rand(0, 160),
+        vx: rand(-18, 18),
+        vy: speed,
+        size,
+        shape,
+        kind,
+        active: true,
+        spin: rand(-1.8, 1.8),
+        angle: rand(0, Math.PI * 2),
+        age: 0,
+        absorbed: false,
+        alpha: 1,
+        pulse: rand(0, Math.PI * 2)
+      });
     }
 
     function resetGame() {
       state.running = true;
+      state.gameOver = false;
       state.score = 0;
       state.lives = 3;
       state.level = 0;
       state.absorbed = 0;
-      state.growth = 1;
-      state.lastPulseTime = performance.now() / 1000;
+      state.combo = 1;
+      state.spawnTimer = 0;
       state.clickCount += 1;
-      startBtn.textContent = "Pauze";
-      ensureObjects();
-      for (const obj of objects) resetObject(obj, true);
-      showToast("Level 1: vang bollen");
+      state.lastPulse = performance.now() / 1000;
+      player.r = 76;
+      targets.length = 0;
+      for (let i = 0; i < 8; i++) spawnTarget(i < 5);
+      pauseButton.textContent = "Pauze";
+      showToast("Vang de witte bol. Ontwijk rood. Groei naar level 2.", 3.2);
       updateHud();
     }
 
-    function toggleStart() {
-      if (state.lives <= 0 || state.score === 0 && !state.running && state.absorbed === 0) {
-        resetGame();
-        return;
+    function pulse() {
+      state.clickCount += 1;
+      state.lastPulse = performance.now() / 1000;
+    }
+
+    function absorbTarget(target) {
+      if (!target.active) return;
+      target.active = false;
+      pulse();
+      state.absorbed += 1;
+      state.score += 100 + state.level * 25 + state.combo * 12;
+      state.combo = clamp(state.combo + 1, 1, 8);
+      player.r = clamp(player.r + 4.8, 54, 138);
+      makeBurst(target.x, target.y, "good");
+
+      if (state.absorbed >= TARGET_GOAL) {
+        state.level += 1;
+        state.absorbed = 0;
+        state.combo = 1;
+        player.r = clamp(74 + state.level * 7, 74, 132);
+        pulse();
+        showToast(`Level ${state.level + 1}: vang nu ${currentLevel().name.toLowerCase()} vormen.`, 2.8);
+        for (let i = 0; i < 3; i++) spawnTarget(true);
       }
-      state.running = !state.running;
-      startBtn.textContent = state.running ? "Pauze" : "Start";
-      showToast(state.running ? "Verder" : "Pauze");
+    }
+
+    function damageTarget(target) {
+      if (!target.active) return;
+      target.active = false;
+      pulse();
+      state.lives -= 1;
+      state.combo = 1;
+      player.r = clamp(player.r - 20, 44, 138);
+      makeBurst(target.x, target.y, "bad");
+      game.animate([
+        { transform: "translate3d(0,0,0)" },
+        { transform: "translate3d(-9px,0,0)" },
+        { transform: "translate3d(8px,0,0)" },
+        { transform: "translate3d(0,0,0)" }
+      ], { duration: 220, easing: "ease-out" });
+      if (state.lives <= 0) endGame();
+    }
+
+    function endGame() {
+      state.running = false;
+      state.gameOver = true;
+      pauseButton.textContent = "Verder";
+      showToast(`Game over. Score ${Math.round(state.score)}. Druk Reset voor een nieuwe ronde.`, 999);
+    }
+
+    function makeBurst(x, y, kind) {
+      const color = kind === "bad" ? "rgba(255,71,120,.95)" : "rgba(255,255,255,.95)";
+      const count = kind === "bad" ? 18 : 14;
+      for (let i = 0; i < count; i++) {
+        const dot = document.createElement("i");
+        const angle = (i / count) * Math.PI * 2 + rand(-0.16, 0.16);
+        const dist = rand(26, kind === "bad" ? 86 : 70);
+        dot.style.cssText = `
+          position:absolute;z-index:18;left:${x}px;top:${y}px;width:7px;height:7px;border-radius:999px;
+          pointer-events:none;background:${color};box-shadow:0 0 18px ${color};transform:translate(-50%,-50%);`;
+        game.appendChild(dot);
+        dot.animate([
+          { transform: "translate(-50%,-50%) scale(1)", opacity: 1 },
+          { transform: `translate(calc(-50% + ${Math.cos(angle) * dist}px), calc(-50% + ${Math.sin(angle) * dist}px)) scale(.15)`, opacity: 0 }
+        ], { duration: 520, easing: "cubic-bezier(.1,.7,.2,1)" }).finished.finally(() => dot.remove());
+      }
     }
 
     function updateHud() {
-      const shape = currentShape();
-      scoreEl.textContent = String(state.score);
+      const level = currentLevel();
+      scoreEl.textContent = Math.round(state.score).toString();
       levelEl.textContent = String(state.level + 1);
       livesEl.textContent = String(state.lives);
-      shapeEl.textContent = shape.name;
-      progressText.textContent = `${state.absorbed}/${state.targetAbsorb}`;
-      progressFill.style.width = `${(state.absorbed / state.targetAbsorb) * 100}%`;
+      shapeNameEl.textContent = level.name;
+      sizeEl.textContent = String(Math.round(player.r));
+      progressFill.style.width = `${(state.absorbed / TARGET_GOAL) * 100}%`;
     }
 
-    function updateShaderBubbles(time) {
-      const visible = clamp(3 + state.absorbed, 3, PARAMS.bubbleCount);
-      for (let i = 0; i < PARAMS.bubbleCount; i++) {
-        const life = fract(time * PARAMS.bubbleSpeed + i / PARAMS.bubbleCount);
-        const orbitR = PARAMS.sphereR * (0.30 + life * 0.82) * state.growth;
-        const angle = time * (0.8 + fract(i * 0.618) * 0.7) + i * 1.256;
-        const swing = Math.sin(time * 2.1 + i * 1.8) * 0.018;
-        const j = i * 4;
-        shaderBubbles[j] = Math.cos(angle) * orbitR + swing;
-        shaderBubbles[j + 1] = Math.sin(angle * 1.21) * orbitR * 0.55 + life * 0.09;
-        shaderBubbles[j + 2] = Math.sin(angle) * orbitR;
-        const range = PARAMS.bubbleRadiusMax - PARAMS.bubbleRadiusMin;
-        const maxR = PARAMS.bubbleRadiusMin + range * fract(i * 0.618);
-        shaderBubbles[j + 3] = i < visible ? maxR * Math.sin(life * Math.PI) * (0.92 + state.absorbed * 0.018) : 0;
+    function handlePointer(clientX, clientY) {
+      const rect = game.getBoundingClientRect();
+      player.tx = clamp(clientX - rect.left, 0, rect.width);
+      player.ty = clamp(clientY - rect.top, 0, rect.height);
+      state.hasPointer = true;
+    }
+
+    game.addEventListener("pointermove", (event) => handlePointer(event.clientX, event.clientY), { passive: true });
+    game.addEventListener("pointerdown", (event) => {
+      if (event.target.closest("button")) return;
+      handlePointer(event.clientX, event.clientY);
+      pulse();
+      if (state.gameOver) resetGame();
+    });
+
+    pauseButton.addEventListener("click", () => {
+      if (state.gameOver) { resetGame(); return; }
+      state.running = !state.running;
+      pauseButton.textContent = state.running ? "Pauze" : "Verder";
+      showToast(state.running ? "Verder." : "Gepauzeerd.", 1.2);
+    });
+
+    resetButton.addEventListener("click", resetGame);
+
+    window.addEventListener("keydown", (event) => {
+      if (event.code === "Space") {
+        event.preventDefault();
+        pauseButton.click();
       }
-    }
+      if (event.key.toLowerCase() === "r") resetGame();
+    });
 
-    function updateObjects(dt, time) {
-      const playerRadius = Math.max(54, Math.min(window.innerWidth, window.innerHeight) * 0.14 * state.growth);
-      const active = currentShape();
+    function updateTargets(dt, now) {
+      if (!state.running) return;
 
-      for (const obj of objects) {
-        let speedFactor = state.running ? 1 : 0.28;
+      state.spawnTimer -= dt;
+      if (state.spawnTimer <= 0) {
+        if (targets.filter((target) => target.active).length < targetCount()) spawnTarget(false);
+        state.spawnTimer = clamp(0.55 - state.level * 0.035, 0.27, 0.55);
+      }
 
-        if (state.running) {
-          const d = dist(obj.x, obj.y, player.x, player.y);
-          const magnetRadius = playerRadius * 2.45;
-          if (!obj.bad && obj.shape.shader === active.shader && d < magnetRadius) {
-            const pull = clamp(1 - d / magnetRadius, 0, 1);
-            obj.vx += (player.x - obj.x) * pull * 7.0 * dt;
-            obj.vy += (player.y - obj.y) * pull * 7.0 * dt;
-            obj.el.classList.add("absorbing");
-            obj.el.style.setProperty("--scale", `${1 - pull * 0.18}`);
-          } else {
-            obj.el.classList.remove("absorbing");
-            obj.el.style.setProperty("--scale", "1");
-          }
+      const level = currentLevel();
+      const magnetRange = player.r * 2.6;
+      const hitBase = player.r * 0.62;
 
-          if (d < playerRadius * 0.78 + obj.size * 0.48) {
-            if (!obj.bad && obj.shape.shader === active.shader) absorb(obj);
-            else damage(obj);
-            continue;
-          }
+      for (const target of targets) {
+        if (!target.active) continue;
+        target.age += dt;
+        target.angle += target.spin * dt;
+
+        const dx = player.x - target.x;
+        const dy = player.y - target.y;
+        const d = Math.hypot(dx, dy) || 1;
+        const isCorrect = target.kind === "good" && target.shape === level.targetShape;
+
+        if (isCorrect && d < magnetRange) {
+          const pull = (1 - d / magnetRange) * (340 + state.level * 30);
+          target.vx += (dx / d) * pull * dt;
+          target.vy += (dy / d) * pull * dt;
         }
 
-        obj.x += obj.vx * dt * speedFactor + Math.sin(time * 1.3 + obj.size) * 5 * dt;
-        obj.y += obj.vy * dt * speedFactor;
-        obj.rot += obj.spin * dt * speedFactor;
+        target.x += target.vx * dt;
+        target.y += target.vy * dt;
+        target.vx += Math.sin(now * 0.0017 + target.pulse) * 2.3 * dt;
+        target.vx *= 0.996;
+        target.vy = clamp(target.vy, 54, 330 + state.level * 18);
 
-        if (obj.y > window.innerHeight + 120 || obj.x < -130 || obj.x > window.innerWidth + 130) {
-          resetObject(obj, false);
+        if (d < hitBase + target.size * 0.52) {
+          if (isCorrect) absorbTarget(target);
+          else damageTarget(target);
         }
 
-        obj.el.style.left = `${obj.x}px`;
-        obj.el.style.top = `${obj.y}px`;
-        obj.el.style.setProperty("--rot", `${obj.rot}deg`);
+        if (target.y > window.innerHeight + 110 || target.x < -130 || target.x > window.innerWidth + 130) {
+          target.active = false;
+        }
+      }
+
+      for (let i = targets.length - 1; i >= 0; i--) {
+        if (!targets[i].active) targets.splice(i, 1);
       }
     }
 
-    function updateFallbackOrb() {
-      const size = Math.max(120, Math.min(window.innerWidth, window.innerHeight) * 0.28 * state.growth);
-      playerFallback.style.width = `${size}px`;
-      playerFallback.style.height = `${size}px`;
-      playerFallback.style.marginLeft = `${-size / 2}px`;
-      playerFallback.style.marginTop = `${-size / 2}px`;
-      playerFallback.style.left = `${player.x}px`;
-      playerFallback.style.top = `${player.y}px`;
+    function drawRoundedRect(ctx, x, y, w, h, r) {
+      const rr = Math.min(r, w / 2, h / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + rr, y);
+      ctx.arcTo(x + w, y, x + w, y + h, rr);
+      ctx.arcTo(x + w, y + h, x, y + h, rr);
+      ctx.arcTo(x, y + h, x, y, rr);
+      ctx.arcTo(x, y, x + w, y, rr);
+      ctx.closePath();
     }
 
-    function frame(nowMs) {
-      const dt = Math.min(0.04, (nowMs - lastFrame) / 1000);
-      lastFrame = nowMs;
-      const time = performance.now() / 1000 - t0;
+    function drawShapePath(shape, s) {
+      const r = s / 2;
+      ctx.beginPath();
+      if (shape === "circle") {
+        ctx.arc(0, 0, r, 0, Math.PI * 2);
+      } else if (shape === "donut") {
+        ctx.arc(0, 0, r, 0, Math.PI * 2);
+        ctx.moveTo(r * .45, 0);
+        ctx.arc(0, 0, r * .45, 0, Math.PI * 2, true);
+      } else if (shape === "cube") {
+        drawRoundedRect(ctx, -r, -r, s, s, s * .18);
+      } else if (shape === "capsule") {
+        drawRoundedRect(ctx, -s * .72, -s * .31, s * 1.44, s * .62, s * .31);
+      } else if (shape === "diamond") {
+        ctx.moveTo(0, -r);
+        ctx.lineTo(r, 0);
+        ctx.lineTo(0, r);
+        ctx.lineTo(-r, 0);
+        ctx.closePath();
+      }
+    }
 
-      if (!state.hasPointer) {
-        const cx = window.innerWidth / 2 + Math.cos(time * 0.34) * window.innerWidth * 0.16;
-        const cy = window.innerHeight * 0.66 + Math.sin(time * 0.42) * window.innerHeight * 0.08;
-        player.x = cx;
-        player.y = cy;
-        p0.x = cx;
-        p0.y = window.innerHeight - cy;
+    function drawTarget(target, now) {
+      const level = currentLevel();
+      const isCorrect = target.kind === "good" && target.shape === level.targetShape;
+      const s = target.size * (1 + Math.sin(now * 0.005 + target.pulse) * 0.045);
+      ctx.save();
+      ctx.translate(target.x, target.y);
+      ctx.rotate(target.angle);
+      ctx.globalAlpha = target.alpha;
+
+      ctx.shadowBlur = isCorrect ? 28 : 22;
+      ctx.shadowColor = isCorrect ? "rgba(255,255,255,.75)" : "rgba(255,71,120,.75)";
+      drawShapePath(target.shape, s);
+      ctx.fillStyle = isCorrect ? "rgba(255,255,255,.16)" : "rgba(255,71,120,.22)";
+      ctx.fill(target.shape === "donut" ? "evenodd" : "nonzero");
+
+      drawShapePath(target.shape, s);
+      ctx.lineWidth = isCorrect ? 2.7 : 2.4;
+      ctx.strokeStyle = isCorrect ? "rgba(255,255,255,.92)" : "rgba(255,71,120,.95)";
+      ctx.stroke();
+
+      if (isCorrect) {
+        ctx.rotate(-target.angle);
+        ctx.beginPath();
+        ctx.arc(-s * .18, -s * .22, Math.max(3, s * .11), 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(255,255,255,.92)";
+        ctx.shadowBlur = 18;
+        ctx.shadowColor = "rgba(255,255,255,.95)";
+        ctx.fill();
+      } else {
+        ctx.rotate(-target.angle);
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = "rgba(255,255,255,.82)";
+        ctx.beginPath();
+        ctx.moveTo(-s * .18, -s * .18);
+        ctx.lineTo(s * .18, s * .18);
+        ctx.moveTo(s * .18, -s * .18);
+        ctx.lineTo(-s * .18, s * .18);
+        ctx.stroke();
       }
 
-      p1.x += (p0.x - p1.x) * PARAMS.mouseSmoothing;
-      p1.y += (p0.y - p1.y) * PARAMS.mouseSmoothing;
-      p2.x += (p1.x - p2.x) * PARAMS.mouseSmoothing;
-      p2.y += (p1.y - p2.y) * PARAMS.mouseSmoothing;
+      ctx.restore();
+    }
 
-      updateObjects(dt, time);
-      updateShaderBubbles(time);
-      updateFallbackOrb();
+    function renderTargets(now) {
+      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      for (const target of targets) drawTarget(target, now);
+    }
+
+    function updateBubbleUniforms(now) {
+      const w = Math.max(1, window.innerWidth);
+      const h = Math.max(1, window.innerHeight);
+      const aspect = h / w;
+      let j = 0;
+      const level = currentLevel();
+
+      for (const target of targets) {
+        if (j >= MAX_SHADER_BUBBLES) break;
+        const isCorrect = target.active && target.kind === "good" && target.shape === level.targetShape;
+        if (!isCorrect) continue;
+        const k = j * 4;
+        bubbleUniform[k] = target.x / w - 0.5;
+        bubbleUniform[k + 1] = ((h - target.y) / h - 0.5) * aspect;
+        bubbleUniform[k + 2] = Math.sin(now * 0.0014 + target.pulse) * 0.026;
+        bubbleUniform[k + 3] = (target.size * 0.52) / w;
+        j++;
+      }
+
+      for (; j < MAX_SHADER_BUBBLES; j++) {
+        const k = j * 4;
+        bubbleUniform[k] = 0;
+        bubbleUniform[k + 1] = 0;
+        bubbleUniform[k + 2] = 0;
+        bubbleUniform[k + 3] = 0;
+      }
+    }
+
+    function update(dt, now) {
+      if (!state.hasPointer && state.running) {
+        player.tx = window.innerWidth / 2 + Math.sin(now * 0.00035) * window.innerWidth * 0.16;
+        player.ty = window.innerHeight * 0.72 + Math.cos(now * 0.00046) * window.innerHeight * 0.06;
+      }
+
+      const smoothing = state.hasPointer ? 0.21 : 0.035;
+      player.x += (player.tx - player.x) * smoothing;
+      player.y += (player.ty - player.y) * smoothing;
+
+      if (toastTimer > 0) {
+        toastTimer -= dt;
+        if (toastTimer <= 0 && !state.gameOver) toast.classList.remove("show");
+      }
+
+      updateTargets(dt, now);
+      updateBubbleUniforms(now);
       updateHud();
+    }
 
-      if (state.toastTimer > 0) {
-        state.toastTimer -= dt;
-        if (state.toastTimer <= 0) toast.classList.remove("show");
-      }
+    function render(now) {
+      fallbackPlayer.style.left = `${player.x}px`;
+      fallbackPlayer.style.top = `${player.y}px`;
+      fallbackPlayer.style.width = `${player.r * 2}px`;
+      fallbackPlayer.style.height = `${player.r * 2}px`;
+      renderTargets(now);
+    }
 
+    function frame(now) {
+      const dt = Math.min(0.04, (now - lastFrame) / 1000);
+      lastFrame = now;
+      update(dt, now);
+      render(now);
       requestAnimationFrame(frame);
+    }
+
+    function lockVfxCanvasLayer() {
+      for (const item of document.querySelectorAll("canvas")) {
+        if (item === canvas) continue;
+        item.style.pointerEvents = "none";
+        item.style.zIndex = "2";
+      }
     }
 
     async function setupVfx() {
@@ -945,58 +786,40 @@
         const { VFX } = await import("https://esm.sh/@vfx-js/core@0.11.1");
         const vfx = new VFX({
           postEffect: {
-            shader: postEffectShader,
+            shader: SHADER,
             uniforms: {
-              lag: () => {
-                const lx = (p1.x - p0.x) * devicePixelRatio;
-                const ly = (p1.y - p0.y) * devicePixelRatio;
-                const cx = window.innerWidth / 2 * devicePixelRatio * centerBlend;
-                const cy = window.innerHeight / 2 * devicePixelRatio * centerBlend;
-                return [cx + lx, cy + ly];
-              },
-              clickTime: () => performance.now() / 1000 - state.lastPulseTime,
+              playerPx: () => [
+                player.x * window.devicePixelRatio,
+                (window.innerHeight - player.y) * window.devicePixelRatio
+              ],
+              playerR: () => player.r / Math.max(1, window.innerWidth),
+              distortion: () => 0.068,
+              shapeIndex: () => currentLevel().shaderShape,
+              clickTime: () => performance.now() / 1000 - state.lastPulse,
               clickCount: () => state.clickCount,
-              forcedShape: () => currentShape().shader,
-              sphereScale: () => state.growth,
-              bubbleData: () => shaderBubbles
+              bubbleData: () => bubbleUniform
             }
           }
         });
-        await vfx.addHTML(effectTarget, { shader: "none" });
+
+        await vfx.addHTML(vfxStage, { shader: "none" });
         vfx.play();
+        state.shaderReady = true;
+        shaderStatus.textContent = "Liquid shader actief. Doelen worden apart getekend zodat ze zichtbaar blijven.";
+        lockVfxCanvasLayer();
+        setTimeout(lockVfxCanvasLayer, 250);
+        setTimeout(lockVfxCanvasLayer, 1000);
       } catch (error) {
         console.warn("VFX JS kon niet laden", error);
-        app.classList.add("no-vfx");
-        showToast("VFX niet geladen");
+        game.classList.add("no-vfx");
+        shaderStatus.textContent = "Shader kon niet laden. Game draait met fallback speler.";
       }
     }
 
-    window.addEventListener("pointermove", (event) => setPointer(event.clientX, event.clientY));
-    window.addEventListener("pointerdown", (event) => {
-      if (event.target.closest("button")) return;
-      setPointer(event.clientX, event.clientY);
-      state.lastPulseTime = performance.now() / 1000;
-      state.clickCount += 1;
-    });
+    window.addEventListener("resize", resizeCanvas);
 
-    window.addEventListener("keydown", (event) => {
-      if (event.code === "Space") {
-        event.preventDefault();
-        toggleStart();
-      }
-      if (event.key.toLowerCase() === "r") resetGame();
-    });
-
-    window.addEventListener("resize", () => {
-      setPointer(clamp(player.x, 0, window.innerWidth), clamp(player.y, 0, window.innerHeight));
-    });
-
-    startBtn.addEventListener("click", toggleStart);
-    resetBtn.addEventListener("click", resetGame);
-
-    ensureObjects();
-    showToast("Start: vang bollen");
-    updateHud();
+    resizeCanvas();
+    resetGame();
     setupVfx();
     requestAnimationFrame(frame);
   </script>
