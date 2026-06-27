@@ -2,26 +2,22 @@
 <html lang="nl">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Liquid Absorb v6</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Liquid Absorb v7</title>
   <style>
     :root {
-      --text: #f7fbff;
-      --muted: rgba(247, 251, 255, 0.72);
-      --panel: rgba(12, 16, 31, 0.56);
+      --ink: #f8fbff;
+      --muted: rgba(248, 251, 255, 0.76);
+      --glass: rgba(7, 12, 28, 0.62);
       --line: rgba(255, 255, 255, 0.18);
-      --good: #f6fffb;
-      --good-glow: rgba(106, 255, 220, 0.82);
-      --danger: #ff3e6f;
-      --gold: #ffe16b;
-      --bg0: #060814;
-      --bg1: #10162c;
-      --bg2: #f8fbff;
+      --good: rgba(247, 255, 253, 0.96);
+      --good-glow: rgba(119, 255, 225, 0.82);
+      --danger: #ff3868;
+      --warn: rgba(255, 56, 104, 0.92);
+      --gold: #ffe079;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     html,
     body {
@@ -29,186 +25,113 @@
       height: 100%;
       margin: 0;
       overflow: hidden;
-      background: var(--bg0);
-      color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", sans-serif;
+      background: #060815;
+      color: var(--ink);
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       user-select: none;
       touch-action: none;
     }
 
-    button {
-      font: inherit;
-    }
+    button { font: inherit; }
 
     #app {
       position: relative;
       width: 100vw;
       height: 100vh;
       overflow: hidden;
-      background: #070917;
       isolation: isolate;
       cursor: none;
+      background: #070a17;
     }
 
     #effectTarget {
       position: absolute;
       inset: 0;
-      overflow: hidden;
       z-index: 0;
-      background: #fbfbfd;
-    }
-
-    .stage-background {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-      background: linear-gradient(180deg, #fbfbfd 0%, #f2f5fb 48%, #e8edf7 100%);
-    }
-
-    .hero-band {
-      position: absolute;
-      inset: 0 0 auto 0;
-      height: 58vh;
       overflow: hidden;
       background:
-        radial-gradient(circle at 16% 22%, rgba(52, 239, 196, 0.42), transparent 29%),
-        radial-gradient(circle at 78% 18%, rgba(92, 95, 255, 0.36), transparent 30%),
-        linear-gradient(135deg, #08132c 0%, #122e54 46%, #06121e 100%);
+        radial-gradient(circle at 18% 18%, rgba(82, 255, 218, 0.42), transparent 26%),
+        radial-gradient(circle at 76% 20%, rgba(91, 89, 255, 0.38), transparent 30%),
+        radial-gradient(circle at 52% 90%, rgba(255, 220, 120, 0.32), transparent 34%),
+        linear-gradient(135deg, #081126 0%, #12285a 42%, #071021 100%);
     }
 
-    .hero-band::before {
+    #effectTarget::before {
       content: "";
       position: absolute;
-      inset: -24%;
+      inset: -18%;
       background:
-        linear-gradient(rgba(255,255,255,0.12) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.12) 1px, transparent 1px),
-        radial-gradient(circle at 40% 40%, rgba(255,255,255,0.18), transparent 42%);
-      background-size: 54px 54px, 54px 54px, 100% 100%;
-      transform: rotate(-8deg);
-      animation: drift 26s linear infinite;
-      opacity: 0.76;
+        linear-gradient(rgba(255,255,255,0.16) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.16) 1px, transparent 1px),
+        repeating-linear-gradient(135deg, rgba(255,255,255,0.06) 0 2px, transparent 2px 20px);
+      background-size: 46px 46px, 46px 46px, 100% 100%;
+      opacity: 0.78;
+      transform: rotate(-7deg);
+      animation: fieldDrift 28s linear infinite;
     }
 
-    .hero-copy {
-      position: absolute;
-      left: 50%;
-      top: 21vh;
-      transform: translate(-50%, -50%);
-      width: min(860px, calc(100vw - 40px));
-      text-align: center;
-      color: #fff;
-      z-index: 1;
-      text-shadow: 0 8px 36px rgba(0,0,0,0.46);
-    }
-
-    .hero-copy h1 {
-      margin: 0 0 10px;
-      font-size: clamp(42px, 8vw, 94px);
-      line-height: 0.88;
-      letter-spacing: -0.07em;
-      font-weight: 740;
-    }
-
-    .hero-copy p {
-      margin: 0 auto;
-      max-width: 54ch;
-      font-size: clamp(16px, 2.4vw, 25px);
-      opacity: 0.84;
-      line-height: 1.35;
-      letter-spacing: -0.02em;
-    }
-
-    .tile-field {
-      position: absolute;
-      left: clamp(10px, 2vw, 22px);
-      right: clamp(10px, 2vw, 22px);
-      bottom: clamp(10px, 2vw, 22px);
-      top: min(45vh, 430px);
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      grid-template-rows: 1fr 1fr;
-      gap: clamp(8px, 1.8vw, 18px);
-    }
-
-    .tile {
-      position: relative;
-      overflow: hidden;
-      border-radius: clamp(18px, 3vw, 34px);
-      background: #1d2338;
-      min-height: 140px;
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.22), 0 30px 90px rgba(13, 19, 39, 0.18);
-    }
-
-    .tile.light {
-      background:
-        radial-gradient(circle at 70% 30%, rgba(120, 255, 224, 0.45), transparent 32%),
-        linear-gradient(135deg, #ffffff, #dce7ff);
-      color: #142136;
-    }
-
-    .tile.dark {
-      background:
-        radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.22), transparent 32%),
-        radial-gradient(circle at 78% 82%, rgba(86, 254, 207, 0.22), transparent 34%),
-        linear-gradient(135deg, #101831, #020716);
-      color: #fff;
-    }
-
-    .tile.wide {
-      grid-column: span 2;
-    }
-
-    .tile::before {
+    #effectTarget::after {
       content: "";
       position: absolute;
       inset: 0;
       background:
-        linear-gradient(120deg, transparent 0 36%, rgba(255,255,255,0.22) 37% 38%, transparent 39% 100%),
-        repeating-linear-gradient(135deg, rgba(255,255,255,0.09) 0 1px, transparent 1px 18px);
+        radial-gradient(circle at 50% 48%, transparent 0 34%, rgba(255,255,255,0.12) 35% 36%, transparent 37% 100%),
+        linear-gradient(90deg, transparent, rgba(255,255,255,0.16), transparent),
+        radial-gradient(circle at 50% 10%, rgba(255,255,255,0.2), transparent 34%);
+      mix-blend-mode: screen;
       opacity: 0.72;
+      pointer-events: none;
     }
 
-    .tile strong {
+    .bg-card {
       position: absolute;
-      left: clamp(16px, 2.4vw, 32px);
-      bottom: clamp(16px, 2.4vw, 32px);
-      z-index: 1;
-      font-size: clamp(22px, 3.3vw, 54px);
-      letter-spacing: -0.05em;
-      line-height: 0.92;
+      border-radius: 30px;
+      background:
+        linear-gradient(145deg, rgba(255,255,255,0.2), rgba(255,255,255,0.04)),
+        rgba(255,255,255,0.08);
+      box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,0.22),
+        0 28px 90px rgba(0,0,0,0.18);
+      overflow: hidden;
     }
 
-    .tile span {
-      position: absolute;
-      left: clamp(16px, 2.4vw, 32px);
-      top: clamp(16px, 2.4vw, 32px);
-      z-index: 1;
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.13em;
-      opacity: 0.7;
-    }
-
-    #targets {
+    .bg-card::before {
+      content: "";
       position: absolute;
       inset: 0;
-      z-index: 3;
-      pointer-events: none;
+      background:
+        linear-gradient(115deg, transparent 0 36%, rgba(255,255,255,0.34) 37% 38%, transparent 39% 100%),
+        radial-gradient(circle at 22% 18%, rgba(112,255,226,0.24), transparent 36%);
+    }
+
+    .bg-card.a { left: 5vw; top: 14vh; width: 24vw; height: 26vh; min-width: 180px; }
+    .bg-card.b { right: 7vw; top: 11vh; width: 28vw; height: 20vh; min-width: 210px; }
+    .bg-card.c { left: 12vw; bottom: 9vh; width: 31vw; height: 22vh; min-width: 230px; }
+    .bg-card.d { right: 10vw; bottom: 13vh; width: 22vw; height: 28vh; min-width: 170px; }
+
+    @keyframes fieldDrift {
+      from { transform: translate3d(0, 0, 0) rotate(-7deg); }
+      to { transform: translate3d(-46px, -46px, 0) rotate(-5deg); }
+    }
+
+    #targetsLayer {
+      position: absolute;
+      inset: 0;
+      z-index: 8;
       overflow: hidden;
+      pointer-events: none;
     }
 
     .target {
       position: absolute;
       left: 0;
       top: 0;
-      width: var(--size, 54px);
-      height: var(--size, 54px);
-      aspect-ratio: 1 / 1;
+      width: var(--size, 58px);
+      height: var(--size, 58px);
       transform: translate3d(-50%, -50%, 0) rotate(var(--rot, 0deg)) scale(var(--scale, 1));
-      opacity: 0.96;
-      filter: drop-shadow(0 18px 28px rgba(15, 22, 40, 0.18));
-      will-change: transform, left, top, opacity;
+      opacity: 0.98;
+      will-change: left, top, transform, opacity;
+      filter: drop-shadow(0 18px 28px rgba(0, 0, 0, 0.32));
     }
 
     .target::before {
@@ -217,334 +140,278 @@
       inset: 0;
       border-radius: inherit;
       background:
-        radial-gradient(circle at 30% 22%, rgba(255,255,255,0.96), rgba(255,255,255,0.2) 18%, transparent 32%),
-        radial-gradient(circle at 72% 78%, rgba(255,255,255,0.18), transparent 34%),
-        linear-gradient(135deg, rgba(255,255,255,0.84), rgba(208,255,246,0.5));
+        radial-gradient(circle at 32% 24%, rgba(255,255,255,1), rgba(255,255,255,0.28) 18%, transparent 31%),
+        radial-gradient(circle at 72% 78%, rgba(255,255,255,0.22), transparent 32%),
+        linear-gradient(145deg, rgba(255,255,255,0.92), rgba(208,255,246,0.58));
       box-shadow:
-        inset 10px 14px 24px rgba(255,255,255,0.55),
-        inset -14px -18px 24px rgba(0, 53, 76, 0.18),
-        0 0 30px var(--good-glow);
-      border: 1px solid rgba(255,255,255,0.72);
+        inset 12px 15px 24px rgba(255,255,255,0.52),
+        inset -16px -20px 28px rgba(10, 61, 86, 0.28),
+        0 0 28px var(--good-glow),
+        0 0 58px rgba(119,255,225,0.24);
+      border: 1px solid rgba(255,255,255,0.7);
     }
 
-    .target.sphere {
-      border-radius: 999px;
-    }
-
-    .target.ring {
-      border-radius: 999px;
-    }
+    .target.sphere { border-radius: 999px; }
+    .target.cube { border-radius: 28%; }
+    .target.ring { border-radius: 999px; }
 
     .target.ring::after {
       content: "";
       position: absolute;
-      inset: 28%;
+      inset: 29%;
       border-radius: 999px;
-      background: rgba(8, 15, 32, 0.72);
-      box-shadow: inset 0 0 16px rgba(255,255,255,0.32), 0 0 18px rgba(255,255,255,0.14);
-    }
-
-    .target.cube {
-      border-radius: 28%;
+      background: rgba(7, 12, 28, 0.74);
+      box-shadow:
+        inset 0 0 16px rgba(255,255,255,0.42),
+        0 0 16px rgba(255,255,255,0.18);
     }
 
     .target.bad::before {
       background:
-        radial-gradient(circle at 31% 25%, rgba(255,255,255,0.94), rgba(255,255,255,0.16) 18%, transparent 32%),
-        linear-gradient(135deg, rgba(255,134,168,0.88), rgba(255,41,92,0.68));
+        radial-gradient(circle at 32% 24%, rgba(255,255,255,0.95), rgba(255,255,255,0.19) 18%, transparent 31%),
+        linear-gradient(145deg, rgba(255,160,185,0.95), rgba(255,40,92,0.78));
       box-shadow:
-        inset 10px 14px 24px rgba(255,255,255,0.36),
-        inset -14px -18px 24px rgba(72,0,24,0.24),
-        0 0 34px rgba(255,48,96,0.72);
+        inset 12px 15px 24px rgba(255,255,255,0.34),
+        inset -16px -20px 28px rgba(72, 0, 24, 0.34),
+        0 0 34px rgba(255,56,104,0.82),
+        0 0 70px rgba(255,56,104,0.3);
       border-color: rgba(255,255,255,0.48);
     }
 
-    .target.wrong {
-      opacity: 0.86;
-    }
+    .target.bad.ring::after { background: rgba(74, 0, 28, 0.72); }
 
     .target.absorbing {
-      transition: opacity 160ms ease;
-      opacity: 0.22;
+      opacity: 0.9;
+      filter: drop-shadow(0 0 24px rgba(140,255,231,0.9));
     }
 
-    .hud {
+    .target.absorbing::before {
+      box-shadow:
+        inset 12px 15px 24px rgba(255,255,255,0.62),
+        inset -16px -20px 28px rgba(10, 61, 86, 0.22),
+        0 0 42px rgba(160,255,236,0.96),
+        0 0 86px rgba(119,255,225,0.44);
+    }
+
+    #playerFallback {
       position: absolute;
-      top: 14px;
-      left: 14px;
-      right: 14px;
-      z-index: 20;
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      align-items: flex-start;
+      z-index: 7;
+      left: 50%;
+      top: 50%;
+      width: 150px;
+      height: 150px;
+      margin: -75px 0 0 -75px;
+      border-radius: 999px;
       pointer-events: none;
+      opacity: 0;
+      background:
+        radial-gradient(circle at 29% 21%, rgba(255,255,255,0.94), rgba(255,255,255,0.14) 20%, transparent 33%),
+        radial-gradient(circle at 70% 80%, rgba(255,255,255,0.18), transparent 40%),
+        linear-gradient(145deg, rgba(255,255,255,0.22), rgba(121,255,229,0.18));
+      box-shadow:
+        inset 18px 22px 40px rgba(255,255,255,0.28),
+        inset -22px -28px 48px rgba(0, 30, 50, 0.36),
+        0 0 84px rgba(105,255,224,0.3);
+      backdrop-filter: blur(8px) saturate(150%);
     }
 
-    .stats {
+    .no-vfx #playerFallback { opacity: 0.5; }
+
+    .statusbar {
+      position: absolute;
+      z-index: 30;
+      left: max(10px, env(safe-area-inset-left));
+      right: max(10px, env(safe-area-inset-right));
+      top: max(10px, env(safe-area-inset-top));
+      min-height: 46px;
       display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      max-width: min(780px, calc(100vw - 28px));
-    }
-
-    .chip,
-    .panel,
-    .button {
+      align-items: center;
+      gap: 9px;
+      padding: 7px;
       border: 1px solid var(--line);
-      background: var(--panel);
-      color: var(--text);
+      border-radius: 999px;
+      background: var(--glass);
+      color: #fff;
       backdrop-filter: blur(18px) saturate(170%);
-      box-shadow: 0 18px 54px rgba(0, 0, 0, 0.24);
-    }
-
-    .chip {
-      min-width: 86px;
-      border-radius: 999px;
-      padding: 9px 12px 10px;
-      font-size: 12px;
-      line-height: 1.05;
-      letter-spacing: 0.02em;
-    }
-
-    .chip strong {
-      display: block;
-      margin-top: 3px;
-      font-size: 18px;
-      line-height: 1;
-      letter-spacing: -0.04em;
-    }
-
-    .meter {
-      width: min(320px, 40vw);
-      min-width: 160px;
-      border-radius: 999px;
-      padding: 10px 12px;
-      font-size: 12px;
-    }
-
-    .meter-track {
-      height: 8px;
-      margin-top: 7px;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.14);
-      overflow: hidden;
-    }
-
-    .meter-fill {
-      width: 0%;
-      height: 100%;
-      border-radius: inherit;
-      background: linear-gradient(90deg, rgba(255,255,255,0.96), rgba(106,255,220,0.9), rgba(255,225,107,0.9));
-      box-shadow: 0 0 18px rgba(106,255,220,0.72);
-      transition: width 150ms ease;
-    }
-
-    .controls {
-      display: flex;
-      gap: 8px;
+      box-shadow: 0 18px 50px rgba(0,0,0,0.28);
       pointer-events: auto;
     }
 
-    .button {
-      border-radius: 999px;
-      padding: 10px 14px;
-      cursor: pointer;
-      color: #fff;
-    }
-
-    .button:hover {
-      background: rgba(255,255,255,0.16);
-    }
-
-    .overlay {
-      position: absolute;
-      inset: 0;
-      z-index: 30;
-      display: grid;
-      place-items: center;
-      padding: 20px;
-      background: radial-gradient(circle at 50% 42%, rgba(12,16,31,0.24), rgba(12,16,31,0.72));
-      backdrop-filter: blur(10px);
-    }
-
-    .overlay.hidden {
-      display: none;
-    }
-
-    .card {
-      width: min(640px, calc(100vw - 36px));
-      border-radius: 34px;
-      padding: clamp(24px, 4vw, 44px);
-      text-align: center;
-      border: 1px solid var(--line);
-      background:
-        linear-gradient(145deg, rgba(255,255,255,0.2), rgba(255,255,255,0.08)),
-        rgba(9, 13, 28, 0.7);
-      box-shadow: 0 26px 90px rgba(0,0,0,0.38);
-    }
-
-    .card h2 {
-      margin: 0 0 12px;
-      font-size: clamp(34px, 6vw, 72px);
-      line-height: 0.92;
-      letter-spacing: -0.07em;
-    }
-
-    .card p {
-      margin: 0 auto 20px;
-      max-width: 52ch;
-      color: var(--muted);
-      line-height: 1.55;
-    }
-
-    .primary {
-      border: 0;
-      border-radius: 999px;
-      padding: 13px 19px;
-      cursor: pointer;
-      color: #06101a;
-      font-weight: 800;
-      background: linear-gradient(135deg, #ffffff, #7dffe5 52%, #ffe68c);
-      box-shadow: 0 20px 56px rgba(112,255,224,0.25);
-    }
-
-    .hint {
-      position: absolute;
-      left: 16px;
-      bottom: 14px;
-      z-index: 20;
-      max-width: min(560px, calc(100vw - 32px));
-      color: rgba(255,255,255,0.72);
+    .stat {
+      display: flex;
+      align-items: baseline;
+      gap: 5px;
+      white-space: nowrap;
+      padding: 0 7px;
       font-size: 12px;
-      line-height: 1.4;
+      color: var(--muted);
+    }
+
+    .stat strong {
+      color: #fff;
+      font-size: 16px;
+      line-height: 1;
+      letter-spacing: -0.03em;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .progress {
+      flex: 1 1 auto;
+      min-width: 58px;
+      height: 9px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.16);
+      overflow: hidden;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+    }
+
+    #progressFill {
+      height: 100%;
+      width: 0%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #ffffff, #7dffe7, #ffe079);
+      box-shadow: 0 0 18px rgba(125,255,231,0.85);
+      transition: width 130ms ease;
+    }
+
+    .barButton {
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 999px;
+      padding: 8px 12px;
+      color: #06101a;
+      background: linear-gradient(135deg, #ffffff, #89ffe8);
+      font-weight: 800;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .barButton.secondary {
+      color: #fff;
+      background: rgba(255,255,255,0.1);
+    }
+
+    #miniHelp {
+      position: absolute;
+      z-index: 31;
+      left: 50%;
+      bottom: max(14px, env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      max-width: min(640px, calc(100vw - 22px));
+      padding: 10px 13px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(7, 12, 28, 0.62);
+      backdrop-filter: blur(18px) saturate(170%);
+      color: rgba(255,255,255,0.82);
+      font-size: 13px;
+      line-height: 1.25;
+      text-align: center;
+      box-shadow: 0 18px 48px rgba(0,0,0,0.28);
       pointer-events: none;
-      text-shadow: 0 2px 12px rgba(0,0,0,0.46);
+    }
+
+    #toast {
+      position: absolute;
+      z-index: 32;
+      left: 50%;
+      top: max(68px, calc(env(safe-area-inset-top) + 68px));
+      transform: translate(-50%, -8px);
+      opacity: 0;
+      min-width: 160px;
+      max-width: calc(100vw - 30px);
+      text-align: center;
+      padding: 10px 14px;
+      border-radius: 999px;
+      color: #06101a;
+      background: linear-gradient(135deg, #ffffff, #8dffe9, #ffe079);
+      font-weight: 800;
+      box-shadow: 0 18px 48px rgba(0,0,0,0.26);
+      transition: opacity 170ms ease, transform 170ms ease;
+      pointer-events: none;
+    }
+
+    #toast.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
     }
 
     .pulse {
       position: absolute;
-      z-index: 16;
+      z-index: 22;
       left: 0;
       top: 0;
-      width: 30px;
-      height: 30px;
+      width: 28px;
+      height: 28px;
       border-radius: 999px;
-      border: 2px solid rgba(255,255,255,0.9);
-      transform: translate3d(-50%, -50%, 0) scale(0.35);
+      border: 2px solid rgba(255,255,255,0.94);
+      transform: translate3d(-50%, -50%, 0) scale(0.25);
       pointer-events: none;
-      animation: pulse 560ms ease-out forwards;
-      box-shadow: 0 0 28px rgba(112,255,224,0.8);
-    }
-
-    .shake {
-      animation: shake 250ms ease-out;
+      animation: pulse 520ms ease-out forwards;
+      box-shadow: 0 0 34px rgba(126,255,231,0.9);
     }
 
     @keyframes pulse {
-      to {
-        opacity: 0;
-        transform: translate3d(-50%, -50%, 0) scale(5.2);
-      }
+      to { opacity: 0; transform: translate3d(-50%, -50%, 0) scale(5.6); }
     }
 
+    .shake { animation: shake 260ms ease-out; }
     @keyframes shake {
       20% { transform: translate3d(-8px, 0, 0); }
       45% { transform: translate3d(7px, 0, 0); }
       70% { transform: translate3d(-4px, 0, 0); }
     }
 
-    @keyframes drift {
-      from { transform: translate3d(0, 0, 0) rotate(-8deg); }
-      to { transform: translate3d(-54px, -54px, 0) rotate(-6deg); }
-    }
-
-    .no-vfx .hint strong {
-      color: var(--gold);
-    }
-
     @media (max-width: 760px) {
-      .tile-field {
-        grid-template-columns: 1fr 1fr;
-        top: 47vh;
+      .statusbar {
+        gap: 5px;
+        padding: 6px;
       }
+      .stat {
+        font-size: 10px;
+        padding: 0 3px;
+        gap: 3px;
+      }
+      .stat strong { font-size: 14px; }
+      .stat.optional { display: none; }
+      .barButton { padding: 8px 9px; font-size: 12px; }
+      #miniHelp { font-size: 12px; border-radius: 18px; }
+      .bg-card.a { left: -6vw; width: 42vw; }
+      .bg-card.b { right: -8vw; width: 50vw; }
+      .bg-card.c { left: 4vw; width: 54vw; }
+      .bg-card.d { right: 0; width: 42vw; }
+    }
 
-      .tile:nth-child(n+5) {
-        display: none;
-      }
-
-      .hud {
-        gap: 8px;
-      }
-
-      .chip {
-        min-width: 72px;
-        padding: 8px 10px 9px;
-      }
-
-      .chip strong {
-        font-size: 16px;
-      }
-
-      .meter {
-        order: 10;
-        width: calc(100vw - 28px);
-      }
-
-      .controls {
-        position: absolute;
-        right: 0;
-        bottom: -54px;
-      }
+    @media (max-height: 520px) {
+      #miniHelp { display: none; }
+      .statusbar { min-height: 40px; }
     }
   </style>
 </head>
 <body>
   <div id="app">
     <div id="effectTarget" aria-hidden="true">
-      <div class="stage-background">
-        <div class="hero-band"></div>
-        <div class="hero-copy">
-          <h1>Liquid Absorb</h1>
-          <p>Vang alleen de juiste vorm. Elke absorptie maakt het glas groter.</p>
-        </div>
-        <div class="tile-field">
-          <div class="tile dark wide"><span>Liquid</span><strong>Glass<br>Field</strong></div>
-          <div class="tile light"><span>Target</span><strong>Absorb</strong></div>
-          <div class="tile light"><span>Level</span><strong>Shape</strong></div>
-          <div class="tile dark"><span>Danger</span><strong>Avoid</strong></div>
-          <div class="tile dark"><span>Flow</span><strong>Grow</strong></div>
-          <div class="tile light"><span>Score</span><strong>Combo</strong></div>
-        </div>
-        <div id="targets"></div>
-      </div>
+      <div class="bg-card a"></div>
+      <div class="bg-card b"></div>
+      <div class="bg-card c"></div>
+      <div class="bg-card d"></div>
     </div>
 
-    <div class="hud">
-      <div class="stats">
-        <div class="chip">Score<strong id="score">0</strong></div>
-        <div class="chip">Level<strong id="level">1</strong></div>
-        <div class="chip">Levens<strong id="lives">3</strong></div>
-        <div class="chip">Vorm<strong id="shape">Bol</strong></div>
-        <div class="meter panel">
-          Absorptie <span id="progressText">0/10</span>
-          <div class="meter-track"><div id="progressFill" class="meter-fill"></div></div>
-        </div>
-      </div>
-      <div class="controls">
-        <button id="restart" class="button" type="button">Reset</button>
-      </div>
+    <div id="targetsLayer" aria-hidden="true"></div>
+    <div id="playerFallback" aria-hidden="true"></div>
+
+    <div class="statusbar" aria-label="Spel status">
+      <div class="stat">Score <strong id="score">0</strong></div>
+      <div class="stat">Lvl <strong id="level">1</strong></div>
+      <div class="stat optional">Vang <strong id="shape">Bol</strong></div>
+      <div class="stat">❤ <strong id="lives">3</strong></div>
+      <div class="stat optional"><strong id="progressText">0/10</strong></div>
+      <div class="progress" aria-hidden="true"><div id="progressFill"></div></div>
+      <button id="startBtn" class="barButton" type="button">Start</button>
+      <button id="resetBtn" class="barButton secondary" type="button">Reset</button>
     </div>
 
-    <p id="hint" class="hint"><strong>Shader:</strong> exactere basis van het oorspronkelijke VFX liquid glass effect. Beweeg met muis of vinger, vang de witte juiste vorm, ontwijk rood.</p>
-
-    <div id="overlay" class="overlay">
-      <div class="card">
-        <h2>Liquid Absorb</h2>
-        <p>Dit prototype gebruikt het oorspronkelijke glass post effect als speler. Verzamel 10 juiste vormen om door te gaan naar de volgende vorm.</p>
-        <button id="start" class="primary" type="button">Start game</button>
-      </div>
-    </div>
+    <div id="toast">Level 1: vang bollen</div>
+    <div id="miniHelp">Beweeg de liquid orb met je vinger of muis. Absorbeer de witte juiste vorm, ontwijk rood.</div>
   </div>
 
   <script type="module">
@@ -760,11 +627,11 @@
 
     const app = document.getElementById("app");
     const effectTarget = document.getElementById("effectTarget");
-    const targetsLayer = document.getElementById("targets");
-    const overlay = document.getElementById("overlay");
-    const startButton = document.getElementById("start");
-    const restartButton = document.getElementById("restart");
-    const hint = document.getElementById("hint");
+    const targetsLayer = document.getElementById("targetsLayer");
+    const playerFallback = document.getElementById("playerFallback");
+    const startBtn = document.getElementById("startBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const toast = document.getElementById("toast");
     const scoreEl = document.getElementById("score");
     const levelEl = document.getElementById("level");
     const livesEl = document.getElementById("lives");
@@ -773,9 +640,9 @@
     const progressFill = document.getElementById("progressFill");
 
     const shapeSequence = [
-      { shader: 0, name: "Bol", className: "sphere" },
-      { shader: 2, name: "Donut", className: "ring" },
-      { shader: 1, name: "Cube", className: "cube" }
+      { shader: 0, name: "Bol", className: "sphere", plural: "bollen" },
+      { shader: 2, name: "Donut", className: "ring", plural: "donuts" },
+      { shader: 1, name: "Cube", className: "cube", plural: "cubes" }
     ];
 
     const state = {
@@ -786,37 +653,40 @@
       absorbed: 0,
       targetAbsorb: 10,
       growth: 1,
-      lastHitTime: performance.now() / 1000,
+      lastPulseTime: performance.now() / 1000,
       clickCount: 0,
-      hasPointer: false
+      hasPointer: false,
+      toastTimer: 0
     };
 
     const player = {
       x: window.innerWidth / 2,
-      y: window.innerHeight / 2
+      y: window.innerHeight * 0.72
     };
 
-    const p0 = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-    const p1 = { x: p0.x, y: window.innerHeight - p0.y };
-    const p2 = { x: p0.x, y: window.innerHeight - p0.y };
-    let centerBlend = 1.0;
+    const p0 = { x: player.x, y: window.innerHeight - player.y };
+    const p1 = { x: p0.x, y: p0.y };
+    const p2 = { x: p0.x, y: p0.y };
+    let centerBlend = 0;
 
-    const gameObjects = [];
-    const N = PARAMS.bubbleCount;
-    const shaderBubbles = new Float32Array(N * 4);
-    const fract = (x) => x - Math.floor(x);
+    const objects = [];
+    const shaderBubbles = new Float32Array(PARAMS.bubbleCount * 4);
+    const t0 = performance.now() / 1000;
+    let lastFrame = performance.now();
+
     const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
     const rand = (min, max) => min + Math.random() * (max - min);
     const dist = (ax, ay, bx, by) => Math.hypot(ax - bx, ay - by);
-
-    function rot2d(x, y, t) {
-      const c = Math.cos(t);
-      const s = Math.sin(t);
-      return [x * c - y * s, x * s + y * c];
-    }
+    const fract = (x) => x - Math.floor(x);
 
     function currentShape() {
       return shapeSequence[state.level % shapeSequence.length];
+    }
+
+    function otherShape() {
+      const active = currentShape();
+      const options = shapeSequence.filter((shape) => shape.shader !== active.shader);
+      return options[Math.floor(Math.random() * options.length)];
     }
 
     function setPointer(clientX, clientY) {
@@ -825,22 +695,17 @@
       p0.x = player.x;
       p0.y = window.innerHeight - player.y;
       state.hasPointer = true;
+      centerBlend = 0;
     }
 
-    window.addEventListener("pointermove", (event) => {
-      setPointer(event.clientX, event.clientY);
-    });
+    function showToast(text) {
+      toast.textContent = text;
+      toast.classList.add("show");
+      state.toastTimer = 1.5;
+    }
 
-    window.addEventListener("pointerdown", (event) => {
-      if (event.target.closest("button")) return;
-      setPointer(event.clientX, event.clientY);
-      state.lastHitTime = performance.now() / 1000;
-      state.clickCount += 1;
-    });
-
-    function makeTarget() {
+    function makeObject() {
       const el = document.createElement("div");
-      el.className = "target sphere";
       targetsLayer.appendChild(el);
       const obj = {
         el,
@@ -848,101 +713,94 @@
         y: 0,
         vx: 0,
         vy: 0,
-        size: 54,
-        shape: 0,
-        kind: "good",
+        size: 58,
+        shape: currentShape(),
+        bad: false,
         rot: 0,
         spin: 0,
-        absorbing: false,
-        dead: false
+        justSpawned: true
       };
-      gameObjects.push(obj);
-      resetTarget(obj, true);
+      objects.push(obj);
+      resetObject(obj, true);
     }
 
-    function resetTarget(obj, first = false) {
+    function resetObject(obj, first = false) {
       const active = currentShape();
-      const roll = Math.random();
-      let chosen = active;
-      obj.kind = "good";
-
-      if (roll < 0.18) {
-        obj.kind = "bad";
-        const other = shapeSequence[Math.floor(Math.random() * shapeSequence.length)];
-        chosen = other;
-      } else if (roll < 0.36) {
-        obj.kind = "wrong";
-        const options = shapeSequence.filter((s) => s.shader !== active.shader);
-        chosen = options[Math.floor(Math.random() * options.length)];
-      }
-
-      obj.shape = chosen.shader;
-      obj.size = rand(42, 66) * clamp(1 - state.level * 0.025, 0.82, 1);
-      obj.x = rand(obj.size, window.innerWidth - obj.size);
-      obj.y = first ? rand(-window.innerHeight, -80) : rand(-260, -80);
-      obj.vx = rand(-18, 18);
-      obj.vy = rand(72, 128) + state.level * 12;
-      obj.rot = rand(-20, 20);
-      obj.spin = rand(-28, 28);
-      obj.absorbing = false;
-      obj.dead = false;
-      obj.el.className = `target ${chosen.className} ${obj.kind === "bad" ? "bad" : ""} ${obj.kind === "wrong" ? "wrong" : ""}`;
+      const bad = Math.random() < 0.34;
+      obj.bad = bad;
+      obj.shape = bad ? otherShape() : active;
+      obj.size = rand(46, 70) * clamp(1 - state.level * 0.018, 0.82, 1.0);
+      obj.x = rand(obj.size * 0.7, Math.max(obj.size, window.innerWidth - obj.size * 0.7));
+      obj.y = first ? rand(-window.innerHeight * 0.9, -80) : rand(-260, -70);
+      obj.vx = rand(-14, 14);
+      obj.vy = rand(86, 132) + state.level * 11;
+      obj.rot = rand(-25, 25);
+      obj.spin = rand(-38, 38);
+      obj.justSpawned = true;
+      obj.el.className = `target ${obj.shape.className}${bad ? " bad" : ""}`;
       obj.el.style.setProperty("--size", `${obj.size}px`);
-      obj.el.style.opacity = obj.kind === "wrong" ? "0.82" : "0.96";
+      obj.el.style.setProperty("--scale", "1");
+      obj.el.style.opacity = "0.98";
     }
 
-    function ensureTargets() {
-      const desired = clamp(7 + Math.floor(state.level / 2), 7, 12);
-      while (gameObjects.length < desired) makeTarget();
-      while (gameObjects.length > desired) {
-        const obj = gameObjects.pop();
+    function ensureObjects() {
+      const wanted = clamp(8 + Math.floor(state.level / 2), 8, 13);
+      while (objects.length < wanted) makeObject();
+      while (objects.length > wanted) {
+        const obj = objects.pop();
         obj.el.remove();
       }
     }
 
-    function showPulse(x, y, color = "rgba(112,255,224,0.9)") {
-      const pulse = document.createElement("div");
-      pulse.className = "pulse";
-      pulse.style.left = `${x}px`;
-      pulse.style.top = `${y}px`;
-      pulse.style.borderColor = color;
-      pulse.style.boxShadow = `0 0 30px ${color}`;
-      app.appendChild(pulse);
-      pulse.addEventListener("animationend", () => pulse.remove());
+    function pulse(x, y, color = "rgba(126,255,231,0.95)") {
+      const el = document.createElement("div");
+      el.className = "pulse";
+      el.style.left = `${x}px`;
+      el.style.top = `${y}px`;
+      el.style.borderColor = color;
+      el.style.boxShadow = `0 0 34px ${color}`;
+      app.appendChild(el);
+      el.addEventListener("animationend", () => el.remove());
     }
 
     function absorb(obj) {
-      state.score += 100 + state.level * 20;
+      state.score += 100 + state.level * 25;
       state.absorbed += 1;
-      state.growth = 1 + state.absorbed * 0.035;
-      state.lastHitTime = performance.now() / 1000;
+      state.growth = 1 + state.absorbed * 0.042;
+      state.lastPulseTime = performance.now() / 1000;
       state.clickCount += 1;
-      showPulse(player.x, player.y);
-      resetTarget(obj, false);
+      pulse(player.x, player.y);
+      resetObject(obj, false);
 
       if (state.absorbed >= state.targetAbsorb) {
         state.level += 1;
         state.absorbed = 0;
         state.growth = 1;
-        state.lastHitTime = performance.now() / 1000;
+        state.lastPulseTime = performance.now() / 1000;
         state.clickCount += 1;
-        showPulse(player.x, player.y, "rgba(255,225,107,0.96)");
-        ensureTargets();
+        showToast(`Level ${state.level + 1}: vang ${currentShape().plural}`);
+        pulse(player.x, player.y, "rgba(255,224,121,0.98)");
+        ensureObjects();
+        for (const item of objects) resetObject(item, true);
       }
     }
 
     function damage(obj) {
       state.lives -= 1;
       state.absorbed = clamp(state.absorbed - 3, 0, state.targetAbsorb);
-      state.growth = 1 + state.absorbed * 0.035;
-      state.lastHitTime = performance.now() / 1000;
+      state.growth = 1 + state.absorbed * 0.042;
+      state.lastPulseTime = performance.now() / 1000;
       state.clickCount += 1;
-      showPulse(obj.x, obj.y, "rgba(255,62,111,0.92)");
+      pulse(obj.x, obj.y, "rgba(255,56,104,0.95)");
       app.classList.remove("shake");
       void app.offsetWidth;
       app.classList.add("shake");
-      resetTarget(obj, false);
-      if (state.lives <= 0) endGame();
+      resetObject(obj, false);
+      if (state.lives <= 0) {
+        state.running = false;
+        startBtn.textContent = "Opnieuw";
+        showToast(`Game over: ${state.score}`);
+      }
     }
 
     function resetGame() {
@@ -952,60 +810,23 @@
       state.level = 0;
       state.absorbed = 0;
       state.growth = 1;
-      state.lastHitTime = performance.now() / 1000;
+      state.lastPulseTime = performance.now() / 1000;
       state.clickCount += 1;
-      ensureTargets();
-      for (const obj of gameObjects) resetTarget(obj, true);
-      overlay.classList.add("hidden");
+      startBtn.textContent = "Pauze";
+      ensureObjects();
+      for (const obj of objects) resetObject(obj, true);
+      showToast("Level 1: vang bollen");
       updateHud();
     }
 
-    function endGame() {
-      state.running = false;
-      overlay.classList.remove("hidden");
-      overlay.querySelector("h2").textContent = "Game over";
-      overlay.querySelector("p").textContent = `Score ${state.score}. Start opnieuw om verder te tweaken.`;
-      startButton.textContent = "Opnieuw starten";
-    }
-
-    startButton.addEventListener("click", () => {
-      overlay.querySelector("h2").textContent = "Liquid Absorb";
-      resetGame();
-    });
-
-    restartButton.addEventListener("click", resetGame);
-
-    function updateShaderBubbles(time) {
-      const visible = clamp(3 + state.absorbed, 3, N);
-      for (let i = 0; i < N; i++) {
-        const life = fract(time * PARAMS.bubbleSpeed + i / N);
-        const orbitR = PARAMS.sphereR * (0.3 + life * 0.8) * state.growth;
-        const orbitAngle = time * (0.8 + fract(i * 0.618) * 0.7) + i * 1.256;
-
-        let bx = Math.cos(orbitAngle) * orbitR;
-        let by = 0;
-        let bz = Math.sin(orbitAngle) * orbitR;
-
-        [bx, by] = rot2d(bx, by, i * 2.3);
-        [by, bz] = rot2d(by, bz, i * 1.8);
-
-        by += life * 0.1;
-        bx += Math.sin(time * 2.7 + i * 4.1) * 0.008 * life;
-        bz += Math.cos(time * 3.1 + i * 3.7) * 0.008 * life;
-
-        const w = window.innerWidth;
-        const h = window.innerHeight;
-        bx += ((p2.x - p1.x) / w) * (h / w);
-        by += (p2.y - p1.y) / h;
-
-        const range = PARAMS.bubbleRadiusMax - PARAMS.bubbleRadiusMin;
-        const maxR = PARAMS.bubbleRadiusMin + range * fract(i * 0.618);
-        const j = i * 4;
-        shaderBubbles[j] = bx;
-        shaderBubbles[j + 1] = by;
-        shaderBubbles[j + 2] = bz;
-        shaderBubbles[j + 3] = i < visible ? maxR * Math.sin(life * Math.PI) * (0.92 + state.absorbed * 0.02) : 0;
+    function toggleStart() {
+      if (state.lives <= 0 || state.score === 0 && !state.running && state.absorbed === 0) {
+        resetGame();
+        return;
       }
+      state.running = !state.running;
+      startBtn.textContent = state.running ? "Pauze" : "Start";
+      showToast(state.running ? "Verder" : "Pauze");
     }
 
     function updateHud() {
@@ -1018,77 +839,105 @@
       progressFill.style.width = `${(state.absorbed / state.targetAbsorb) * 100}%`;
     }
 
-    let last = performance.now();
-    const t0 = performance.now() / 1000;
-
-    function tick(nowMs) {
-      const dt = Math.min(0.04, (nowMs - last) / 1000);
-      last = nowMs;
-      const time = performance.now() / 1000 - t0;
-      const sm = PARAMS.mouseSmoothing;
-
-      if (!state.hasPointer) {
-        const cx = window.innerWidth / 2 + Math.cos(time * 0.36) * window.innerWidth * 0.16;
-        const cy = window.innerHeight / 2 + Math.sin(time * 0.42) * window.innerHeight * 0.12;
-        setPointer(cx, cy);
-        state.hasPointer = false;
+    function updateShaderBubbles(time) {
+      const visible = clamp(3 + state.absorbed, 3, PARAMS.bubbleCount);
+      for (let i = 0; i < PARAMS.bubbleCount; i++) {
+        const life = fract(time * PARAMS.bubbleSpeed + i / PARAMS.bubbleCount);
+        const orbitR = PARAMS.sphereR * (0.30 + life * 0.82) * state.growth;
+        const angle = time * (0.8 + fract(i * 0.618) * 0.7) + i * 1.256;
+        const swing = Math.sin(time * 2.1 + i * 1.8) * 0.018;
+        const j = i * 4;
+        shaderBubbles[j] = Math.cos(angle) * orbitR + swing;
+        shaderBubbles[j + 1] = Math.sin(angle * 1.21) * orbitR * 0.55 + life * 0.09;
+        shaderBubbles[j + 2] = Math.sin(angle) * orbitR;
+        const range = PARAMS.bubbleRadiusMax - PARAMS.bubbleRadiusMin;
+        const maxR = PARAMS.bubbleRadiusMin + range * fract(i * 0.618);
+        shaderBubbles[j + 3] = i < visible ? maxR * Math.sin(life * Math.PI) * (0.92 + state.absorbed * 0.018) : 0;
       }
+    }
 
-      p1.x += (p0.x - p1.x) * sm;
-      p1.y += (p0.y - p1.y) * sm;
-      p2.x += (p1.x - p2.x) * sm;
-      p2.y += (p1.y - p2.y) * sm;
-      if (state.hasPointer) centerBlend *= 0.95;
+    function updateObjects(dt, time) {
+      const playerRadius = Math.max(54, Math.min(window.innerWidth, window.innerHeight) * 0.14 * state.growth);
+      const active = currentShape();
 
-      if (state.running) {
-        const active = currentShape();
-        const playerRadius = Math.max(58, Math.min(window.innerWidth, window.innerHeight) * 0.15 * state.growth);
-        const magnetRadius = playerRadius * 2.3;
+      for (const obj of objects) {
+        let speedFactor = state.running ? 1 : 0.28;
 
-        for (const obj of gameObjects) {
+        if (state.running) {
           const d = dist(obj.x, obj.y, player.x, player.y);
-          if (obj.kind === "good" && obj.shape === active.shader && d < magnetRadius) {
+          const magnetRadius = playerRadius * 2.45;
+          if (!obj.bad && obj.shape.shader === active.shader && d < magnetRadius) {
             const pull = clamp(1 - d / magnetRadius, 0, 1);
-            obj.vx += (player.x - obj.x) * pull * 5.8 * dt;
-            obj.vy += (player.y - obj.y) * pull * 5.8 * dt;
+            obj.vx += (player.x - obj.x) * pull * 7.0 * dt;
+            obj.vy += (player.y - obj.y) * pull * 7.0 * dt;
             obj.el.classList.add("absorbing");
+            obj.el.style.setProperty("--scale", `${1 - pull * 0.18}`);
           } else {
             obj.el.classList.remove("absorbing");
+            obj.el.style.setProperty("--scale", "1");
           }
 
-          obj.x += obj.vx * dt;
-          obj.y += obj.vy * dt;
-          obj.rot += obj.spin * dt;
-
-          if (obj.y > window.innerHeight + 120) resetTarget(obj, false);
-
-          const hitRadius = playerRadius * 0.78 + obj.size * 0.46;
-          if (d < hitRadius) {
-            if (obj.kind === "good" && obj.shape === active.shader) {
-              absorb(obj);
-            } else {
-              damage(obj);
-            }
+          if (d < playerRadius * 0.78 + obj.size * 0.48) {
+            if (!obj.bad && obj.shape.shader === active.shader) absorb(obj);
+            else damage(obj);
+            continue;
           }
+        }
 
-          obj.el.style.left = `${obj.x}px`;
-          obj.el.style.top = `${obj.y}px`;
-          obj.el.style.setProperty("--rot", `${obj.rot}deg`);
-          obj.el.style.setProperty("--scale", obj.el.classList.contains("absorbing") ? "0.78" : "1");
+        obj.x += obj.vx * dt * speedFactor + Math.sin(time * 1.3 + obj.size) * 5 * dt;
+        obj.y += obj.vy * dt * speedFactor;
+        obj.rot += obj.spin * dt * speedFactor;
+
+        if (obj.y > window.innerHeight + 120 || obj.x < -130 || obj.x > window.innerWidth + 130) {
+          resetObject(obj, false);
         }
-      } else {
-        for (const obj of gameObjects) {
-          obj.y += obj.vy * dt * 0.22;
-          if (obj.y > window.innerHeight + 120) resetTarget(obj, false);
-          obj.el.style.left = `${obj.x}px`;
-          obj.el.style.top = `${obj.y}px`;
-          obj.el.style.setProperty("--rot", `${obj.rot}deg`);
-        }
+
+        obj.el.style.left = `${obj.x}px`;
+        obj.el.style.top = `${obj.y}px`;
+        obj.el.style.setProperty("--rot", `${obj.rot}deg`);
+      }
+    }
+
+    function updateFallbackOrb() {
+      const size = Math.max(120, Math.min(window.innerWidth, window.innerHeight) * 0.28 * state.growth);
+      playerFallback.style.width = `${size}px`;
+      playerFallback.style.height = `${size}px`;
+      playerFallback.style.marginLeft = `${-size / 2}px`;
+      playerFallback.style.marginTop = `${-size / 2}px`;
+      playerFallback.style.left = `${player.x}px`;
+      playerFallback.style.top = `${player.y}px`;
+    }
+
+    function frame(nowMs) {
+      const dt = Math.min(0.04, (nowMs - lastFrame) / 1000);
+      lastFrame = nowMs;
+      const time = performance.now() / 1000 - t0;
+
+      if (!state.hasPointer) {
+        const cx = window.innerWidth / 2 + Math.cos(time * 0.34) * window.innerWidth * 0.16;
+        const cy = window.innerHeight * 0.66 + Math.sin(time * 0.42) * window.innerHeight * 0.08;
+        player.x = cx;
+        player.y = cy;
+        p0.x = cx;
+        p0.y = window.innerHeight - cy;
       }
 
+      p1.x += (p0.x - p1.x) * PARAMS.mouseSmoothing;
+      p1.y += (p0.y - p1.y) * PARAMS.mouseSmoothing;
+      p2.x += (p1.x - p2.x) * PARAMS.mouseSmoothing;
+      p2.y += (p1.y - p2.y) * PARAMS.mouseSmoothing;
+
+      updateObjects(dt, time);
       updateShaderBubbles(time);
+      updateFallbackOrb();
       updateHud();
-      requestAnimationFrame(tick);
+
+      if (state.toastTimer > 0) {
+        state.toastTimer -= dt;
+        if (state.toastTimer <= 0) toast.classList.remove("show");
+      }
+
+      requestAnimationFrame(frame);
     }
 
     async function setupVfx() {
@@ -1105,7 +954,7 @@
                 const cy = window.innerHeight / 2 * devicePixelRatio * centerBlend;
                 return [cx + lx, cy + ly];
               },
-              clickTime: () => performance.now() / 1000 - state.lastHitTime,
+              clickTime: () => performance.now() / 1000 - state.lastPulseTime,
               clickCount: () => state.clickCount,
               forcedShape: () => currentShape().shader,
               sphereScale: () => state.growth,
@@ -1115,22 +964,41 @@
         });
         await vfx.addHTML(effectTarget, { shader: "none" });
         vfx.play();
-        hint.innerHTML = "<strong>Shader:</strong> actief. Deze versie gebruikt de oorspronkelijke liquid glass shader als basis en zet de game eromheen.";
       } catch (error) {
-        console.warn(error);
+        console.warn("VFX JS kon niet laden", error);
         app.classList.add("no-vfx");
-        hint.innerHTML = "<strong>Fallback:</strong> VFX JS kon niet laden. Open met internetverbinding voor het echte liquid glass effect.";
+        showToast("VFX niet geladen");
       }
     }
+
+    window.addEventListener("pointermove", (event) => setPointer(event.clientX, event.clientY));
+    window.addEventListener("pointerdown", (event) => {
+      if (event.target.closest("button")) return;
+      setPointer(event.clientX, event.clientY);
+      state.lastPulseTime = performance.now() / 1000;
+      state.clickCount += 1;
+    });
+
+    window.addEventListener("keydown", (event) => {
+      if (event.code === "Space") {
+        event.preventDefault();
+        toggleStart();
+      }
+      if (event.key.toLowerCase() === "r") resetGame();
+    });
 
     window.addEventListener("resize", () => {
       setPointer(clamp(player.x, 0, window.innerWidth), clamp(player.y, 0, window.innerHeight));
     });
 
-    ensureTargets();
+    startBtn.addEventListener("click", toggleStart);
+    resetBtn.addEventListener("click", resetGame);
+
+    ensureObjects();
+    showToast("Start: vang bollen");
     updateHud();
     setupVfx();
-    requestAnimationFrame(tick);
+    requestAnimationFrame(frame);
   </script>
 </body>
 </html>
