@@ -2,23 +2,29 @@
 <html lang="nl">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Liquid Bubble Pop</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Liquid Bubble Pop v2</title>
   <style>
     :root {
-      --panel: rgba(9, 13, 28, 0.58);
-      --panel-border: rgba(255, 255, 255, 0.16);
-      --text: #f7fbff;
-      --muted: rgba(247, 251, 255, 0.68);
-      --good: #5ff3d0;
-      --bad: #ff5b86;
-      --gold: #ffd666;
-      --morph: #9b7bff;
-      --player-size: 144px;
+      --bg-a: #070a16;
+      --bg-b: #0d1b34;
+      --panel: rgba(8, 12, 24, 0.78);
+      --panel-strong: rgba(10, 16, 31, 0.93);
+      --border: rgba(255, 255, 255, 0.16);
+      --text: #f8fcff;
+      --muted: rgba(248, 252, 255, 0.68);
+      --good: #dffff8;
+      --good-edge: #9affdf;
+      --bad: #ff5d7e;
+      --gold: #ffd86d;
+      --morph: #a88cff;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-top: env(safe-area-inset-top, 0px);
     }
 
     * {
       box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
     }
 
     html,
@@ -27,7 +33,7 @@
       height: 100%;
       margin: 0;
       overflow: hidden;
-      background: #080b18;
+      background: var(--bg-a);
       color: var(--text);
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       user-select: none;
@@ -38,246 +44,202 @@
       font: inherit;
     }
 
-    #app {
-      position: relative;
+    button {
+      color: inherit;
+    }
+
+    #gameCanvas {
+      position: fixed;
+      inset: 0;
       width: 100vw;
-      height: 100vh;
-      overflow: hidden;
+      height: 100dvh;
+      display: block;
+      touch-action: none;
       cursor: none;
-      isolation: isolate;
-      background:
-        radial-gradient(circle at 15% 20%, rgba(91, 245, 226, 0.32), transparent 25%),
-        radial-gradient(circle at 78% 18%, rgba(157, 123, 255, 0.32), transparent 26%),
-        radial-gradient(circle at 55% 92%, rgba(255, 214, 102, 0.25), transparent 30%),
-        linear-gradient(135deg, #070917 0%, #101a35 45%, #071321 100%);
-    }
-
-    #app::before {
-      content: "";
-      position: absolute;
-      inset: -20%;
-      z-index: 0;
-      background:
-        linear-gradient(rgba(255, 255, 255, 0.055) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.055) 1px, transparent 1px);
-      background-size: 54px 54px;
-      mask-image: radial-gradient(circle at 50% 50%, black 0%, transparent 72%);
-      animation: drift 22s linear infinite;
-    }
-
-    #app::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      z-index: 1;
-      pointer-events: none;
-      background:
-        radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.14), transparent 35%),
-        linear-gradient(to bottom, rgba(255, 255, 255, 0.05), transparent 42%, rgba(0, 0, 0, 0.22));
-      mix-blend-mode: screen;
-    }
-
-    @keyframes drift {
-      from {
-        transform: translate3d(0, 0, 0) rotate(0deg);
-      }
-
-      to {
-        transform: translate3d(-54px, -54px, 0) rotate(2deg);
-      }
-    }
-
-    #world {
-      position: absolute;
-      inset: 0;
-      z-index: 2;
-      filter: url("#goo");
-    }
-
-    .bubble {
-      --bubble-color: var(--good);
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      width: 48px;
-      height: 48px;
-      border-radius: 999px;
-      transform: translate3d(-50%, -50%, 0) scale(1);
-      background:
-        radial-gradient(circle at 34% 26%, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.12) 16%, transparent 27%),
-        radial-gradient(circle at 70% 78%, rgba(255, 255, 255, 0.18), transparent 34%),
-        radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--bubble-color) 58%, white), var(--bubble-color));
-      box-shadow:
-        inset -10px -14px 22px rgba(0, 0, 0, 0.18),
-        inset 8px 10px 22px rgba(255, 255, 255, 0.38),
-        0 12px 40px color-mix(in srgb, var(--bubble-color) 48%, transparent);
-      opacity: 0;
-      will-change: transform, left, top, opacity;
-    }
-
-    .bubble.good {
-      --bubble-color: var(--good);
-    }
-
-    .bubble.bad {
-      --bubble-color: var(--bad);
-    }
-
-    .bubble.gold {
-      --bubble-color: var(--gold);
-    }
-
-    .bubble.morph {
-      --bubble-color: var(--morph);
-    }
-
-    .player-core {
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      width: var(--player-size);
-      height: var(--player-size);
-      border-radius: 999px;
-      transform: translate3d(-50%, -50%, 0);
-      background:
-        radial-gradient(circle at 28% 22%, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.14) 18%, transparent 32%),
-        radial-gradient(circle at 66% 75%, rgba(255, 255, 255, 0.16), transparent 45%),
-        radial-gradient(circle, rgba(145, 255, 238, 0.44), rgba(89, 120, 255, 0.2) 60%, rgba(255, 255, 255, 0.08));
-      box-shadow:
-        inset -18px -22px 42px rgba(0, 0, 0, 0.2),
-        inset 18px 22px 46px rgba(255, 255, 255, 0.28),
-        0 18px 80px rgba(99, 255, 228, 0.24);
-      opacity: 0.4;
-      will-change: transform, border-radius;
-    }
-
-    .shape-0 .player-core {
-      border-radius: 999px;
-    }
-
-    .shape-1 .player-core {
-      border-radius: 30%;
-    }
-
-    .shape-2 .player-core {
-      border-radius: 999px;
-      box-shadow:
-        inset 0 0 0 32px rgba(9, 13, 28, 0.34),
-        inset -18px -22px 42px rgba(0, 0, 0, 0.2),
-        inset 18px 22px 46px rgba(255, 255, 255, 0.28),
-        0 18px 80px rgba(99, 255, 228, 0.24);
-    }
-
-    .shape-3 .player-core {
-      border-radius: 44px;
-      width: calc(var(--player-size) * 1.45);
-      height: calc(var(--player-size) * 0.72);
-    }
-
-    .shape-4 .player-core {
-      border-radius: 18%;
-      rotate: 45deg;
+      background: #07101f;
     }
 
     .hud {
-      position: absolute;
-      top: 16px;
-      left: 16px;
-      right: 16px;
-      z-index: 10;
+      position: fixed;
+      z-index: 20;
+      top: calc(12px + var(--safe-top));
+      left: 12px;
+      right: 12px;
       display: flex;
-      gap: 12px;
-      justify-content: space-between;
       align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
       pointer-events: none;
     }
 
-    .stat-row {
+    .stats {
       display: flex;
       flex-wrap: wrap;
-      gap: 10px;
-      align-items: center;
-      max-width: min(760px, calc(100vw - 32px));
+      gap: 8px;
+      max-width: calc(100vw - 24px);
     }
 
     .chip,
-    .panel {
-      border: 1px solid var(--panel-border);
+    .mission,
+    .settings-panel,
+    .round-button,
+    .overlay-card {
+      border: 1px solid var(--border);
       background: var(--panel);
       backdrop-filter: blur(18px) saturate(160%);
-      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22);
+      box-shadow: 0 16px 50px rgba(0, 0, 0, 0.28);
     }
 
     .chip {
-      min-width: 96px;
+      min-width: 84px;
       border-radius: 999px;
-      padding: 9px 13px;
-      font-size: 13px;
-      line-height: 1.1;
-      letter-spacing: 0.01em;
+      padding: 8px 12px;
+      line-height: 1.05;
+      font-size: 12px;
+      color: var(--muted);
     }
 
     .chip strong {
       display: block;
       margin-top: 2px;
+      color: var(--text);
       font-size: 18px;
-      letter-spacing: -0.02em;
+      letter-spacing: -0.03em;
+      font-variant-numeric: tabular-nums;
     }
 
-    .chip.small {
-      min-width: auto;
-      padding-inline: 12px;
-    }
-
-    .settings {
-      width: min(340px, calc(100vw - 32px));
-      max-height: calc(100vh - 32px);
-      overflow: auto;
-      border-radius: 24px;
-      padding: 14px;
-      pointer-events: auto;
-      transform-origin: top right;
-      transition: transform 180ms ease, opacity 180ms ease;
-    }
-
-    .settings.collapsed {
-      opacity: 0;
-      transform: scale(0.96) translateY(-10px);
+    .mission {
+      position: fixed;
+      z-index: 19;
+      top: calc(84px + var(--safe-top));
+      left: 50%;
+      width: min(720px, calc(100vw - 24px));
+      transform: translateX(-50%);
+      border-radius: 22px;
+      padding: 10px 14px;
+      color: rgba(248, 252, 255, 0.82);
+      font-size: 13px;
+      line-height: 1.35;
+      text-align: center;
       pointer-events: none;
     }
 
-    .settings-head {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      align-items: center;
-      margin-bottom: 10px;
+    .legend-dot {
+      display: inline-block;
+      width: 9px;
+      height: 9px;
+      margin-right: 4px;
+      border-radius: 999px;
+      vertical-align: 1px;
+      box-shadow: 0 0 12px currentColor;
     }
 
-    .settings h2 {
+    .legend-good {
+      color: var(--good-edge);
+      background: #f7fffe;
+    }
+
+    .legend-bad {
+      color: var(--bad);
+      background: var(--bad);
+    }
+
+    .legend-gold {
+      color: var(--gold);
+      background: var(--gold);
+    }
+
+    .legend-morph {
+      color: var(--morph);
+      background: var(--morph);
+    }
+
+    .round-button {
+      position: fixed;
+      z-index: 45;
+      right: 14px;
+      min-height: 44px;
+      border-radius: 999px;
+      padding: 10px 14px;
+      border-color: rgba(255, 255, 255, 0.2);
+      cursor: pointer;
+      font-weight: 750;
+      letter-spacing: -0.01em;
+    }
+
+    .settings-toggle {
+      bottom: calc(14px + var(--safe-bottom));
+    }
+
+    .pause-toggle {
+      bottom: calc(66px + var(--safe-bottom));
+    }
+
+    .settings-panel {
+      position: fixed;
+      z-index: 44;
+      top: calc(84px + var(--safe-top));
+      right: 14px;
+      width: min(360px, calc(100vw - 28px));
+      max-height: calc(100dvh - 110px - var(--safe-top) - var(--safe-bottom));
+      overflow: auto;
+      overscroll-behavior: contain;
+      border-radius: 26px;
+      padding: 14px;
+      transform: translateX(calc(100% + 24px));
+      opacity: 0;
+      pointer-events: none;
+      transition: transform 180ms ease, opacity 180ms ease;
+    }
+
+    .settings-panel.open {
+      transform: translateX(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .settings-head {
+      position: sticky;
+      top: -14px;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: -14px -14px 4px;
+      padding: 14px;
+      background: var(--panel-strong);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 26px 26px 0 0;
+    }
+
+    .settings-head h2 {
       margin: 0;
-      font-size: 15px;
+      font-size: 16px;
       letter-spacing: -0.02em;
     }
 
-    .mini-button {
-      border: 0;
-      border-radius: 999px;
-      color: var(--text);
-      background: rgba(255, 255, 255, 0.12);
-      padding: 7px 10px;
-      cursor: pointer;
+    .mini-actions {
+      display: flex;
+      gap: 8px;
     }
 
-    .mini-button:hover {
-      background: rgba(255, 255, 255, 0.18);
+    .mini-button {
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 999px;
+      min-height: 34px;
+      padding: 7px 10px;
+      background: rgba(255, 255, 255, 0.1);
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
     }
 
     .setting {
       display: grid;
       grid-template-columns: 1fr auto;
-      gap: 6px 10px;
-      padding: 10px 0;
+      gap: 7px 12px;
+      padding: 11px 0;
       border-top: 1px solid rgba(255, 255, 255, 0.09);
       font-size: 13px;
     }
@@ -292,76 +254,78 @@
 
     .setting output {
       font-variant-numeric: tabular-nums;
-      color: var(--text);
     }
 
-    .setting input {
+    .setting input[type="range"] {
       grid-column: 1 / -1;
       width: 100%;
-      accent-color: #6cf7dd;
+      height: 38px;
+      accent-color: #dffff8;
+      touch-action: pan-y;
     }
 
     .help {
+      margin: 8px 0 0;
       color: var(--muted);
-      margin: 10px 0 0;
       font-size: 12px;
       line-height: 1.45;
     }
 
-    .toggle-settings {
-      position: absolute;
-      right: 16px;
-      bottom: 16px;
-      z-index: 12;
-      border: 1px solid var(--panel-border);
-      border-radius: 999px;
-      padding: 10px 14px;
-      color: var(--text);
-      background: var(--panel);
-      backdrop-filter: blur(18px) saturate(160%);
-      cursor: pointer;
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.24);
-    }
-
     .overlay {
-      position: absolute;
+      position: fixed;
+      z-index: 60;
       inset: 0;
-      z-index: 20;
       display: grid;
       place-items: center;
-      padding: 24px;
-      background: radial-gradient(circle at 50% 50%, rgba(9, 13, 28, 0.32), rgba(9, 13, 28, 0.78));
-      backdrop-filter: blur(10px);
+      padding: 20px;
+      background: radial-gradient(circle at 50% 45%, rgba(20, 32, 61, 0.35), rgba(3, 6, 14, 0.82));
+      backdrop-filter: blur(8px);
     }
 
     .overlay.hidden {
       display: none;
     }
 
-    .card {
-      width: min(620px, calc(100vw - 32px));
-      border: 1px solid var(--panel-border);
-      border-radius: 32px;
+    .overlay-card {
+      width: min(640px, calc(100vw - 30px));
+      border-radius: 34px;
       padding: clamp(22px, 4vw, 42px);
-      background:
-        linear-gradient(145deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.07)),
-        rgba(9, 13, 28, 0.68);
-      box-shadow: 0 24px 90px rgba(0, 0, 0, 0.38);
       text-align: center;
+      background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.07)),
+        rgba(8, 13, 28, 0.78);
     }
 
-    .card h1 {
+    .overlay-card h1 {
       margin: 0 0 12px;
-      font-size: clamp(36px, 7vw, 76px);
-      line-height: 0.92;
-      letter-spacing: -0.07em;
+      font-size: clamp(34px, 7vw, 68px);
+      line-height: 0.95;
+      letter-spacing: -0.06em;
     }
 
-    .card p {
+    .overlay-card p {
       margin: 0 auto 18px;
-      max-width: 48ch;
+      max-width: 52ch;
       color: var(--muted);
       line-height: 1.55;
+    }
+
+    .rules {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin: 18px auto 0;
+      max-width: 520px;
+      text-align: left;
+      color: rgba(248, 252, 255, 0.82);
+      font-size: 13px;
+    }
+
+    .rule {
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.06);
     }
 
     .actions {
@@ -369,922 +333,1022 @@
       flex-wrap: wrap;
       justify-content: center;
       gap: 10px;
-      margin-top: 24px;
+      margin-top: 22px;
     }
 
     .primary,
     .secondary {
+      min-height: 46px;
       border: 0;
       border-radius: 999px;
       padding: 12px 18px;
       cursor: pointer;
-      color: #07111b;
-      font-weight: 800;
+      font-weight: 850;
       letter-spacing: -0.01em;
     }
 
     .primary {
-      background: linear-gradient(135deg, #70ffe0, #ffe082);
-      box-shadow: 0 12px 42px rgba(112, 255, 224, 0.25);
+      color: #06111b;
+      background: linear-gradient(135deg, #f9fffd, #aaffdf 45%, #ffd86d);
+      box-shadow: 0 14px 48px rgba(170, 255, 223, 0.24);
     }
 
     .secondary {
-      color: var(--text);
       background: rgba(255, 255, 255, 0.12);
+      color: var(--text);
     }
 
-    .burst,
-    .particle {
-      position: absolute;
-      z-index: 9;
-      left: 0;
-      top: 0;
-      pointer-events: none;
+    .toast {
+      position: fixed;
+      z-index: 35;
+      left: 50%;
+      bottom: calc(24px + var(--safe-bottom));
+      transform: translateX(-50%) translateY(14px);
+      opacity: 0;
+      max-width: min(460px, calc(100vw - 28px));
+      border: 1px solid rgba(255, 255, 255, 0.14);
       border-radius: 999px;
-      will-change: transform, opacity;
-    }
-
-    .burst {
-      width: 28px;
-      height: 28px;
-      border: 2px solid rgba(255, 255, 255, 0.8);
-      transform: translate3d(-50%, -50%, 0) scale(0.25);
-      animation: burst 520ms ease-out forwards;
-      box-shadow: 0 0 24px rgba(255, 255, 255, 0.55);
-    }
-
-    .particle {
-      width: 8px;
-      height: 8px;
-      background: currentColor;
-      transform: translate3d(-50%, -50%, 0);
-      animation: particle 620ms ease-out forwards;
-      box-shadow: 0 0 16px currentColor;
-    }
-
-    @keyframes burst {
-      to {
-        opacity: 0;
-        transform: translate3d(-50%, -50%, 0) scale(4.8);
-      }
-    }
-
-    @keyframes particle {
-      to {
-        opacity: 0;
-        transform: translate3d(var(--dx), var(--dy), 0) scale(0.2);
-      }
-    }
-
-    .shake {
-      animation: shake 240ms ease-out;
-    }
-
-    @keyframes shake {
-      20% {
-        transform: translate3d(-8px, 0, 0);
-      }
-
-      45% {
-        transform: translate3d(7px, 0, 0);
-      }
-
-      70% {
-        transform: translate3d(-4px, 0, 0);
-      }
-    }
-
-    .vfx-note {
-      position: absolute;
-      left: 16px;
-      bottom: 16px;
-      z-index: 12;
-      max-width: min(430px, calc(100vw - 32px));
-      color: var(--muted);
-      font-size: 12px;
+      padding: 10px 14px;
+      background: rgba(8, 12, 24, 0.72);
+      backdrop-filter: blur(18px) saturate(160%);
+      color: rgba(248, 252, 255, 0.86);
+      font-size: 13px;
       pointer-events: none;
+      transition: opacity 160ms ease, transform 160ms ease;
     }
 
-    .no-vfx .vfx-note strong {
-      color: var(--gold);
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
     }
 
     @media (max-width: 720px) {
       .hud {
-        align-items: stretch;
-      }
-
-      .settings {
-        position: absolute;
-        top: 78px;
-        right: 0;
+        top: calc(8px + var(--safe-top));
+        left: 8px;
+        right: 8px;
       }
 
       .chip {
-        min-width: 82px;
+        min-width: 70px;
+        padding: 7px 10px;
       }
 
       .chip strong {
         font-size: 16px;
       }
 
-      .card h1 {
-        letter-spacing: -0.05em;
+      .mission {
+        top: calc(74px + var(--safe-top));
+        font-size: 12px;
+      }
+
+      .rules {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (orientation: portrait) and (max-width: 820px) {
+      .settings-panel {
+        top: auto;
+        left: 8px;
+        right: 8px;
+        bottom: calc(8px + var(--safe-bottom));
+        width: auto;
+        max-height: min(68dvh, 560px);
+        border-radius: 28px;
+        transform: translateY(calc(100% + 24px));
+      }
+
+      .settings-panel.open {
+        transform: translateY(0);
+      }
+
+      .settings-toggle {
+        right: 10px;
+        bottom: calc(10px + var(--safe-bottom));
+      }
+
+      .pause-toggle {
+        right: 10px;
+        bottom: calc(62px + var(--safe-bottom));
+      }
+    }
+
+    @media (orientation: landscape) and (max-height: 560px) {
+      .hud {
+        top: calc(6px + var(--safe-top));
+      }
+
+      .mission {
+        display: none;
+      }
+
+      .settings-panel {
+        top: calc(6px + var(--safe-top));
+        right: 8px;
+        bottom: calc(6px + var(--safe-bottom));
+        width: min(360px, 42vw);
+        max-height: none;
+        padding-bottom: 70px;
+      }
+
+      .round-button {
+        right: 8px;
+      }
+
+      .chip {
+        min-width: 68px;
+        padding: 6px 9px;
+      }
+
+      .chip strong {
+        font-size: 15px;
       }
     }
   </style>
 </head>
 <body>
-  <div id="app" class="shape-0">
-    <svg width="0" height="0" aria-hidden="true">
-      <filter id="goo">
-        <feGaussianBlur in="SourceGraphic" stdDeviation="9" result="blur" />
-        <feColorMatrix in="blur" mode="matrix" values="
-          1 0 0 0 0
-          0 1 0 0 0
-          0 0 1 0 0
-          0 0 0 18 -8" result="goo" />
-        <feBlend in="SourceGraphic" in2="goo" />
-      </filter>
-    </svg>
+  <canvas id="gameCanvas" aria-label="Liquid Bubble Pop speelveld"></canvas>
 
-    <div id="world">
-      <div id="playerCore" class="player-core"></div>
+  <div class="hud" aria-hidden="true">
+    <div class="stats">
+      <div class="chip">Score<strong id="scoreEl">0</strong></div>
+      <div class="chip">Tijd<strong id="timeEl">75</strong></div>
+      <div class="chip">Levens<strong id="livesEl">3</strong></div>
+      <div class="chip">Streak<strong id="streakEl">x1</strong></div>
+      <div class="chip">Vorm<strong id="shapeEl">Bol</strong></div>
     </div>
+  </div>
 
-    <div class="hud">
-      <div class="stat-row">
-        <div class="chip">Score<strong id="score">0</strong></div>
-        <div class="chip">Tijd<strong id="time">60</strong></div>
-        <div class="chip">Levens<strong id="lives">3</strong></div>
-        <div class="chip">Combo<strong id="combo">x1</strong></div>
-        <div class="chip small">Vorm: <strong id="shapeName">Bol</strong></div>
+  <div class="mission" id="missionText">
+    <span class="legend-dot legend-good"></span>Parelwitte bubbles pakken,
+    <span class="legend-dot legend-bad"></span>rood ontwijken,
+    <span class="legend-dot legend-gold"></span>goud geeft tijd,
+    <span class="legend-dot legend-morph"></span>paars verandert vorm.
+  </div>
+
+  <button id="pauseToggle" class="round-button pause-toggle" type="button">Pauze</button>
+  <button id="settingsToggle" class="round-button settings-toggle" type="button">Instellingen</button>
+
+  <section id="settingsPanel" class="settings-panel" aria-label="Instellingen">
+    <div class="settings-head">
+      <h2>Instellingen</h2>
+      <div class="mini-actions">
+        <button id="resetSettings" class="mini-button" type="button">Reset</button>
+        <button id="closeSettings" class="mini-button" type="button">Sluit</button>
       </div>
-
-      <section id="settings" class="settings panel collapsed" aria-label="Instellingen">
-        <div class="settings-head">
-          <h2>Instellingen</h2>
-          <button class="mini-button" id="resetSettings" type="button">Reset</button>
-        </div>
-
-        <div class="setting">
-          <label for="bubbleCount">Aantal bubbles</label>
-          <output id="bubbleCountOut">12</output>
-          <input id="bubbleCount" data-setting="bubbleCount" type="range" min="4" max="28" step="1" value="12" />
-        </div>
-
-        <div class="setting">
-          <label for="bubbleSpeed">Bubble snelheid</label>
-          <output id="bubbleSpeedOut">1.00</output>
-          <input id="bubbleSpeed" data-setting="bubbleSpeed" type="range" min="0.35" max="2.4" step="0.05" value="1" />
-        </div>
-
-        <div class="setting">
-          <label for="playerRadius">Liquid grootte</label>
-          <output id="playerRadiusOut">72</output>
-          <input id="playerRadius" data-setting="playerRadius" type="range" min="42" max="128" step="1" value="72" />
-        </div>
-
-        <div class="setting">
-          <label for="popRadius">Pop bereik</label>
-          <output id="popRadiusOut">92</output>
-          <input id="popRadius" data-setting="popRadius" type="range" min="42" max="180" step="1" value="92" />
-        </div>
-
-        <div class="setting">
-          <label for="smoothing">Muis smoothing</label>
-          <output id="smoothingOut">0.18</output>
-          <input id="smoothing" data-setting="smoothing" type="range" min="0.05" max="0.38" step="0.01" value="0.18" />
-        </div>
-
-        <div class="setting">
-          <label for="distortion">Glas vervorming</label>
-          <output id="distortionOut">0.060</output>
-          <input id="distortion" data-setting="distortion" type="range" min="0.01" max="0.12" step="0.005" value="0.06" />
-        </div>
-
-        <div class="setting">
-          <label for="dangerRatio">Rode bubble kans</label>
-          <output id="dangerRatioOut">18%</output>
-          <input id="dangerRatio" data-setting="dangerRatio" type="range" min="0" max="0.45" step="0.01" value="0.18" />
-        </div>
-
-        <p class="help">
-          Speel: beweeg met muis of vinger. Raak goede bubbles voor punten, ontwijk rood. Klik of tik om de dichtstbijzijnde bubble te laten klappen. Lege klik wisselt vorm.
-        </p>
-      </section>
     </div>
 
-    <button id="toggleSettings" class="toggle-settings" type="button">Instellingen</button>
+    <div class="setting">
+      <label for="bubbleCount">Aantal bubbles</label>
+      <output id="bubbleCountOut">14</output>
+      <input id="bubbleCount" data-setting="bubbleCount" type="range" min="5" max="32" step="1" value="14" />
+    </div>
 
-    <p class="vfx-note" id="vfxNote">
-      <strong>Liquid shader:</strong> laden via VFX JS. Als je offline opent blijft de CSS fallback speelbaar.
+    <div class="setting">
+      <label for="bubbleSpeed">Bubble snelheid</label>
+      <output id="bubbleSpeedOut">1.00</output>
+      <input id="bubbleSpeed" data-setting="bubbleSpeed" type="range" min="0.35" max="2.6" step="0.05" value="1" />
+    </div>
+
+    <div class="setting">
+      <label for="playerRadius">Liquid grootte</label>
+      <output id="playerRadiusOut">54</output>
+      <input id="playerRadius" data-setting="playerRadius" type="range" min="36" max="96" step="1" value="54" />
+    </div>
+
+    <div class="setting">
+      <label for="popRadius">Tap bereik</label>
+      <output id="popRadiusOut">105</output>
+      <input id="popRadius" data-setting="popRadius" type="range" min="50" max="190" step="1" value="105" />
+    </div>
+
+    <div class="setting">
+      <label for="controlEase">Besturing directheid</label>
+      <output id="controlEaseOut">0.26</output>
+      <input id="controlEase" data-setting="controlEase" type="range" min="0.08" max="0.55" step="0.01" value="0.26" />
+    </div>
+
+    <div class="setting">
+      <label for="dangerRatio">Rode bubble kans</label>
+      <output id="dangerRatioOut">14%</output>
+      <input id="dangerRatio" data-setting="dangerRatio" type="range" min="0" max="0.4" step="0.01" value="0.14" />
+    </div>
+
+    <div class="setting">
+      <label for="liquidBridge">Liquid verbinding</label>
+      <output id="liquidBridgeOut">0.70</output>
+      <input id="liquidBridge" data-setting="liquidBridge" type="range" min="0" max="1" step="0.05" value="0.7" />
+    </div>
+
+    <p class="help">
+      Spel: sleep of beweeg om de liquid vorm te sturen. Raak parelwitte bubbles voor punten. Tik een bubble om hem op afstand te poppen. Rode bubbles mag je aantikken om ze veilig weg te halen, maar raak ze niet met je liquid vorm.
     </p>
+  </section>
 
-    <div id="overlay" class="overlay">
-      <div class="card">
-        <h1>Liquid Bubble Pop</h1>
-        <p>
-          Een eerste speelbaar prototype voor het liquid glass effect. Verzamel mint bubbles, pak goud voor extra tijd, paars verandert je vorm en rood kost een leven.
-        </p>
-        <div class="actions">
-          <button id="startButton" class="primary" type="button">Start game</button>
-          <button id="openSettingsButton" class="secondary" type="button">Instellingen openen</button>
-        </div>
+  <div id="toast" class="toast">Klaar</div>
+
+  <div id="overlay" class="overlay">
+    <div class="overlay-card">
+      <h1 id="overlayTitle">Liquid Bubble Pop</h1>
+      <p id="overlayText">
+        Deze v2 is opnieuw opgebouwd voor stabiel spelen op mobiel en desktop. De goede bubbles zijn nu parelwit en glimmend, de regels zijn simpeler en de instellingen blijven scrollbaar in portrait en landscape.
+      </p>
+      <div class="rules">
+        <div class="rule"><span class="legend-dot legend-good"></span>Parelwit is goed: pakken of aantikken voor score.</div>
+        <div class="rule"><span class="legend-dot legend-bad"></span>Rood is gevaar: aanraken kost een leven.</div>
+        <div class="rule"><span class="legend-dot legend-gold"></span>Goud geeft extra tijd en punten.</div>
+        <div class="rule"><span class="legend-dot legend-morph"></span>Paars verandert je liquid vorm.</div>
+      </div>
+      <div class="actions">
+        <button id="startButton" class="primary" type="button">Start game</button>
+        <button id="overlaySettings" class="secondary" type="button">Instellingen</button>
       </div>
     </div>
   </div>
 
-  <script type="module">
-    const MAX_BUBBLES = 28;
-    const SHADER = `
-      precision highp float;
+  <script>
+    (() => {
+      "use strict";
 
-      uniform sampler2D src;
-      uniform vec2 resolution;
-      uniform vec2 offset;
-      uniform float time;
-      uniform vec2 playerPx;
-      uniform float playerR;
-      uniform float distortion;
-      uniform int shapeIndex;
-      uniform float clickTime;
-      uniform int clickCount;
-      uniform float bubbleData[112];
+      const canvas = document.getElementById("gameCanvas");
+      const ctx = canvas.getContext("2d", { alpha: false });
 
-      out vec4 outColor;
+      const scoreEl = document.getElementById("scoreEl");
+      const timeEl = document.getElementById("timeEl");
+      const livesEl = document.getElementById("livesEl");
+      const streakEl = document.getElementById("streakEl");
+      const shapeEl = document.getElementById("shapeEl");
+      const overlay = document.getElementById("overlay");
+      const overlayTitle = document.getElementById("overlayTitle");
+      const overlayText = document.getElementById("overlayText");
+      const startButton = document.getElementById("startButton");
+      const overlaySettings = document.getElementById("overlaySettings");
+      const settingsToggle = document.getElementById("settingsToggle");
+      const pauseToggle = document.getElementById("pauseToggle");
+      const settingsPanel = document.getElementById("settingsPanel");
+      const closeSettings = document.getElementById("closeSettings");
+      const resetSettings = document.getElementById("resetSettings");
+      const toast = document.getElementById("toast");
 
-      const int MAX_ITEMS = 28;
+      const shapeNames = ["Bol", "Cube", "Ring", "Capsule", "Diamant"];
 
-      float smin(float a, float b, float k) {
-        float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);
-        return mix(b, a, h) - k * h * (1.0 - h);
+      const defaults = {
+        bubbleCount: 14,
+        bubbleSpeed: 1,
+        playerRadius: 54,
+        popRadius: 105,
+        controlEase: 0.26,
+        dangerRatio: 0.14,
+        liquidBridge: 0.7
+      };
+
+      const settings = { ...defaults };
+
+      const state = {
+        running: false,
+        paused: false,
+        score: 0,
+        lives: 3,
+        timeLeft: 75,
+        streak: 1,
+        streakTime: 0,
+        shape: 0,
+        lastT: performance.now(),
+        dpr: 1,
+        width: 1,
+        height: 1,
+        hasPointer: false,
+        shake: 0
+      };
+
+      const player = {
+        x: 0,
+        y: 0,
+        tx: 0,
+        ty: 0,
+        vx: 0,
+        vy: 0,
+        wobble: 0
+      };
+
+      const bubbles = [];
+      const pops = [];
+      const floatTexts = [];
+      let toastTimer = 0;
+
+      function clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
       }
 
-      mat2 rot(float a) {
-        float c = cos(a);
-        float s = sin(a);
-        return mat2(c, -s, s, c);
+      function rand(min, max) {
+        return min + Math.random() * (max - min);
       }
 
-      float sdSphere(vec3 p, float r) {
-        return length(p) - r;
+      function dist(ax, ay, bx, by) {
+        return Math.hypot(ax - bx, ay - by);
       }
 
-      float sdBox(vec3 p, vec3 b, float r) {
-        vec3 q = abs(p) - b + r;
-        return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0) - r;
+      function resize() {
+        state.dpr = Math.min(2, window.devicePixelRatio || 1);
+        state.width = Math.max(1, Math.floor(window.innerWidth));
+        state.height = Math.max(1, Math.floor(window.innerHeight));
+        canvas.width = Math.floor(state.width * state.dpr);
+        canvas.height = Math.floor(state.height * state.dpr);
+        canvas.style.width = `${state.width}px`;
+        canvas.style.height = `${state.height}px`;
+        ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+
+        if (!state.hasPointer) {
+          player.x = state.width * 0.5;
+          player.y = state.height * 0.58;
+          player.tx = player.x;
+          player.ty = player.y;
+        } else {
+          player.x = clamp(player.x, 0, state.width);
+          player.y = clamp(player.y, 0, state.height);
+          player.tx = clamp(player.tx, 0, state.width);
+          player.ty = clamp(player.ty, 0, state.height);
+        }
       }
 
-      float sdTorus(vec3 p, vec2 t) {
-        vec2 q = vec2(length(p.xy) - t.x, p.z);
-        return length(q) - t.y;
+      function setPointer(clientX, clientY) {
+        player.tx = clamp(clientX, 0, state.width);
+        player.ty = clamp(clientY, 0, state.height);
+        state.hasPointer = true;
       }
 
-      float sdCapsule(vec3 p, vec3 a, vec3 b, float r) {
-        vec3 pa = p - a;
-        vec3 ba = b - a;
-        float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
-        return length(pa - ba * h) - r;
+      function chooseType() {
+        const roll = Math.random();
+        if (roll < settings.dangerRatio) return "bad";
+        if (roll < settings.dangerRatio + 0.08) return "gold";
+        if (roll < settings.dangerRatio + 0.15) return "morph";
+        return "good";
       }
 
-      float sdOctahedron(vec3 p, float s) {
-        p = abs(p);
-        return (p.x + p.y + p.z - s) * 0.57735027;
+      function typeColor(type) {
+        if (type === "bad") return "#ff5d7e";
+        if (type === "gold") return "#ffd86d";
+        if (type === "morph") return "#a88cff";
+        return "#f7fffd";
       }
 
-      vec3 centerWorld() {
-        vec2 uv = playerPx / resolution;
-        float aspect = resolution.y / resolution.x;
-        return vec3((uv - 0.5) * vec2(1.0, aspect), 0.0);
+      function typeEdge(type) {
+        if (type === "bad") return "#ff9ab0";
+        if (type === "gold") return "#fff0a8";
+        if (type === "morph") return "#d8caff";
+        return "#9affdf";
       }
 
-      float scene(vec3 p) {
-        vec3 c = centerWorld();
-        vec3 q = p - c;
+      function spawnBubble(b, first = false) {
+        const margin = 70;
+        const side = Math.floor(Math.random() * 4);
 
-        float pulseAge = min(clickTime, 0.8);
-        float pulse = exp(-pulseAge * 5.5) * sin(pulseAge * 25.0) * 0.09;
-        float r = playerR * (1.0 + pulse);
-
-        q.xy *= rot(sin(time * 0.8) * 0.12);
-        q.xz *= rot(cos(time * 0.7) * 0.08);
-        q.z += sin(q.x * 34.0 + q.y * 12.0 + time * 3.2) * 0.006;
-
-        float d = sdSphere(q, r);
-
-        if (shapeIndex == 1) {
-          d = sdBox(q, vec3(r * 0.72), r * 0.23);
-        } else if (shapeIndex == 2) {
-          d = sdTorus(q, vec2(r * 0.78, r * 0.23));
-        } else if (shapeIndex == 3) {
-          d = sdCapsule(q, vec3(-r * 0.88, 0.0, 0.0), vec3(r * 0.88, 0.0, 0.0), r * 0.44);
-        } else if (shapeIndex == 4) {
-          d = sdOctahedron(q, r * 1.1);
+        if (first) {
+          b.x = rand(margin, state.width - margin);
+          b.y = rand(Math.max(120, margin), state.height - margin);
+        } else if (side === 0) {
+          b.x = -margin;
+          b.y = rand(80, state.height - margin);
+        } else if (side === 1) {
+          b.x = state.width + margin;
+          b.y = rand(80, state.height - margin);
+        } else if (side === 2) {
+          b.x = rand(margin, state.width - margin);
+          b.y = -margin;
+        } else {
+          b.x = rand(margin, state.width - margin);
+          b.y = state.height + margin;
         }
 
-        for (int i = 0; i < MAX_ITEMS; i++) {
-          int k = i * 4;
-          float br = bubbleData[k + 3];
-          if (br > 0.0001) {
-            vec3 bp = vec3(bubbleData[k], bubbleData[k + 1], bubbleData[k + 2]);
-            float bd = sdSphere(p - bp, br);
-            d = smin(d, bd, max(0.012, br * 0.7));
+        const angle = Math.atan2(state.height * 0.52 - b.y, state.width * 0.5 - b.x) + rand(-0.62, 0.62);
+        const base = rand(42, 88) * settings.bubbleSpeed * (1 + Math.min(0.45, state.score / 1400));
+
+        b.vx = Math.cos(angle) * base;
+        b.vy = Math.sin(angle) * base;
+        b.type = chooseType();
+        b.r = b.type === "good" ? rand(24, 39) : rand(21, 34);
+        b.phase = rand(0, Math.PI * 2);
+        b.alpha = 0;
+        b.scale = 0.2;
+        b.active = true;
+        b.justSpawned = 0.25;
+      }
+
+      function ensureBubbles() {
+        while (bubbles.length < settings.bubbleCount) {
+          const b = { x: 0, y: 0, vx: 0, vy: 0, r: 28, type: "good", phase: 0, alpha: 0, scale: 0.2, active: true, justSpawned: 0 };
+          bubbles.push(b);
+          spawnBubble(b, true);
+        }
+        while (bubbles.length > settings.bubbleCount) {
+          bubbles.pop();
+        }
+      }
+
+      function addFloatText(text, x, y, color) {
+        floatTexts.push({ text, x, y, vy: -42, life: 0.9, maxLife: 0.9, color });
+      }
+
+      function addPop(x, y, type, big = false) {
+        const color = typeColor(type);
+        const edge = typeEdge(type);
+        pops.push({ x, y, r: big ? 26 : 18, life: 0.55, maxLife: 0.55, color: edge, ring: true });
+        const count = big ? 18 : 11;
+        for (let i = 0; i < count; i += 1) {
+          const angle = (i / count) * Math.PI * 2 + rand(-0.2, 0.2);
+          const speed = rand(55, big ? 180 : 125);
+          pops.push({
+            x,
+            y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            r: rand(2.5, 5.2),
+            life: rand(0.35, 0.72),
+            maxLife: 0.72,
+            color,
+            ring: false
+          });
+        }
+      }
+
+      function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove("show"), 1400);
+      }
+
+      function addScore(points, x, y, label) {
+        const earned = points * state.streak;
+        state.score += earned;
+        state.streak = clamp(state.streak + 1, 1, 12);
+        state.streakTime = 2.5;
+        addFloatText(label || `+${earned}`, x, y, "#f7fffd");
+      }
+
+      function damage(x, y) {
+        state.lives -= 1;
+        state.streak = 1;
+        state.streakTime = 0;
+        state.shake = 0.28;
+        addFloatText("-1 leven", x, y, "#ff9ab0");
+        showToast("Rood geraakt. Raak rode bubbles niet met de liquid vorm.");
+        if (state.lives <= 0) endGame("Game over", `Je score is ${Math.round(state.score)}. De besturing en zichtbaarheid zijn nu het uitgangspunt om verder te tweaken.`);
+      }
+
+      function cycleShape(x = player.x, y = player.y) {
+        state.shape = (state.shape + 1) % shapeNames.length;
+        shapeEl.textContent = shapeNames[state.shape];
+        player.wobble = 1;
+        addFloatText(shapeNames[state.shape], x, y - settings.playerRadius, "#d8caff");
+      }
+
+      function handleBubble(b, reason) {
+        if (!state.running || state.paused) return;
+
+        const x = b.x;
+        const y = b.y;
+        const type = b.type;
+        const safeTap = reason === "tap";
+
+        addPop(x, y, type, type === "gold" || type === "morph");
+
+        if (type === "bad") {
+          if (safeTap) {
+            state.score += 3;
+            addFloatText("veilig", x, y, "#ffb6c5");
+          } else {
+            damage(x, y);
           }
+        } else if (type === "gold") {
+          state.timeLeft = clamp(state.timeLeft + 5, 0, 99);
+          addScore(safeTap ? 24 : 18, x, y, "+5 sec");
+        } else if (type === "morph") {
+          addScore(safeTap ? 20 : 16, x, y, "morph");
+          cycleShape(x, y);
+        } else {
+          addScore(safeTap ? 14 : 10, x, y);
         }
 
-        return d;
+        spawnBubble(b, false);
       }
 
-      vec3 calcNormal(vec3 p) {
-        vec2 e = vec2(0.0015, 0.0);
-        return normalize(vec3(
-          scene(p + e.xyy) - scene(p - e.xyy),
-          scene(p + e.yxy) - scene(p - e.yxy),
-          scene(p + e.yyx) - scene(p - e.yyx)
-        ));
-      }
-
-      vec4 readSrc(vec2 uv) {
-        vec2 safeUv = clamp(uv, vec2(0.001), vec2(0.999));
-        vec4 c = texture(src, safeUv);
-        vec4 base = vec4(0.03, 0.05, 0.10, 1.0);
-        return mix(base, c, c.a);
-      }
-
-      void main() {
-        vec2 uv = (gl_FragCoord.xy - offset) / resolution;
-        float aspect = resolution.y / resolution.x;
-        vec2 p2 = (uv - 0.5) * vec2(1.0, aspect);
-
-        vec3 ro = vec3(0.0, 0.0, -1.9);
-        vec3 rd = normalize(vec3(p2, 1.65));
-
-        float t = 0.0;
-        bool hit = false;
-        vec3 pos = vec3(0.0);
-
-        for (int i = 0; i < 56; i++) {
-          pos = ro + rd * t;
-          float d = scene(pos);
-          if (d < 0.0012) {
-            hit = true;
-            break;
-          }
-          t += d * 0.78;
-          if (t > 4.0) {
-            break;
+      function nearestBubble(x, y) {
+        let best = null;
+        let bestD = Infinity;
+        for (const b of bubbles) {
+          const d = dist(x, y, b.x, b.y);
+          if (d < bestD) {
+            best = b;
+            bestD = d;
           }
         }
+        return { bubble: best, distance: bestD };
+      }
 
-        if (!hit) {
-          outColor = readSrc(uv);
+      function startGame() {
+        state.running = true;
+        state.paused = false;
+        state.score = 0;
+        state.lives = 3;
+        state.timeLeft = 75;
+        state.streak = 1;
+        state.streakTime = 0;
+        state.shape = 0;
+        state.shake = 0;
+        shapeEl.textContent = shapeNames[state.shape];
+        overlay.classList.add("hidden");
+        startButton.textContent = "Start game";
+        pauseToggle.textContent = "Pauze";
+        ensureBubbles();
+        for (const b of bubbles) spawnBubble(b, true);
+        setPointer(state.width * 0.5, state.height * 0.62);
+      }
+
+      function endGame(title, text) {
+        state.running = false;
+        state.paused = false;
+        overlayTitle.textContent = title;
+        overlayText.textContent = text;
+        startButton.textContent = "Opnieuw starten";
+        pauseToggle.textContent = "Pauze";
+        overlay.classList.remove("hidden");
+      }
+
+      function togglePause() {
+        if (!state.running) return;
+        state.paused = !state.paused;
+        pauseToggle.textContent = state.paused ? "Verder" : "Pauze";
+        showToast(state.paused ? "Gepauzeerd" : "Verder spelen");
+      }
+
+      function setSettingsOpen(open) {
+        settingsPanel.classList.toggle("open", open);
+      }
+
+      function updateSettingsUi() {
+        for (const [key, value] of Object.entries(settings)) {
+          const input = document.querySelector(`[data-setting="${key}"]`);
+          const output = document.getElementById(`${key}Out`);
+          if (!input || !output) continue;
+          input.value = String(value);
+          if (key === "dangerRatio") output.textContent = `${Math.round(value * 100)}%`;
+          else if (key === "bubbleCount" || key === "playerRadius" || key === "popRadius") output.textContent = String(Math.round(value));
+          else output.textContent = Number(value).toFixed(2);
+        }
+        ensureBubbles();
+      }
+
+      function drawBackground(t) {
+        const w = state.width;
+        const h = state.height;
+        const g = ctx.createLinearGradient(0, 0, w, h);
+        g.addColorStop(0, "#070a16");
+        g.addColorStop(0.5, "#10203b");
+        g.addColorStop(1, "#071526");
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, w, h);
+
+        ctx.save();
+        ctx.globalAlpha = 0.16;
+        const r1 = ctx.createRadialGradient(w * 0.18, h * 0.2, 0, w * 0.18, h * 0.2, Math.max(w, h) * 0.42);
+        r1.addColorStop(0, "#61ffe0");
+        r1.addColorStop(1, "rgba(97, 255, 224, 0)");
+        ctx.fillStyle = r1;
+        ctx.fillRect(0, 0, w, h);
+
+        const r2 = ctx.createRadialGradient(w * 0.82, h * 0.24, 0, w * 0.82, h * 0.24, Math.max(w, h) * 0.38);
+        r2.addColorStop(0, "#a88cff");
+        r2.addColorStop(1, "rgba(168, 140, 255, 0)");
+        ctx.fillStyle = r2;
+        ctx.fillRect(0, 0, w, h);
+        ctx.restore();
+
+        ctx.save();
+        ctx.globalAlpha = 0.08;
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 1;
+        const grid = 46;
+        const ox = (t * 10) % grid;
+        const oy = (t * 7) % grid;
+        for (let x = -grid + ox; x < w + grid; x += grid) {
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, h);
+          ctx.stroke();
+        }
+        for (let y = -grid + oy; y < h + grid; y += grid) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(w, y);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+
+      function playerPath(r, t) {
+        const wobble = Math.sin(t * 2.9) * 0.035 + player.wobble * 0.08;
+        if (state.shape === 0) {
+          ctx.beginPath();
+          ctx.ellipse(0, 0, r * (1 + wobble), r * (1 - wobble * 0.6), Math.sin(t * 0.8) * 0.18, 0, Math.PI * 2);
+        } else if (state.shape === 1) {
+          roundedRectPath(-r * 0.86, -r * 0.86, r * 1.72, r * 1.72, r * 0.32);
+        } else if (state.shape === 2) {
+          ctx.beginPath();
+          ctx.arc(0, 0, r * 0.98, 0, Math.PI * 2);
+          ctx.moveTo(r * 0.42, 0);
+          ctx.arc(0, 0, r * 0.42, 0, Math.PI * 2, true);
+        } else if (state.shape === 3) {
+          roundedRectPath(-r * 1.35, -r * 0.58, r * 2.7, r * 1.16, r * 0.56);
+        } else {
+          ctx.beginPath();
+          ctx.moveTo(0, -r * 1.12);
+          ctx.quadraticCurveTo(r * 0.75, -r * 0.7, r * 1.12, 0);
+          ctx.quadraticCurveTo(r * 0.7, r * 0.75, 0, r * 1.12);
+          ctx.quadraticCurveTo(-r * 0.75, r * 0.7, -r * 1.12, 0);
+          ctx.quadraticCurveTo(-r * 0.7, -r * 0.75, 0, -r * 1.12);
+          ctx.closePath();
+        }
+      }
+
+      function roundedRectPath(x, y, w, h, r) {
+        const rr = Math.min(r, w * 0.5, h * 0.5);
+        ctx.beginPath();
+        ctx.moveTo(x + rr, y);
+        ctx.lineTo(x + w - rr, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + rr);
+        ctx.lineTo(x + w, y + h - rr);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - rr, y + h);
+        ctx.lineTo(x + rr, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - rr);
+        ctx.lineTo(x, y + rr);
+        ctx.quadraticCurveTo(x, y, x + rr, y);
+        ctx.closePath();
+      }
+
+      function drawLiquidBridge(b, t) {
+        if (settings.liquidBridge <= 0 || b.type === "bad") return;
+        const d = dist(player.x, player.y, b.x, b.y);
+        const reach = settings.playerRadius + b.r + 92 * settings.liquidBridge;
+        if (d > reach || d < 2) return;
+        const strength = (1 - d / reach) * settings.liquidBridge;
+        const dx = (b.x - player.x) / d;
+        const dy = (b.y - player.y) / d;
+        const nx = -dy;
+        const ny = dx;
+        const w1 = settings.playerRadius * 0.38 * strength;
+        const w2 = b.r * 0.85 * strength;
+        const midX = (player.x + b.x) * 0.5 + Math.sin(t * 3 + b.phase) * 10 * strength;
+        const midY = (player.y + b.y) * 0.5 + Math.cos(t * 2.7 + b.phase) * 10 * strength;
+
+        ctx.save();
+        ctx.globalAlpha = 0.18 + 0.28 * strength;
+        const g = ctx.createLinearGradient(player.x, player.y, b.x, b.y);
+        g.addColorStop(0, "rgba(255, 255, 255, 0.36)");
+        g.addColorStop(0.5, "rgba(214, 255, 248, 0.28)");
+        g.addColorStop(1, "rgba(154, 255, 223, 0.22)");
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.moveTo(player.x + nx * w1, player.y + ny * w1);
+        ctx.quadraticCurveTo(midX + nx * w1, midY + ny * w1, b.x + nx * w2, b.y + ny * w2);
+        ctx.quadraticCurveTo(b.x - nx * w2, b.y - ny * w2, midX - nx * w1, midY - ny * w1);
+        ctx.quadraticCurveTo(player.x - nx * w1, player.y - ny * w1, player.x + nx * w1, player.y + ny * w1);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      function drawPlayer(t) {
+        const r = settings.playerRadius;
+        const sx = 1 + Math.sin(t * 3.6) * 0.025 + player.wobble * 0.08;
+        const sy = 1 + Math.cos(t * 3.1) * 0.025 - player.wobble * 0.04;
+
+        ctx.save();
+        if (state.shake > 0) {
+          ctx.translate(rand(-5, 5) * state.shake * 4, rand(-4, 4) * state.shake * 4);
+        }
+        ctx.translate(player.x, player.y);
+        ctx.rotate(Math.sin(t * 0.9) * 0.08);
+        ctx.scale(sx, sy);
+
+        ctx.save();
+        ctx.globalAlpha = 0.22;
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([8, 8]);
+        ctx.beginPath();
+        ctx.arc(0, 0, settings.popRadius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+
+        ctx.shadowColor = "rgba(188, 255, 239, 0.42)";
+        ctx.shadowBlur = 36;
+        playerPath(r, t);
+        const fill = ctx.createRadialGradient(-r * 0.34, -r * 0.42, r * 0.08, 0, 0, r * 1.28);
+        fill.addColorStop(0, "rgba(255, 255, 255, 0.98)");
+        fill.addColorStop(0.18, "rgba(244, 255, 253, 0.72)");
+        fill.addColorStop(0.56, "rgba(166, 255, 231, 0.34)");
+        fill.addColorStop(1, "rgba(113, 148, 255, 0.18)");
+        ctx.fillStyle = fill;
+        ctx.fill(state.shape === 2 ? "evenodd" : "nonzero");
+
+        playerPath(r, t);
+        ctx.shadowBlur = 0;
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.58)";
+        ctx.stroke();
+
+        ctx.globalAlpha = 0.9;
+        ctx.fillStyle = "rgba(255, 255, 255, 0.72)";
+        ctx.beginPath();
+        ctx.ellipse(-r * 0.34, -r * 0.36, r * 0.2, r * 0.1, -0.45, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.globalAlpha = 0.25;
+        ctx.fillStyle = "rgba(255, 255, 255, 0.55)";
+        ctx.beginPath();
+        ctx.ellipse(r * 0.38, r * 0.4, r * 0.16, r * 0.08, -0.4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      function drawBubble(b, t) {
+        const r = b.r * b.scale;
+        const pulse = 1 + Math.sin(t * 4 + b.phase) * 0.035;
+        const x = b.x;
+        const y = b.y;
+        const edge = typeEdge(b.type);
+        const core = typeColor(b.type);
+
+        ctx.save();
+        ctx.globalAlpha = b.alpha;
+        ctx.translate(x, y);
+        ctx.scale(pulse, pulse);
+        ctx.shadowColor = edge;
+        ctx.shadowBlur = b.type === "good" ? 26 : 20;
+
+        const g = ctx.createRadialGradient(-r * 0.38, -r * 0.42, r * 0.08, 0, 0, r * 1.12);
+        if (b.type === "good") {
+          g.addColorStop(0, "#ffffff");
+          g.addColorStop(0.22, "#fbfffe");
+          g.addColorStop(0.55, "#e9fff9");
+          g.addColorStop(1, "#9affdf");
+        } else if (b.type === "bad") {
+          g.addColorStop(0, "#fff0f4");
+          g.addColorStop(0.2, "#ff9ab0");
+          g.addColorStop(1, "#f22f61");
+        } else if (b.type === "gold") {
+          g.addColorStop(0, "#fffdf0");
+          g.addColorStop(0.28, "#fff0a8");
+          g.addColorStop(1, "#eaa600");
+        } else {
+          g.addColorStop(0, "#ffffff");
+          g.addColorStop(0.25, "#d8caff");
+          g.addColorStop(1, "#7e5cff");
+        }
+
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(0, 0, r, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.shadowBlur = 0;
+        ctx.lineWidth = b.type === "good" ? 2.5 : 2;
+        ctx.strokeStyle = b.type === "good" ? "rgba(255, 255, 255, 0.9)" : "rgba(255, 255, 255, 0.6)";
+        ctx.stroke();
+
+        ctx.fillStyle = "rgba(255, 255, 255, 0.82)";
+        ctx.beginPath();
+        ctx.ellipse(-r * 0.34, -r * 0.38, r * 0.18, r * 0.09, -0.45, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.globalAlpha *= b.type === "good" ? 0.55 : 0.35;
+        ctx.strokeStyle = core;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(0, 0, r * 0.72, Math.PI * 0.12, Math.PI * 1.32);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function drawPops(dt) {
+        for (let i = pops.length - 1; i >= 0; i -= 1) {
+          const p = pops[i];
+          p.life -= dt;
+          if (p.life <= 0) {
+            pops.splice(i, 1);
+            continue;
+          }
+          const k = p.life / p.maxLife;
+          ctx.save();
+          ctx.globalAlpha = Math.max(0, k);
+          ctx.strokeStyle = p.color;
+          ctx.fillStyle = p.color;
+          ctx.shadowColor = p.color;
+          ctx.shadowBlur = 18;
+          if (p.ring) {
+            const radius = p.r + (1 - k) * 62;
+            ctx.lineWidth = 2 + k * 2;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+            ctx.stroke();
+          } else {
+            p.x += p.vx * dt;
+            p.y += p.vy * dt;
+            p.vx *= 0.98;
+            p.vy = p.vy * 0.98 + 55 * dt;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.r * (0.4 + k), 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.restore();
+        }
+      }
+
+      function drawFloatTexts(dt) {
+        ctx.save();
+        ctx.font = "800 16px Inter, system-ui, sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        for (let i = floatTexts.length - 1; i >= 0; i -= 1) {
+          const f = floatTexts[i];
+          f.life -= dt;
+          if (f.life <= 0) {
+            floatTexts.splice(i, 1);
+            continue;
+          }
+          f.y += f.vy * dt;
+          const k = f.life / f.maxLife;
+          ctx.globalAlpha = k;
+          ctx.fillStyle = "rgba(0, 0, 0, 0.35)";
+          ctx.fillText(f.text, f.x + 1, f.y + 2);
+          ctx.fillStyle = f.color;
+          ctx.fillText(f.text, f.x, f.y);
+        }
+        ctx.restore();
+      }
+
+      function update(dt, t) {
+        if (!state.running || state.paused) {
+          if (!state.hasPointer) {
+            player.tx = state.width * 0.5 + Math.cos(t * 0.45) * state.width * 0.18;
+            player.ty = state.height * 0.55 + Math.sin(t * 0.6) * state.height * 0.12;
+          }
+          player.x += (player.tx - player.x) * 0.04;
+          player.y += (player.ty - player.y) * 0.04;
           return;
         }
 
-        vec3 n = calcNormal(pos);
-        float ndv = max(dot(n, -rd), 0.0);
-        float fres = pow(1.0 - ndv, 4.0);
+        const oldX = player.x;
+        const oldY = player.y;
+        const ease = settings.controlEase;
+        player.x += (player.tx - player.x) * ease;
+        player.y += (player.ty - player.y) * ease;
+        player.vx = (player.x - oldX) / Math.max(dt, 0.001);
+        player.vy = (player.y - oldY) / Math.max(dt, 0.001);
+        player.wobble = Math.max(0, player.wobble - dt * 3.1);
+        state.shake = Math.max(0, state.shake - dt);
 
-        vec2 wobble = vec2(
-          sin(uv.y * 80.0 + time * 2.4),
-          cos(uv.x * 70.0 - time * 2.1)
-        ) * 0.0015;
-
-        vec2 refractUv = uv - n.xy * distortion * (0.75 + fres * 1.8) + wobble;
-        vec3 col;
-        col.r = readSrc(refractUv + n.xy * distortion * 0.26).r;
-        col.g = readSrc(refractUv).g;
-        col.b = readSrc(refractUv - n.xy * distortion * 0.20).b;
-
-        vec3 lightA = normalize(vec3(-0.45, 0.7, -0.55));
-        vec3 lightB = normalize(vec3(0.7, -0.25, -0.25));
-        float specA = pow(max(dot(reflect(-lightA, n), -rd), 0.0), 160.0);
-        float specB = pow(max(dot(reflect(-lightB, n), -rd), 0.0), 48.0);
-
-        col = mix(col, vec3(1.0), 0.10 + fres * 0.28);
-        col += vec3(0.45, 0.98, 0.9) * fres * 0.28;
-        col += vec3(1.0) * specA * 1.8 + vec3(0.7, 0.9, 1.0) * specB * 0.45;
-        col = clamp(col, 0.0, 1.0);
-
-        outColor = vec4(col, 1.0);
-      }
-    `;
-
-    const app = document.getElementById("app");
-    const world = document.getElementById("world");
-    const playerCore = document.getElementById("playerCore");
-    const overlay = document.getElementById("overlay");
-    const startButton = document.getElementById("startButton");
-    const openSettingsButton = document.getElementById("openSettingsButton");
-    const settingsPanel = document.getElementById("settings");
-    const toggleSettingsButton = document.getElementById("toggleSettings");
-    const resetSettingsButton = document.getElementById("resetSettings");
-    const vfxNote = document.getElementById("vfxNote");
-
-    const scoreEl = document.getElementById("score");
-    const timeEl = document.getElementById("time");
-    const livesEl = document.getElementById("lives");
-    const comboEl = document.getElementById("combo");
-    const shapeNameEl = document.getElementById("shapeName");
-
-    const defaultSettings = {
-      bubbleCount: 12,
-      bubbleSpeed: 1,
-      playerRadius: 72,
-      popRadius: 92,
-      smoothing: 0.18,
-      distortion: 0.06,
-      dangerRatio: 0.18
-    };
-
-    const state = {
-      running: false,
-      score: 0,
-      lives: 3,
-      timeLeft: 60,
-      combo: 1,
-      comboTimer: 0,
-      shapeIndex: 0,
-      clickCount: 0,
-      lastClick: performance.now() / 1000,
-      hasPointer: false,
-      settings: { ...defaultSettings }
-    };
-
-    const shapeNames = ["Bol", "Cube", "Ring", "Capsule", "Diamant"];
-
-    const player = {
-      x: window.innerWidth / 2,
-      y: window.innerHeight / 2,
-      targetX: window.innerWidth / 2,
-      targetY: window.innerHeight / 2
-    };
-
-    const bubbles = [];
-    const bubbleUniform = new Float32Array(MAX_BUBBLES * 4);
-
-    function clamp(value, min, max) {
-      return Math.max(min, Math.min(max, value));
-    }
-
-    function rand(min, max) {
-      return min + Math.random() * (max - min);
-    }
-
-    function distance(aX, aY, bX, bY) {
-      return Math.hypot(aX - bX, aY - bY);
-    }
-
-    function bubbleColor(type) {
-      if (type === "bad") return "#ff5b86";
-      if (type === "gold") return "#ffd666";
-      if (type === "morph") return "#9b7bff";
-      return "#5ff3d0";
-    }
-
-    function chooseBubbleType() {
-      const roll = Math.random();
-      if (roll < state.settings.dangerRatio) return "bad";
-      if (roll < state.settings.dangerRatio + 0.08) return "gold";
-      if (roll < state.settings.dangerRatio + 0.15) return "morph";
-      return "good";
-    }
-
-    function createBubble(index) {
-      const el = document.createElement("div");
-      el.className = "bubble good";
-      el.setAttribute("aria-hidden", "true");
-      world.appendChild(el);
-
-      const bubble = {
-        index,
-        el,
-        x: 0,
-        y: 0,
-        vx: 0,
-        vy: 0,
-        r: 28,
-        type: "good",
-        active: false,
-        phase: Math.random() * Math.PI * 2
-      };
-
-      bubbles.push(bubble);
-      spawnBubble(bubble, true);
-    }
-
-    function spawnBubble(bubble, firstSpawn = false) {
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      const side = Math.floor(Math.random() * 4);
-      const margin = 100;
-
-      if (firstSpawn) {
-        bubble.x = rand(margin, w - margin);
-        bubble.y = rand(margin + 70, h - margin);
-      } else if (side === 0) {
-        bubble.x = -margin;
-        bubble.y = rand(90, h - margin);
-      } else if (side === 1) {
-        bubble.x = w + margin;
-        bubble.y = rand(90, h - margin);
-      } else if (side === 2) {
-        bubble.x = rand(margin, w - margin);
-        bubble.y = -margin;
-      } else {
-        bubble.x = rand(margin, w - margin);
-        bubble.y = h + margin;
-      }
-
-      const angle = Math.atan2(h / 2 - bubble.y, w / 2 - bubble.x) + rand(-0.7, 0.7);
-      const speed = rand(42, 110) * state.settings.bubbleSpeed;
-
-      bubble.vx = Math.cos(angle) * speed;
-      bubble.vy = Math.sin(angle) * speed;
-      bubble.r = rand(18, 38);
-      bubble.type = chooseBubbleType();
-      bubble.active = bubble.index < state.settings.bubbleCount;
-      bubble.phase = Math.random() * Math.PI * 2;
-
-      bubble.el.className = `bubble ${bubble.type}`;
-      bubble.el.style.opacity = bubble.active ? "0.92" : "0";
-      bubble.el.style.width = `${bubble.r * 2}px`;
-      bubble.el.style.height = `${bubble.r * 2}px`;
-    }
-
-    function ensureBubblePool() {
-      while (bubbles.length < MAX_BUBBLES) {
-        createBubble(bubbles.length);
-      }
-
-      for (const bubble of bubbles) {
-        if (bubble.index < state.settings.bubbleCount) {
-          if (!bubble.active) spawnBubble(bubble, true);
-          bubble.active = true;
-          bubble.el.style.opacity = "0.92";
-        } else {
-          bubble.active = false;
-          bubble.el.style.opacity = "0";
-        }
-      }
-    }
-
-    function updateSettingsUi() {
-      for (const [key, value] of Object.entries(state.settings)) {
-        const input = document.querySelector(`[data-setting="${key}"]`);
-        if (!input) continue;
-
-        input.value = value;
-        const output = document.getElementById(`${key}Out`);
-        if (!output) continue;
-
-        if (key === "dangerRatio") {
-          output.textContent = `${Math.round(value * 100)}%`;
-        } else if (key === "distortion") {
-          output.textContent = value.toFixed(3);
-        } else if (key === "bubbleSpeed" || key === "smoothing") {
-          output.textContent = value.toFixed(2);
-        } else {
-          output.textContent = Math.round(value);
-        }
-      }
-
-      document.documentElement.style.setProperty("--player-size", `${state.settings.playerRadius * 2}px`);
-      ensureBubblePool();
-    }
-
-    document.querySelectorAll("[data-setting]").forEach((input) => {
-      input.addEventListener("input", () => {
-        const key = input.dataset.setting;
-        state.settings[key] = Number(input.value);
-        updateSettingsUi();
-      });
-    });
-
-    resetSettingsButton.addEventListener("click", () => {
-      state.settings = { ...defaultSettings };
-      updateSettingsUi();
-    });
-
-    function toggleSettings(forceOpen) {
-      const shouldOpen = typeof forceOpen === "boolean" ? forceOpen : settingsPanel.classList.contains("collapsed");
-      settingsPanel.classList.toggle("collapsed", !shouldOpen);
-    }
-
-    toggleSettingsButton.addEventListener("click", () => toggleSettings());
-    openSettingsButton.addEventListener("click", () => toggleSettings(true));
-
-    function cycleShape() {
-      state.shapeIndex = (state.shapeIndex + 1) % shapeNames.length;
-      state.clickCount += 1;
-      state.lastClick = performance.now() / 1000;
-      app.className = app.className.replace(/\bshape-\d\b/g, "").trim();
-      app.classList.add(`shape-${state.shapeIndex}`);
-      shapeNameEl.textContent = shapeNames[state.shapeIndex];
-    }
-
-    function createBurst(x, y, type = "good") {
-      const color = bubbleColor(type);
-
-      const ring = document.createElement("div");
-      ring.className = "burst";
-      ring.style.left = `${x}px`;
-      ring.style.top = `${y}px`;
-      ring.style.borderColor = color;
-      ring.style.boxShadow = `0 0 28px ${color}`;
-      app.appendChild(ring);
-      ring.addEventListener("animationend", () => ring.remove());
-
-      const count = type === "bad" ? 14 : 10;
-      for (let i = 0; i < count; i++) {
-        const p = document.createElement("div");
-        p.className = "particle";
-        p.style.left = `${x}px`;
-        p.style.top = `${y}px`;
-        p.style.color = color;
-        const angle = (i / count) * Math.PI * 2 + rand(-0.2, 0.2);
-        const dist = rand(28, type === "gold" ? 92 : 68);
-        p.style.setProperty("--dx", `${Math.cos(angle) * dist}px`);
-        p.style.setProperty("--dy", `${Math.sin(angle) * dist}px`);
-        app.appendChild(p);
-        p.addEventListener("animationend", () => p.remove());
-      }
-    }
-
-    function addScore(points) {
-      state.score += points * state.combo;
-      state.combo = clamp(state.combo + 1, 1, 12);
-      state.comboTimer = 2.2;
-    }
-
-    function damage() {
-      state.lives -= 1;
-      state.combo = 1;
-      state.comboTimer = 0;
-      app.classList.remove("shake");
-      void app.offsetWidth;
-      app.classList.add("shake");
-
-      if (state.lives <= 0) {
-        endGame();
-      }
-    }
-
-    function popBubble(bubble, mode = "collect") {
-      if (!bubble.active) return;
-
-      createBurst(bubble.x, bubble.y, bubble.type);
-
-      if (state.running) {
-        if (bubble.type === "bad") {
-          damage();
-        } else if (bubble.type === "gold") {
-          state.timeLeft = clamp(state.timeLeft + 5, 0, 99);
-          addScore(25);
-        } else if (bubble.type === "morph") {
-          addScore(18);
-          cycleShape();
-        } else {
-          addScore(mode === "click" ? 14 : 10);
-        }
-      }
-
-      spawnBubble(bubble, false);
-    }
-
-    function handlePointer(e) {
-      const rect = app.getBoundingClientRect();
-      player.targetX = e.clientX - rect.left;
-      player.targetY = e.clientY - rect.top;
-      state.hasPointer = true;
-    }
-
-    app.addEventListener("pointermove", handlePointer);
-    app.addEventListener("pointerdown", (e) => {
-      if (e.target.closest("button") || e.target.closest(".settings")) return;
-      handlePointer(e);
-      state.clickCount += 1;
-      state.lastClick = performance.now() / 1000;
-
-      const nearest = bubbles
-        .filter((bubble) => bubble.active)
-        .map((bubble) => ({
-          bubble,
-          d: distance(e.clientX, e.clientY, bubble.x, bubble.y)
-        }))
-        .sort((a, b) => a.d - b.d)[0];
-
-      if (nearest && nearest.d < state.settings.popRadius + nearest.bubble.r) {
-        popBubble(nearest.bubble, "click");
-      } else {
-        cycleShape();
-      }
-    });
-
-    window.addEventListener("keydown", (e) => {
-      if (e.code === "Space") {
-        e.preventDefault();
-        cycleShape();
-      } else if (e.key.toLowerCase() === "s") {
-        toggleSettings();
-      } else if (e.key.toLowerCase() === "r") {
-        resetGame();
-      }
-    });
-
-    function resetGame() {
-      state.running = true;
-      state.score = 0;
-      state.lives = 3;
-      state.timeLeft = 60;
-      state.combo = 1;
-      state.comboTimer = 0;
-      overlay.classList.add("hidden");
-
-      for (const bubble of bubbles) {
-        spawnBubble(bubble, true);
-      }
-
-      updateHud();
-    }
-
-    function endGame() {
-      state.running = false;
-      overlay.classList.remove("hidden");
-      overlay.querySelector("h1").textContent = "Game over";
-      overlay.querySelector("p").textContent = `Je score is ${state.score}. Pas de instellingen aan en start opnieuw om verder te tweaken.`;
-      startButton.textContent = "Opnieuw starten";
-    }
-
-    startButton.addEventListener("click", () => {
-      overlay.querySelector("h1").textContent = "Liquid Bubble Pop";
-      resetGame();
-    });
-
-    function updateHud() {
-      scoreEl.textContent = Math.round(state.score).toString();
-      timeEl.textContent = Math.ceil(state.timeLeft).toString();
-      livesEl.textContent = state.lives.toString();
-      comboEl.textContent = `x${state.combo}`;
-      shapeNameEl.textContent = shapeNames[state.shapeIndex];
-    }
-
-    function updateBubbleUniforms() {
-      const w = Math.max(1, window.innerWidth);
-      const h = Math.max(1, window.innerHeight);
-      const aspect = h / w;
-
-      for (let i = 0; i < MAX_BUBBLES; i++) {
-        const bubble = bubbles[i];
-        const k = i * 4;
-
-        if (!bubble || !bubble.active || i >= state.settings.bubbleCount) {
-          bubbleUniform[k] = 0;
-          bubbleUniform[k + 1] = 0;
-          bubbleUniform[k + 2] = 0;
-          bubbleUniform[k + 3] = 0;
-          continue;
-        }
-
-        bubbleUniform[k] = bubble.x / w - 0.5;
-        bubbleUniform[k + 1] = ((h - bubble.y) / h - 0.5) * aspect;
-        bubbleUniform[k + 2] = Math.sin(performance.now() * 0.0013 + bubble.phase) * 0.025;
-        bubbleUniform[k + 3] = bubble.r / w;
-      }
-    }
-
-    function update(dt, now) {
-      if (!state.hasPointer && !state.running) {
-        player.targetX = window.innerWidth / 2 + Math.cos(now * 0.0005) * window.innerWidth * 0.18;
-        player.targetY = window.innerHeight / 2 + Math.sin(now * 0.0007) * window.innerHeight * 0.16;
-      }
-
-      const smoothing = state.settings.smoothing;
-      player.x += (player.targetX - player.x) * smoothing;
-      player.y += (player.targetY - player.y) * smoothing;
-
-      if (state.running) {
         state.timeLeft -= dt;
         if (state.timeLeft <= 0) {
           state.timeLeft = 0;
-          endGame();
+          endGame("Tijd op", `Je score is ${Math.round(state.score)}. Verhoog het aantal bubbles of de snelheid als je meer chaos wilt.`);
+          return;
         }
 
-        if (state.comboTimer > 0) {
-          state.comboTimer -= dt;
-          if (state.comboTimer <= 0) {
-            state.combo = 1;
-          }
-        }
-      }
-
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-
-      for (const bubble of bubbles) {
-        if (!bubble.active) continue;
-
-        const speedMod = state.running ? 1 : 0.42;
-        bubble.x += bubble.vx * dt * speedMod;
-        bubble.y += bubble.vy * dt * speedMod;
-
-        bubble.x += Math.sin(now * 0.002 + bubble.phase) * 0.18;
-        bubble.y += Math.cos(now * 0.0017 + bubble.phase) * 0.15;
-
-        if (
-          bubble.x < -160 ||
-          bubble.x > w + 160 ||
-          bubble.y < -160 ||
-          bubble.y > h + 160
-        ) {
-          spawnBubble(bubble, false);
+        if (state.streakTime > 0) {
+          state.streakTime -= dt;
+          if (state.streakTime <= 0) state.streak = 1;
         }
 
-        if (state.running) {
-          const hitRange = state.settings.playerRadius * 0.76 + bubble.r;
-          if (distance(player.x, player.y, bubble.x, bubble.y) < hitRange) {
-            popBubble(bubble, "collect");
-          }
-        }
-      }
+        for (const b of bubbles) {
+          b.justSpawned = Math.max(0, b.justSpawned - dt);
+          b.alpha += (1 - b.alpha) * 0.08;
+          b.scale += (1 - b.scale) * 0.12;
 
-      updateBubbleUniforms();
-    }
+          b.x += b.vx * dt;
+          b.y += b.vy * dt;
+          b.x += Math.sin(t * 2.2 + b.phase) * 0.24;
+          b.y += Math.cos(t * 1.9 + b.phase) * 0.2;
 
-    function render(now) {
-      playerCore.style.left = `${player.x}px`;
-      playerCore.style.top = `${player.y}px`;
-
-      const squishX = 1 + Math.sin(now * 0.004) * 0.035;
-      const squishY = 1 + Math.cos(now * 0.0037) * 0.035;
-      playerCore.style.transform = `translate3d(-50%, -50%, 0) scale(${squishX}, ${squishY})`;
-
-      for (const bubble of bubbles) {
-        const bob = 1 + Math.sin(now * 0.004 + bubble.phase) * 0.04;
-        bubble.el.style.left = `${bubble.x}px`;
-        bubble.el.style.top = `${bubble.y}px`;
-        bubble.el.style.width = `${bubble.r * 2}px`;
-        bubble.el.style.height = `${bubble.r * 2}px`;
-        bubble.el.style.transform = `translate3d(-50%, -50%, 0) scale(${bob})`;
-      }
-
-      updateHud();
-    }
-
-    let lastFrame = performance.now();
-
-    function loop(now) {
-      const dt = Math.min(0.04, (now - lastFrame) / 1000);
-      lastFrame = now;
-      update(dt, now);
-      render(now);
-      requestAnimationFrame(loop);
-    }
-
-    async function setupVfx() {
-      try {
-        const { VFX } = await import("https://esm.sh/@vfx-js/core@0.11.1");
-        const vfx = new VFX({
-          postEffect: {
-            shader: SHADER,
-            uniforms: {
-              playerPx: () => [
-                player.x * window.devicePixelRatio,
-                (window.innerHeight - player.y) * window.devicePixelRatio
-              ],
-              playerR: () => state.settings.playerRadius / Math.max(1, window.innerWidth),
-              distortion: () => state.settings.distortion,
-              shapeIndex: () => state.shapeIndex,
-              clickTime: () => performance.now() / 1000 - state.lastClick,
-              clickCount: () => state.clickCount,
-              bubbleData: () => bubbleUniform
+          if (b.type !== "bad") {
+            const d = dist(player.x, player.y, b.x, b.y);
+            const attract = settings.playerRadius + b.r + 88;
+            if (d < attract && d > 1) {
+              const pull = (1 - d / attract) * 110;
+              b.vx += ((player.x - b.x) / d) * pull * dt;
+              b.vy += ((player.y - b.y) / d) * pull * dt;
             }
           }
-        });
 
-        await vfx.addHTML(app, { shader: "none" });
-        vfx.play();
-        vfxNote.innerHTML = "<strong>Liquid shader:</strong> actief via VFX JS. Open in een moderne browser voor het beste effect.";
-      } catch (error) {
-        console.warn("VFX JS kon niet laden, CSS fallback blijft actief.", error);
-        app.classList.add("no-vfx");
-        vfxNote.innerHTML = "<strong>Fallback:</strong> VFX JS kon niet laden. De game blijft werken met het CSS gooey effect.";
+          b.vx *= 0.999;
+          b.vy *= 0.999;
+
+          if (b.x < -130 || b.x > state.width + 130 || b.y < -130 || b.y > state.height + 130) {
+            spawnBubble(b, false);
+            continue;
+          }
+
+          const hit = settings.playerRadius * 0.92 + b.r * 0.9;
+          if (b.justSpawned <= 0 && dist(player.x, player.y, b.x, b.y) <= hit) {
+            handleBubble(b, "touch");
+          }
+        }
       }
-    }
 
-    window.addEventListener("resize", () => {
-      player.targetX = clamp(player.targetX, 0, window.innerWidth);
-      player.targetY = clamp(player.targetY, 0, window.innerHeight);
-      player.x = clamp(player.x, 0, window.innerWidth);
-      player.y = clamp(player.y, 0, window.innerHeight);
-      updateBubbleUniforms();
-    });
+      function render(dt, t) {
+        drawBackground(t);
 
-    updateSettingsUi();
-    ensureBubblePool();
-    setupVfx();
-    requestAnimationFrame(loop);
+        ctx.save();
+        if (state.shake > 0) {
+          ctx.translate(rand(-3, 3) * state.shake * 5, rand(-3, 3) * state.shake * 5);
+        }
+        for (const b of bubbles) drawLiquidBridge(b, t);
+        for (const b of bubbles) drawBubble(b, t);
+        drawPlayer(t);
+        ctx.restore();
+
+        drawPops(dt);
+        drawFloatTexts(dt);
+
+        scoreEl.textContent = Math.round(state.score).toString();
+        timeEl.textContent = Math.ceil(state.timeLeft).toString();
+        livesEl.textContent = state.lives.toString();
+        streakEl.textContent = `x${state.streak}`;
+        shapeEl.textContent = shapeNames[state.shape];
+      }
+
+      function loop(now) {
+        const dt = Math.min(0.04, (now - state.lastT) / 1000 || 0.016);
+        state.lastT = now;
+        const t = now / 1000;
+        update(dt, t);
+        render(dt, t);
+        requestAnimationFrame(loop);
+      }
+
+      canvas.addEventListener("pointerdown", (event) => {
+        setPointer(event.clientX, event.clientY);
+        canvas.setPointerCapture(event.pointerId);
+        if (!state.running || state.paused) return;
+        const nearest = nearestBubble(event.clientX, event.clientY);
+        if (nearest.bubble && nearest.distance <= settings.popRadius + nearest.bubble.r) {
+          handleBubble(nearest.bubble, "tap");
+        }
+      });
+
+      canvas.addEventListener("pointermove", (event) => {
+        setPointer(event.clientX, event.clientY);
+      });
+
+      canvas.addEventListener("pointerup", (event) => {
+        try {
+          canvas.releasePointerCapture(event.pointerId);
+        } catch (error) {
+          // Sommige browsers releasen automatisch.
+        }
+      });
+
+      window.addEventListener("keydown", (event) => {
+        if (event.key === " " || event.code === "Space") {
+          event.preventDefault();
+          togglePause();
+        } else if (event.key.toLowerCase() === "s") {
+          setSettingsOpen(!settingsPanel.classList.contains("open"));
+        } else if (event.key.toLowerCase() === "r") {
+          startGame();
+        }
+      });
+
+      document.querySelectorAll("[data-setting]").forEach((input) => {
+        input.addEventListener("input", () => {
+          const key = input.dataset.setting;
+          settings[key] = Number(input.value);
+          updateSettingsUi();
+        });
+      });
+
+      settingsToggle.addEventListener("click", () => setSettingsOpen(!settingsPanel.classList.contains("open")));
+      closeSettings.addEventListener("click", () => setSettingsOpen(false));
+      overlaySettings.addEventListener("click", () => setSettingsOpen(true));
+      pauseToggle.addEventListener("click", togglePause);
+      startButton.addEventListener("click", startGame);
+
+      resetSettings.addEventListener("click", () => {
+        Object.assign(settings, defaults);
+        updateSettingsUi();
+        showToast("Instellingen gereset");
+      });
+
+      window.addEventListener("resize", resize, { passive: true });
+      window.addEventListener("orientationchange", () => setTimeout(resize, 120), { passive: true });
+
+      resize();
+      updateSettingsUi();
+      ensureBubbles();
+      requestAnimationFrame(loop);
+    })();
   </script>
 </body>
 </html>
