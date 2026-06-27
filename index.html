@@ -1,1354 +1,1197 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="nl">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Liquid Bubble Pop v2</title>
-  <style>
-    :root {
-      --bg-a: #070a16;
-      --bg-b: #0d1b34;
-      --panel: rgba(8, 12, 24, 0.78);
-      --panel-strong: rgba(10, 16, 31, 0.93);
-      --border: rgba(255, 255, 255, 0.16);
-      --text: #f8fcff;
-      --muted: rgba(248, 252, 255, 0.68);
-      --good: #dffff8;
-      --good-edge: #9affdf;
-      --bad: #ff5d7e;
-      --gold: #ffd86d;
-      --morph: #a88cff;
-      --safe-bottom: env(safe-area-inset-bottom, 0px);
-      --safe-top: env(safe-area-inset-top, 0px);
-    }
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Liquid Absorb</title>
+<style>
+  :root {
+    --panel: rgba(6, 12, 24, 0.62);
+    --panel2: rgba(11, 20, 38, 0.78);
+    --text: rgba(245, 251, 255, 0.95);
+    --muted: rgba(220, 239, 255, 0.72);
+    --line: rgba(255, 255, 255, 0.16);
+    --good: #ecfeff;
+    --danger: #ff6b8f;
+    --accent: #8ff7ff;
+  }
 
-    * {
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
+  * { box-sizing: border-box; }
+  html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    background: #040713;
+    color: var(--text);
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    touch-action: none;
+    user-select: none;
+  }
 
-    html,
-    body {
-      width: 100%;
-      height: 100%;
-      margin: 0;
-      overflow: hidden;
-      background: var(--bg-a);
-      color: var(--text);
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      user-select: none;
-    }
+  #game {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    display: block;
+  }
 
-    button,
-    input {
-      font: inherit;
-    }
+  #safe {
+    position: fixed;
+    inset: max(10px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+    pointer-events: none;
+  }
 
-    button {
-      color: inherit;
-    }
+  .hud {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    align-items: start;
+    pointer-events: none;
+  }
 
-    #gameCanvas {
+  .stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    max-width: min(720px, calc(100vw - 76px));
+  }
+
+  .pill {
+    min-height: 38px;
+    padding: 8px 12px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.16), rgba(255,255,255,0.05));
+    backdrop-filter: blur(18px) saturate(1.2);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 12px 36px rgba(0,0,0,0.18);
+    font-size: 13px;
+    line-height: 1.15;
+    letter-spacing: 0.02em;
+  }
+
+  .pill strong {
+    display: block;
+    font-size: 16px;
+    letter-spacing: 0;
+  }
+
+  .target {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 10px;
+    align-items: center;
+    min-width: 210px;
+    border-radius: 22px;
+  }
+
+  .shapeIcon {
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: radial-gradient(circle at 34% 28%, #ffffff 0 12%, #eafcff 28%, rgba(158,247,255,0.5) 52%, rgba(24,78,106,0.18) 72%);
+    box-shadow: inset -6px -8px 16px rgba(0, 35, 64, 0.28), inset 4px 5px 11px rgba(255,255,255,0.88), 0 0 24px rgba(150,250,255,0.38);
+    color: #052b38;
+    font-weight: 900;
+  }
+
+  .progressWrap {
+    width: 100%;
+    height: 9px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: rgba(255,255,255,0.12);
+    margin-top: 6px;
+  }
+
+  .progressBar {
+    width: 0%;
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #ffffff, #9dfaff);
+    box-shadow: 0 0 18px rgba(157, 250, 255, 0.58);
+    transition: width 0.2s ease;
+  }
+
+  button {
+    appearance: none;
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 16px;
+    background: rgba(255,255,255,0.12);
+    color: var(--text);
+    font: inherit;
+    min-height: 44px;
+    padding: 10px 13px;
+    cursor: pointer;
+    backdrop-filter: blur(14px);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 12px 26px rgba(0,0,0,0.2);
+  }
+  button:active { transform: translateY(1px) scale(0.99); }
+
+  #settingsBtn {
+    pointer-events: auto;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    padding: 0;
+    font-size: 20px;
+  }
+
+  .settings {
+    position: absolute;
+    top: 56px;
+    right: 0;
+    width: min(360px, calc(100vw - 20px));
+    max-height: min(66vh, 560px);
+    overflow: auto;
+    overscroll-behavior: contain;
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    background: var(--panel2);
+    backdrop-filter: blur(24px) saturate(1.25);
+    box-shadow: 0 26px 70px rgba(0,0,0,0.42), inset 0 1px 0 rgba(255,255,255,0.14);
+    pointer-events: auto;
+    transform-origin: top right;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-8px) scale(0.96);
+    transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease;
+  }
+  .settings.open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+  }
+
+  .settings h2 {
+    margin: 0 0 10px;
+    font-size: 17px;
+  }
+  .setting {
+    padding: 11px 0;
+    border-top: 1px solid rgba(255,255,255,0.1);
+  }
+  .setting label {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .setting label span:first-child { color: var(--text); }
+  input[type="range"] {
+    width: 100%;
+    height: 30px;
+    accent-color: #c5fbff;
+  }
+  .settingActions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .settingActions button { flex: 1; border-radius: 14px; }
+
+  .message {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: min(520px, calc(100vw - 28px));
+    transform: translate(-50%, -50%);
+    padding: 22px;
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 30px;
+    background: rgba(5, 11, 23, 0.64);
+    backdrop-filter: blur(28px) saturate(1.25);
+    box-shadow: 0 28px 100px rgba(0,0,0,0.48), inset 0 1px 0 rgba(255,255,255,0.15);
+    pointer-events: auto;
+    text-align: center;
+  }
+  .message h1 {
+    margin: 0 0 6px;
+    font-size: clamp(28px, 6vw, 54px);
+    line-height: 0.95;
+    letter-spacing: -0.06em;
+  }
+  .message p {
+    margin: 9px auto;
+    color: var(--muted);
+    max-width: 430px;
+    line-height: 1.45;
+  }
+  .message .rules {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin: 16px 0;
+    text-align: left;
+  }
+  .rule {
+    padding: 10px;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.1);
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .rule strong { display: block; color: var(--text); margin-bottom: 4px; }
+  .primary {
+    min-width: 160px;
+    color: #062a31;
+    background: linear-gradient(135deg, #ffffff, #a8fbff 58%, #6eeeff);
+    border-color: rgba(255,255,255,0.58);
+    font-weight: 800;
+  }
+
+  #toast {
+    position: absolute;
+    left: 50%;
+    bottom: 18px;
+    transform: translateX(-50%);
+    min-width: 220px;
+    max-width: calc(100vw - 36px);
+    padding: 12px 16px;
+    border-radius: 999px;
+    background: rgba(6, 12, 24, 0.72);
+    border: 1px solid rgba(255,255,255,0.16);
+    backdrop-filter: blur(20px);
+    color: var(--text);
+    text-align: center;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+  #toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-6px);
+  }
+
+  .help {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    max-width: 450px;
+    padding: 10px 12px;
+    border-radius: 18px;
+    background: rgba(4,8,18,0.42);
+    border: 1px solid rgba(255,255,255,0.09);
+    color: rgba(235,247,255,0.7);
+    font-size: 12px;
+    line-height: 1.35;
+    backdrop-filter: blur(14px);
+  }
+
+  @media (max-width: 760px), (max-height: 520px) {
+    .pill { min-height: 32px; padding: 7px 10px; font-size: 12px; }
+    .pill strong { font-size: 14px; }
+    .target { min-width: 185px; }
+    .shapeIcon { width: 30px; height: 30px; }
+    .help { display: none; }
+    .message { padding: 18px; border-radius: 24px; }
+    .message .rules { grid-template-columns: 1fr; }
+    .settings {
       position: fixed;
-      inset: 0;
-      width: 100vw;
-      height: 100dvh;
-      display: block;
-      touch-action: none;
-      cursor: none;
-      background: #07101f;
+      top: 58px;
+      right: 0;
+      width: min(380px, calc(100vw - 20px));
+      max-height: calc(100vh - 88px - env(safe-area-inset-bottom));
     }
+  }
 
-    .hud {
-      position: fixed;
-      z-index: 20;
-      top: calc(12px + var(--safe-top));
-      left: 12px;
-      right: 12px;
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 10px;
-      pointer-events: none;
+  @media (orientation: landscape) and (max-height: 520px) {
+    .stats { max-width: calc(100vw - 80px); gap: 6px; }
+    .target { min-width: 205px; }
+    .settings {
+      top: 52px;
+      max-height: calc(100vh - 74px);
+      padding: 12px;
     }
-
-    .stats {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      max-width: calc(100vw - 24px);
+    .setting { padding: 8px 0; }
+    .message {
+      width: min(720px, calc(100vw - 36px));
+      padding: 16px 18px;
     }
-
-    .chip,
-    .mission,
-    .settings-panel,
-    .round-button,
-    .overlay-card {
-      border: 1px solid var(--border);
-      background: var(--panel);
-      backdrop-filter: blur(18px) saturate(160%);
-      box-shadow: 0 16px 50px rgba(0, 0, 0, 0.28);
-    }
-
-    .chip {
-      min-width: 84px;
-      border-radius: 999px;
-      padding: 8px 12px;
-      line-height: 1.05;
-      font-size: 12px;
-      color: var(--muted);
-    }
-
-    .chip strong {
-      display: block;
-      margin-top: 2px;
-      color: var(--text);
-      font-size: 18px;
-      letter-spacing: -0.03em;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .mission {
-      position: fixed;
-      z-index: 19;
-      top: calc(84px + var(--safe-top));
-      left: 50%;
-      width: min(720px, calc(100vw - 24px));
-      transform: translateX(-50%);
-      border-radius: 22px;
-      padding: 10px 14px;
-      color: rgba(248, 252, 255, 0.82);
-      font-size: 13px;
-      line-height: 1.35;
-      text-align: center;
-      pointer-events: none;
-    }
-
-    .legend-dot {
-      display: inline-block;
-      width: 9px;
-      height: 9px;
-      margin-right: 4px;
-      border-radius: 999px;
-      vertical-align: 1px;
-      box-shadow: 0 0 12px currentColor;
-    }
-
-    .legend-good {
-      color: var(--good-edge);
-      background: #f7fffe;
-    }
-
-    .legend-bad {
-      color: var(--bad);
-      background: var(--bad);
-    }
-
-    .legend-gold {
-      color: var(--gold);
-      background: var(--gold);
-    }
-
-    .legend-morph {
-      color: var(--morph);
-      background: var(--morph);
-    }
-
-    .round-button {
-      position: fixed;
-      z-index: 45;
-      right: 14px;
-      min-height: 44px;
-      border-radius: 999px;
-      padding: 10px 14px;
-      border-color: rgba(255, 255, 255, 0.2);
-      cursor: pointer;
-      font-weight: 750;
-      letter-spacing: -0.01em;
-    }
-
-    .settings-toggle {
-      bottom: calc(14px + var(--safe-bottom));
-    }
-
-    .pause-toggle {
-      bottom: calc(66px + var(--safe-bottom));
-    }
-
-    .settings-panel {
-      position: fixed;
-      z-index: 44;
-      top: calc(84px + var(--safe-top));
-      right: 14px;
-      width: min(360px, calc(100vw - 28px));
-      max-height: calc(100dvh - 110px - var(--safe-top) - var(--safe-bottom));
-      overflow: auto;
-      overscroll-behavior: contain;
-      border-radius: 26px;
-      padding: 14px;
-      transform: translateX(calc(100% + 24px));
-      opacity: 0;
-      pointer-events: none;
-      transition: transform 180ms ease, opacity 180ms ease;
-    }
-
-    .settings-panel.open {
-      transform: translateX(0);
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    .settings-head {
-      position: sticky;
-      top: -14px;
-      z-index: 1;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin: -14px -14px 4px;
-      padding: 14px;
-      background: var(--panel-strong);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 26px 26px 0 0;
-    }
-
-    .settings-head h2 {
-      margin: 0;
-      font-size: 16px;
-      letter-spacing: -0.02em;
-    }
-
-    .mini-actions {
-      display: flex;
-      gap: 8px;
-    }
-
-    .mini-button {
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 999px;
-      min-height: 34px;
-      padding: 7px 10px;
-      background: rgba(255, 255, 255, 0.1);
-      cursor: pointer;
-      font-size: 12px;
-      font-weight: 700;
-    }
-
-    .setting {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 7px 12px;
-      padding: 11px 0;
-      border-top: 1px solid rgba(255, 255, 255, 0.09);
-      font-size: 13px;
-    }
-
-    .setting:first-of-type {
-      border-top: 0;
-    }
-
-    .setting label {
-      color: var(--muted);
-    }
-
-    .setting output {
-      font-variant-numeric: tabular-nums;
-    }
-
-    .setting input[type="range"] {
-      grid-column: 1 / -1;
-      width: 100%;
-      height: 38px;
-      accent-color: #dffff8;
-      touch-action: pan-y;
-    }
-
-    .help {
-      margin: 8px 0 0;
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.45;
-    }
-
-    .overlay {
-      position: fixed;
-      z-index: 60;
-      inset: 0;
-      display: grid;
-      place-items: center;
-      padding: 20px;
-      background: radial-gradient(circle at 50% 45%, rgba(20, 32, 61, 0.35), rgba(3, 6, 14, 0.82));
-      backdrop-filter: blur(8px);
-    }
-
-    .overlay.hidden {
-      display: none;
-    }
-
-    .overlay-card {
-      width: min(640px, calc(100vw - 30px));
-      border-radius: 34px;
-      padding: clamp(22px, 4vw, 42px);
-      text-align: center;
-      background:
-        linear-gradient(145deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.07)),
-        rgba(8, 13, 28, 0.78);
-    }
-
-    .overlay-card h1 {
-      margin: 0 0 12px;
-      font-size: clamp(34px, 7vw, 68px);
-      line-height: 0.95;
-      letter-spacing: -0.06em;
-    }
-
-    .overlay-card p {
-      margin: 0 auto 18px;
-      max-width: 52ch;
-      color: var(--muted);
-      line-height: 1.55;
-    }
-
-    .rules {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
-      margin: 18px auto 0;
-      max-width: 520px;
-      text-align: left;
-      color: rgba(248, 252, 255, 0.82);
-      font-size: 13px;
-    }
-
-    .rule {
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 16px;
-      padding: 10px;
-      background: rgba(255, 255, 255, 0.06);
-    }
-
-    .actions {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 10px;
-      margin-top: 22px;
-    }
-
-    .primary,
-    .secondary {
-      min-height: 46px;
-      border: 0;
-      border-radius: 999px;
-      padding: 12px 18px;
-      cursor: pointer;
-      font-weight: 850;
-      letter-spacing: -0.01em;
-    }
-
-    .primary {
-      color: #06111b;
-      background: linear-gradient(135deg, #f9fffd, #aaffdf 45%, #ffd86d);
-      box-shadow: 0 14px 48px rgba(170, 255, 223, 0.24);
-    }
-
-    .secondary {
-      background: rgba(255, 255, 255, 0.12);
-      color: var(--text);
-    }
-
-    .toast {
-      position: fixed;
-      z-index: 35;
-      left: 50%;
-      bottom: calc(24px + var(--safe-bottom));
-      transform: translateX(-50%) translateY(14px);
-      opacity: 0;
-      max-width: min(460px, calc(100vw - 28px));
-      border: 1px solid rgba(255, 255, 255, 0.14);
-      border-radius: 999px;
-      padding: 10px 14px;
-      background: rgba(8, 12, 24, 0.72);
-      backdrop-filter: blur(18px) saturate(160%);
-      color: rgba(248, 252, 255, 0.86);
-      font-size: 13px;
-      pointer-events: none;
-      transition: opacity 160ms ease, transform 160ms ease;
-    }
-
-    .toast.show {
-      opacity: 1;
-      transform: translateX(-50%) translateY(0);
-    }
-
-    @media (max-width: 720px) {
-      .hud {
-        top: calc(8px + var(--safe-top));
-        left: 8px;
-        right: 8px;
-      }
-
-      .chip {
-        min-width: 70px;
-        padding: 7px 10px;
-      }
-
-      .chip strong {
-        font-size: 16px;
-      }
-
-      .mission {
-        top: calc(74px + var(--safe-top));
-        font-size: 12px;
-      }
-
-      .rules {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    @media (orientation: portrait) and (max-width: 820px) {
-      .settings-panel {
-        top: auto;
-        left: 8px;
-        right: 8px;
-        bottom: calc(8px + var(--safe-bottom));
-        width: auto;
-        max-height: min(68dvh, 560px);
-        border-radius: 28px;
-        transform: translateY(calc(100% + 24px));
-      }
-
-      .settings-panel.open {
-        transform: translateY(0);
-      }
-
-      .settings-toggle {
-        right: 10px;
-        bottom: calc(10px + var(--safe-bottom));
-      }
-
-      .pause-toggle {
-        right: 10px;
-        bottom: calc(62px + var(--safe-bottom));
-      }
-    }
-
-    @media (orientation: landscape) and (max-height: 560px) {
-      .hud {
-        top: calc(6px + var(--safe-top));
-      }
-
-      .mission {
-        display: none;
-      }
-
-      .settings-panel {
-        top: calc(6px + var(--safe-top));
-        right: 8px;
-        bottom: calc(6px + var(--safe-bottom));
-        width: min(360px, 42vw);
-        max-height: none;
-        padding-bottom: 70px;
-      }
-
-      .round-button {
-        right: 8px;
-      }
-
-      .chip {
-        min-width: 68px;
-        padding: 6px 9px;
-      }
-
-      .chip strong {
-        font-size: 15px;
-      }
-    }
-  </style>
+    .message .rules { grid-template-columns: repeat(4, 1fr); }
+    .message h1 { font-size: clamp(26px, 5vw, 44px); }
+  }
+</style>
 </head>
 <body>
-  <canvas id="gameCanvas" aria-label="Liquid Bubble Pop speelveld"></canvas>
-
-  <div class="hud" aria-hidden="true">
+<canvas id="game" aria-label="Liquid Absorb game"></canvas>
+<div id="safe">
+  <div class="hud">
     <div class="stats">
-      <div class="chip">Score<strong id="scoreEl">0</strong></div>
-      <div class="chip">Tijd<strong id="timeEl">75</strong></div>
-      <div class="chip">Levens<strong id="livesEl">3</strong></div>
-      <div class="chip">Streak<strong id="streakEl">x1</strong></div>
-      <div class="chip">Vorm<strong id="shapeEl">Bol</strong></div>
+      <div class="pill target">
+        <div class="shapeIcon" id="shapeGlyph">●</div>
+        <div>
+          <div>Level <strong id="levelText">1</strong></div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px;">Absorbeer: <span id="shapeText">bollen</span></div>
+          <div class="progressWrap"><div class="progressBar" id="progressBar"></div></div>
+        </div>
+      </div>
+      <div class="pill">Score<strong id="scoreText">0</strong></div>
+      <div class="pill">Grootte<strong id="sizeText">100%</strong></div>
+      <div class="pill">Levens<strong id="lifeText">3</strong></div>
+      <div class="pill">Combo<strong id="comboText">x1</strong></div>
+    </div>
+    <button id="settingsBtn" title="Instellingen" aria-label="Instellingen">⚙</button>
+  </div>
+
+  <div class="settings" id="settingsPanel" aria-label="Instellingenpaneel">
+    <h2>Instellingen</h2>
+    <div class="setting">
+      <label><span>Vallende objecten</span><span id="spawnValue">18</span></label>
+      <input id="spawnRange" type="range" min="8" max="34" value="18" />
+    </div>
+    <div class="setting">
+      <label><span>Snelheid</span><span id="speedValue">1.00</span></label>
+      <input id="speedRange" type="range" min="0.55" max="1.8" step="0.05" value="1" />
+    </div>
+    <div class="setting">
+      <label><span>Water glans</span><span id="shineValue">1.20</span></label>
+      <input id="shineRange" type="range" min="0.55" max="2.4" step="0.05" value="1.2" />
+    </div>
+    <div class="setting">
+      <label><span>Vloeibaarheid</span><span id="blendValue">0.68</span></label>
+      <input id="blendRange" type="range" min="0.25" max="1.25" step="0.01" value="0.68" />
+    </div>
+    <div class="setting">
+      <label><span>Verkeerde vormen</span><span id="wrongValue">38%</span></label>
+      <input id="wrongRange" type="range" min="18" max="62" value="38" />
+    </div>
+    <div class="setting">
+      <label><span>Stuur vertraging</span><span id="smoothValue">0.16</span></label>
+      <input id="smoothRange" type="range" min="0.04" max="0.35" step="0.01" value="0.16" />
+    </div>
+    <div class="settingActions">
+      <button id="restartBtn">Opnieuw</button>
+      <button id="pauseBtn">Pauze</button>
     </div>
   </div>
 
-  <div class="mission" id="missionText">
-    <span class="legend-dot legend-good"></span>Parelwitte bubbles pakken,
-    <span class="legend-dot legend-bad"></span>rood ontwijken,
-    <span class="legend-dot legend-gold"></span>goud geeft tijd,
-    <span class="legend-dot legend-morph"></span>paars verandert vorm.
+  <div class="message" id="intro">
+    <h1>Liquid Absorb</h1>
+    <p>Beweeg het waterlichaam en absorbeer alleen dezelfde vorm. Elke 10 juiste absorpties verandert je liquid vorm en begint een nieuw level.</p>
+    <div class="rules">
+      <div class="rule"><strong>Wit glas</strong>Goed. Absorberen en groeien.</div>
+      <div class="rule"><strong>Rood glas</strong>Fout. Je krimpt en verliest controle.</div>
+      <div class="rule"><strong>10 stuks</strong>Volgende vorm en level omhoog.</div>
+      <div class="rule"><strong>Besturing</strong>Muis, touch of pijltjes.</div>
+    </div>
+    <button class="primary" id="startBtn">Start game</button>
   </div>
 
-  <button id="pauseToggle" class="round-button pause-toggle" type="button">Pauze</button>
-  <button id="settingsToggle" class="round-button settings-toggle" type="button">Instellingen</button>
+  <div id="toast"></div>
+  <div class="help">Doel: vang alleen objecten met dezelfde vorm als je speler. De liquid shader trekt goede vormen naar je toe zodra je dichtbij komt. Verkeerde vormen laten je krimpen.</div>
+</div>
 
-  <section id="settingsPanel" class="settings-panel" aria-label="Instellingen">
-    <div class="settings-head">
-      <h2>Instellingen</h2>
-      <div class="mini-actions">
-        <button id="resetSettings" class="mini-button" type="button">Reset</button>
-        <button id="closeSettings" class="mini-button" type="button">Sluit</button>
-      </div>
-    </div>
+<script>
+(() => {
+  'use strict';
 
-    <div class="setting">
-      <label for="bubbleCount">Aantal bubbles</label>
-      <output id="bubbleCountOut">14</output>
-      <input id="bubbleCount" data-setting="bubbleCount" type="range" min="5" max="32" step="1" value="14" />
-    </div>
+  const canvas = document.getElementById('game');
+  const gl = canvas.getContext('webgl', { alpha: false, antialias: false, premultipliedAlpha: false });
 
-    <div class="setting">
-      <label for="bubbleSpeed">Bubble snelheid</label>
-      <output id="bubbleSpeedOut">1.00</output>
-      <input id="bubbleSpeed" data-setting="bubbleSpeed" type="range" min="0.35" max="2.6" step="0.05" value="1" />
-    </div>
+  const ui = {
+    level: document.getElementById('levelText'),
+    shape: document.getElementById('shapeText'),
+    glyph: document.getElementById('shapeGlyph'),
+    score: document.getElementById('scoreText'),
+    size: document.getElementById('sizeText'),
+    life: document.getElementById('lifeText'),
+    combo: document.getElementById('comboText'),
+    progress: document.getElementById('progressBar'),
+    intro: document.getElementById('intro'),
+    start: document.getElementById('startBtn'),
+    settingsBtn: document.getElementById('settingsBtn'),
+    settings: document.getElementById('settingsPanel'),
+    restart: document.getElementById('restartBtn'),
+    pause: document.getElementById('pauseBtn'),
+    toast: document.getElementById('toast'),
+    spawn: document.getElementById('spawnRange'),
+    speed: document.getElementById('speedRange'),
+    shine: document.getElementById('shineRange'),
+    blend: document.getElementById('blendRange'),
+    wrong: document.getElementById('wrongRange'),
+    smooth: document.getElementById('smoothRange'),
+    spawnValue: document.getElementById('spawnValue'),
+    speedValue: document.getElementById('speedValue'),
+    shineValue: document.getElementById('shineValue'),
+    blendValue: document.getElementById('blendValue'),
+    wrongValue: document.getElementById('wrongValue'),
+    smoothValue: document.getElementById('smoothValue')
+  };
 
-    <div class="setting">
-      <label for="playerRadius">Liquid grootte</label>
-      <output id="playerRadiusOut">54</output>
-      <input id="playerRadius" data-setting="playerRadius" type="range" min="36" max="96" step="1" value="54" />
-    </div>
+  const settings = {
+    maxObjects: 18,
+    speed: 1,
+    shine: 1.2,
+    blend: 0.68,
+    wrongChance: 0.38,
+    smoothing: 0.16
+  };
 
-    <div class="setting">
-      <label for="popRadius">Tap bereik</label>
-      <output id="popRadiusOut">105</output>
-      <input id="popRadius" data-setting="popRadius" type="range" min="50" max="190" step="1" value="105" />
-    </div>
+  const SHAPES = [
+    { name: 'bollen', short: 'Bol', glyph: '●', type: 0 },
+    { name: 'donuts', short: 'Donut', glyph: '◎', type: 1 },
+    { name: 'capsules', short: 'Capsule', glyph: '⬭', type: 2 },
+    { name: 'diamanten', short: 'Diamant', glyph: '◆', type: 3 },
+    { name: 'soft cubes', short: 'Cube', glyph: '■', type: 4 }
+  ];
 
-    <div class="setting">
-      <label for="controlEase">Besturing directheid</label>
-      <output id="controlEaseOut">0.26</output>
-      <input id="controlEase" data-setting="controlEase" type="range" min="0.08" max="0.55" step="0.01" value="0.26" />
-    </div>
+  const MAX_OBJECTS = 42;
+  const MAX_BURSTS = 18;
+  const objects = [];
+  const bursts = [];
+  const keys = new Set();
 
-    <div class="setting">
-      <label for="dangerRatio">Rode bubble kans</label>
-      <output id="dangerRatioOut">14%</output>
-      <input id="dangerRatio" data-setting="dangerRatio" type="range" min="0" max="0.4" step="0.01" value="0.14" />
-    </div>
+  const state = {
+    started: false,
+    paused: false,
+    gameOver: false,
+    width: 1,
+    height: 1,
+    dpr: 1,
+    time: 0,
+    last: performance.now(),
+    level: 1,
+    shapeIndex: 0,
+    absorbed: 0,
+    score: 0,
+    lives: 3,
+    combo: 1,
+    comboTimer: 0,
+    player: { x: 0, y: 0, tx: 0, ty: 0, r: 62, targetR: 62, wobble: 0 },
+    flash: 0,
+    levelPulse: 0,
+    spawnTimer: 0,
+    shake: 0,
+    pointerDown: false
+  };
 
-    <div class="setting">
-      <label for="liquidBridge">Liquid verbinding</label>
-      <output id="liquidBridgeOut">0.70</output>
-      <input id="liquidBridge" data-setting="liquidBridge" type="range" min="0" max="1" step="0.05" value="0.7" />
-    </div>
+  function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function rand(min, max) { return min + Math.random() * (max - min); }
+  function dist(a, b, c, d) { const x = a - c; const y = b - d; return Math.hypot(x, y); }
+  function otherShape(current) {
+    let t = current;
+    while (t === current) t = Math.floor(Math.random() * SHAPES.length);
+    return t;
+  }
 
-    <p class="help">
-      Spel: sleep of beweeg om de liquid vorm te sturen. Raak parelwitte bubbles voor punten. Tik een bubble om hem op afstand te poppen. Rode bubbles mag je aantikken om ze veilig weg te halen, maar raak ze niet met je liquid vorm.
-    </p>
-  </section>
+  function shapeDifficulty() {
+    return 1 + (state.level - 1) * 0.16;
+  }
 
-  <div id="toast" class="toast">Klaar</div>
+  function baseRadius() {
+    return clamp(Math.min(state.width, state.height) * 0.068 + 30, 46, 78);
+  }
 
-  <div id="overlay" class="overlay">
-    <div class="overlay-card">
-      <h1 id="overlayTitle">Liquid Bubble Pop</h1>
-      <p id="overlayText">
-        Deze v2 is opnieuw opgebouwd voor stabiel spelen op mobiel en desktop. De goede bubbles zijn nu parelwit en glimmend, de regels zijn simpeler en de instellingen blijven scrollbaar in portrait en landscape.
-      </p>
-      <div class="rules">
-        <div class="rule"><span class="legend-dot legend-good"></span>Parelwit is goed: pakken of aantikken voor score.</div>
-        <div class="rule"><span class="legend-dot legend-bad"></span>Rood is gevaar: aanraken kost een leven.</div>
-        <div class="rule"><span class="legend-dot legend-gold"></span>Goud geeft extra tijd en punten.</div>
-        <div class="rule"><span class="legend-dot legend-morph"></span>Paars verandert je liquid vorm.</div>
-      </div>
-      <div class="actions">
-        <button id="startButton" class="primary" type="button">Start game</button>
-        <button id="overlaySettings" class="secondary" type="button">Instellingen</button>
-      </div>
-    </div>
-  </div>
+  function targetShape() {
+    return SHAPES[state.shapeIndex % SHAPES.length];
+  }
 
-  <script>
-    (() => {
-      "use strict";
+  function updateSettingsLabels() {
+    settings.maxObjects = Number(ui.spawn.value);
+    settings.speed = Number(ui.speed.value);
+    settings.shine = Number(ui.shine.value);
+    settings.blend = Number(ui.blend.value);
+    settings.wrongChance = Number(ui.wrong.value) / 100;
+    settings.smoothing = Number(ui.smooth.value);
+    ui.spawnValue.textContent = String(settings.maxObjects);
+    ui.speedValue.textContent = settings.speed.toFixed(2);
+    ui.shineValue.textContent = settings.shine.toFixed(2);
+    ui.blendValue.textContent = settings.blend.toFixed(2);
+    ui.wrongValue.textContent = Math.round(settings.wrongChance * 100) + '%';
+    ui.smoothValue.textContent = settings.smoothing.toFixed(2);
+  }
 
-      const canvas = document.getElementById("gameCanvas");
-      const ctx = canvas.getContext("2d", { alpha: false });
+  function resize() {
+    state.dpr = Math.min(window.devicePixelRatio || 1, 2);
+    state.width = Math.max(1, Math.floor(window.innerWidth));
+    state.height = Math.max(1, Math.floor(window.innerHeight));
+    canvas.width = Math.floor(state.width * state.dpr);
+    canvas.height = Math.floor(state.height * state.dpr);
+    canvas.style.width = state.width + 'px';
+    canvas.style.height = state.height + 'px';
+    if (gl) gl.viewport(0, 0, canvas.width, canvas.height);
+    if (!state.started) {
+      state.player.x = state.width * 0.5;
+      state.player.y = state.height * 0.74;
+      state.player.tx = state.player.x;
+      state.player.ty = state.player.y;
+    }
+    state.player.r = clamp(state.player.r || baseRadius(), baseRadius() * 0.65, baseRadius() * 1.85);
+    state.player.targetR = clamp(state.player.targetR || baseRadius(), baseRadius() * 0.65, baseRadius() * 1.85);
+  }
 
-      const scoreEl = document.getElementById("scoreEl");
-      const timeEl = document.getElementById("timeEl");
-      const livesEl = document.getElementById("livesEl");
-      const streakEl = document.getElementById("streakEl");
-      const shapeEl = document.getElementById("shapeEl");
-      const overlay = document.getElementById("overlay");
-      const overlayTitle = document.getElementById("overlayTitle");
-      const overlayText = document.getElementById("overlayText");
-      const startButton = document.getElementById("startButton");
-      const overlaySettings = document.getElementById("overlaySettings");
-      const settingsToggle = document.getElementById("settingsToggle");
-      const pauseToggle = document.getElementById("pauseToggle");
-      const settingsPanel = document.getElementById("settingsPanel");
-      const closeSettings = document.getElementById("closeSettings");
-      const resetSettings = document.getElementById("resetSettings");
-      const toast = document.getElementById("toast");
+  const vertexSource = `
+    attribute vec2 a_position;
+    varying vec2 v_uv;
+    void main() {
+      v_uv = a_position * 0.5 + 0.5;
+      gl_Position = vec4(a_position, 0.0, 1.0);
+    }
+  `;
 
-      const shapeNames = ["Bol", "Cube", "Ring", "Capsule", "Diamant"];
+  const fragmentSource = `
+    precision highp float;
+    #define MAX_OBJECTS ${MAX_OBJECTS}
+    #define MAX_BURSTS ${MAX_BURSTS}
 
-      const defaults = {
-        bubbleCount: 14,
-        bubbleSpeed: 1,
-        playerRadius: 54,
-        popRadius: 105,
-        controlEase: 0.26,
-        dangerRatio: 0.14,
-        liquidBridge: 0.7
-      };
+    uniform vec2 u_res;
+    uniform float u_time;
+    uniform vec2 u_player;
+    uniform float u_playerR;
+    uniform float u_playerShape;
+    uniform float u_count;
+    uniform vec4 u_objs[MAX_OBJECTS];
+    uniform vec4 u_bursts[MAX_BURSTS];
+    uniform float u_burstCount;
+    uniform float u_flash;
+    uniform float u_blend;
+    uniform float u_shine;
+    uniform float u_levelPulse;
+    uniform float u_shake;
+    varying vec2 v_uv;
 
-      const settings = { ...defaults };
+    float hash(vec2 p) {
+      return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+    }
 
-      const state = {
-        running: false,
-        paused: false,
-        score: 0,
-        lives: 3,
-        timeLeft: 75,
-        streak: 1,
-        streakTime: 0,
-        shape: 0,
-        lastT: performance.now(),
-        dpr: 1,
-        width: 1,
-        height: 1,
-        hasPointer: false,
-        shake: 0
-      };
+    float noise(vec2 p) {
+      vec2 i = floor(p);
+      vec2 f = fract(p);
+      f = f * f * (3.0 - 2.0 * f);
+      float a = hash(i);
+      float b = hash(i + vec2(1.0, 0.0));
+      float c = hash(i + vec2(0.0, 1.0));
+      float d = hash(i + vec2(1.0, 1.0));
+      return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+    }
 
-      const player = {
-        x: 0,
-        y: 0,
-        tx: 0,
-        ty: 0,
-        vx: 0,
-        vy: 0,
-        wobble: 0
-      };
+    float roundedBox(vec2 p, vec2 b, float r) {
+      vec2 q = abs(p) - b + r;
+      return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;
+    }
 
-      const bubbles = [];
-      const pops = [];
-      const floatTexts = [];
-      let toastTimer = 0;
+    float sdDiamond(vec2 p, float r) {
+      p = abs(p);
+      return (p.x + p.y - r) * 0.7071;
+    }
 
-      function clamp(value, min, max) {
-        return Math.max(min, Math.min(max, value));
-      }
+    float capsule(vec2 p, float r) {
+      p.x = abs(p.x) - r * 0.42;
+      return length(max(p, vec2(0.0))) + min(max(p.x, p.y), 0.0) - r * 0.47;
+    }
 
-      function rand(min, max) {
-        return min + Math.random() * (max - min);
-      }
+    float shapeSdf(vec2 p, float r, float shape) {
+      float wob = 1.0 + 0.018 * sin(u_time * 2.1 + p.x * 0.027) + 0.014 * sin(u_time * 3.3 + p.y * 0.021);
+      p *= wob;
+      if (shape < 0.5) return length(p) - r;
+      if (shape < 1.5) return abs(length(p) - r * 0.58) - r * 0.22;
+      if (shape < 2.5) return capsule(p, r);
+      if (shape < 3.5) return sdDiamond(p, r * 0.98);
+      return roundedBox(p, vec2(r * 0.72), r * 0.31);
+    }
 
-      function dist(ax, ay, bx, by) {
-        return Math.hypot(ax - bx, ay - by);
-      }
+    float smin(float a, float b, float k) {
+      float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);
+      return mix(b, a, h) - k * h * (1.0 - h);
+    }
 
-      function resize() {
-        state.dpr = Math.min(2, window.devicePixelRatio || 1);
-        state.width = Math.max(1, Math.floor(window.innerWidth));
-        state.height = Math.max(1, Math.floor(window.innerHeight));
-        canvas.width = Math.floor(state.width * state.dpr);
-        canvas.height = Math.floor(state.height * state.dpr);
-        canvas.style.width = `${state.width}px`;
-        canvas.style.height = `${state.height}px`;
-        ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+    vec3 bg(vec2 uv) {
+      vec2 p = uv - 0.5;
+      float vignette = 1.0 - smoothstep(0.18, 0.88, length(p));
+      float grid = 0.0;
+      vec2 g = abs(fract((uv + vec2(0.0, u_time * 0.015)) * vec2(16.0, 10.0)) - 0.5);
+      grid = smoothstep(0.488, 0.5, max(g.x, g.y)) * 0.06;
+      float n = noise(uv * 6.0 + u_time * 0.04) * 0.08;
+      vec3 a = vec3(0.015, 0.027, 0.070);
+      vec3 b = vec3(0.030, 0.105, 0.145);
+      vec3 c = mix(a, b, uv.y * 0.75 + vignette * 0.25);
+      c += vec3(0.03, 0.12, 0.16) * grid;
+      c += n;
+      c += vec3(0.10, 0.22, 0.28) * pow(max(0.0, 1.0 - length(p * vec2(0.8, 1.25))), 4.0) * 0.44;
+      return c;
+    }
 
-        if (!state.hasPointer) {
-          player.x = state.width * 0.5;
-          player.y = state.height * 0.58;
-          player.tx = player.x;
-          player.ty = player.y;
-        } else {
-          player.x = clamp(player.x, 0, state.width);
-          player.y = clamp(player.y, 0, state.height);
-          player.tx = clamp(player.tx, 0, state.width);
-          player.ty = clamp(player.ty, 0, state.height);
-        }
-      }
+    vec3 goodColor(float inner, float rim, float sparkle) {
+      vec3 pearl = vec3(0.98, 1.0, 1.0);
+      vec3 aqua = vec3(0.45, 0.95, 1.0);
+      vec3 deep = vec3(0.08, 0.33, 0.48);
+      vec3 c = mix(deep, pearl, inner);
+      c += aqua * rim * 0.92;
+      c += vec3(1.0) * sparkle * 0.72 * u_shine;
+      return c;
+    }
 
-      function setPointer(clientX, clientY) {
-        player.tx = clamp(clientX, 0, state.width);
-        player.ty = clamp(clientY, 0, state.height);
-        state.hasPointer = true;
-      }
+    vec3 badColor(float inner, float rim, float sparkle) {
+      vec3 base = vec3(0.88, 0.10, 0.24);
+      vec3 hot = vec3(1.0, 0.62, 0.72);
+      vec3 dark = vec3(0.16, 0.02, 0.08);
+      vec3 c = mix(dark, base, inner * 0.7 + 0.2);
+      c += hot * rim * 0.85;
+      c += vec3(1.0, 0.55, 0.62) * sparkle * 0.45;
+      return c;
+    }
 
-      function chooseType() {
-        const roll = Math.random();
-        if (roll < settings.dangerRatio) return "bad";
-        if (roll < settings.dangerRatio + 0.08) return "gold";
-        if (roll < settings.dangerRatio + 0.15) return "morph";
-        return "good";
-      }
+    void main() {
+      vec2 uv = v_uv;
+      vec2 frag = uv * u_res;
+      float aspect = u_res.x / u_res.y;
+      vec2 shake = vec2(sin(u_time * 59.0), cos(u_time * 47.0)) * u_shake * 2.0;
+      frag += shake;
+      uv = frag / u_res;
 
-      function typeColor(type) {
-        if (type === "bad") return "#ff5d7e";
-        if (type === "gold") return "#ffd86d";
-        if (type === "morph") return "#a88cff";
-        return "#f7fffd";
-      }
+      vec3 base = bg(uv);
 
-      function typeEdge(type) {
-        if (type === "bad") return "#ff9ab0";
-        if (type === "gold") return "#fff0a8";
-        if (type === "morph") return "#d8caff";
-        return "#9affdf";
-      }
+      float dGood = shapeSdf(frag - u_player, u_playerR, u_playerShape);
+      float dBad = 99999.0;
+      vec2 badVec = vec2(0.0, 1.0);
 
-      function spawnBubble(b, first = false) {
-        const margin = 70;
-        const side = Math.floor(Math.random() * 4);
-
-        if (first) {
-          b.x = rand(margin, state.width - margin);
-          b.y = rand(Math.max(120, margin), state.height - margin);
-        } else if (side === 0) {
-          b.x = -margin;
-          b.y = rand(80, state.height - margin);
-        } else if (side === 1) {
-          b.x = state.width + margin;
-          b.y = rand(80, state.height - margin);
-        } else if (side === 2) {
-          b.x = rand(margin, state.width - margin);
-          b.y = -margin;
-        } else {
-          b.x = rand(margin, state.width - margin);
-          b.y = state.height + margin;
-        }
-
-        const angle = Math.atan2(state.height * 0.52 - b.y, state.width * 0.5 - b.x) + rand(-0.62, 0.62);
-        const base = rand(42, 88) * settings.bubbleSpeed * (1 + Math.min(0.45, state.score / 1400));
-
-        b.vx = Math.cos(angle) * base;
-        b.vy = Math.sin(angle) * base;
-        b.type = chooseType();
-        b.r = b.type === "good" ? rand(24, 39) : rand(21, 34);
-        b.phase = rand(0, Math.PI * 2);
-        b.alpha = 0;
-        b.scale = 0.2;
-        b.active = true;
-        b.justSpawned = 0.25;
-      }
-
-      function ensureBubbles() {
-        while (bubbles.length < settings.bubbleCount) {
-          const b = { x: 0, y: 0, vx: 0, vy: 0, r: 28, type: "good", phase: 0, alpha: 0, scale: 0.2, active: true, justSpawned: 0 };
-          bubbles.push(b);
-          spawnBubble(b, true);
-        }
-        while (bubbles.length > settings.bubbleCount) {
-          bubbles.pop();
-        }
-      }
-
-      function addFloatText(text, x, y, color) {
-        floatTexts.push({ text, x, y, vy: -42, life: 0.9, maxLife: 0.9, color });
-      }
-
-      function addPop(x, y, type, big = false) {
-        const color = typeColor(type);
-        const edge = typeEdge(type);
-        pops.push({ x, y, r: big ? 26 : 18, life: 0.55, maxLife: 0.55, color: edge, ring: true });
-        const count = big ? 18 : 11;
-        for (let i = 0; i < count; i += 1) {
-          const angle = (i / count) * Math.PI * 2 + rand(-0.2, 0.2);
-          const speed = rand(55, big ? 180 : 125);
-          pops.push({
-            x,
-            y,
-            vx: Math.cos(angle) * speed,
-            vy: Math.sin(angle) * speed,
-            r: rand(2.5, 5.2),
-            life: rand(0.35, 0.72),
-            maxLife: 0.72,
-            color,
-            ring: false
-          });
-        }
-      }
-
-      function showToast(message) {
-        toast.textContent = message;
-        toast.classList.add("show");
-        clearTimeout(toastTimer);
-        toastTimer = setTimeout(() => toast.classList.remove("show"), 1400);
-      }
-
-      function addScore(points, x, y, label) {
-        const earned = points * state.streak;
-        state.score += earned;
-        state.streak = clamp(state.streak + 1, 1, 12);
-        state.streakTime = 2.5;
-        addFloatText(label || `+${earned}`, x, y, "#f7fffd");
-      }
-
-      function damage(x, y) {
-        state.lives -= 1;
-        state.streak = 1;
-        state.streakTime = 0;
-        state.shake = 0.28;
-        addFloatText("-1 leven", x, y, "#ff9ab0");
-        showToast("Rood geraakt. Raak rode bubbles niet met de liquid vorm.");
-        if (state.lives <= 0) endGame("Game over", `Je score is ${Math.round(state.score)}. De besturing en zichtbaarheid zijn nu het uitgangspunt om verder te tweaken.`);
-      }
-
-      function cycleShape(x = player.x, y = player.y) {
-        state.shape = (state.shape + 1) % shapeNames.length;
-        shapeEl.textContent = shapeNames[state.shape];
-        player.wobble = 1;
-        addFloatText(shapeNames[state.shape], x, y - settings.playerRadius, "#d8caff");
-      }
-
-      function handleBubble(b, reason) {
-        if (!state.running || state.paused) return;
-
-        const x = b.x;
-        const y = b.y;
-        const type = b.type;
-        const safeTap = reason === "tap";
-
-        addPop(x, y, type, type === "gold" || type === "morph");
-
-        if (type === "bad") {
-          if (safeTap) {
-            state.score += 3;
-            addFloatText("veilig", x, y, "#ffb6c5");
+      for (int i = 0; i < MAX_OBJECTS; i++) {
+        if (float(i) >= u_count) break;
+        vec4 o = u_objs[i];
+        if (o.z > 0.5) {
+          float sdf = shapeSdf(frag - o.xy, abs(o.z), o.w);
+          float same = 1.0 - step(0.5, abs(o.w - u_playerShape));
+          if (same > 0.5) {
+            float joinRange = (u_playerR + abs(o.z)) * 0.38 * u_blend;
+            float bridge = length((frag - (u_player + o.xy) * 0.5) / vec2(max(18.0, length(u_player - o.xy) * 0.5), max(12.0, min(u_playerR, abs(o.z)) * 0.30))) - 1.0;
+            float bridgeSdf = bridge * min(u_playerR, abs(o.z)) * 0.38;
+            float goodObj = smin(sdf, bridgeSdf, joinRange * 0.55);
+            dGood = smin(dGood, goodObj, joinRange);
           } else {
-            damage(x, y);
-          }
-        } else if (type === "gold") {
-          state.timeLeft = clamp(state.timeLeft + 5, 0, 99);
-          addScore(safeTap ? 24 : 18, x, y, "+5 sec");
-        } else if (type === "morph") {
-          addScore(safeTap ? 20 : 16, x, y, "morph");
-          cycleShape(x, y);
-        } else {
-          addScore(safeTap ? 14 : 10, x, y);
-        }
-
-        spawnBubble(b, false);
-      }
-
-      function nearestBubble(x, y) {
-        let best = null;
-        let bestD = Infinity;
-        for (const b of bubbles) {
-          const d = dist(x, y, b.x, b.y);
-          if (d < bestD) {
-            best = b;
-            bestD = d;
-          }
-        }
-        return { bubble: best, distance: bestD };
-      }
-
-      function startGame() {
-        state.running = true;
-        state.paused = false;
-        state.score = 0;
-        state.lives = 3;
-        state.timeLeft = 75;
-        state.streak = 1;
-        state.streakTime = 0;
-        state.shape = 0;
-        state.shake = 0;
-        shapeEl.textContent = shapeNames[state.shape];
-        overlay.classList.add("hidden");
-        startButton.textContent = "Start game";
-        pauseToggle.textContent = "Pauze";
-        ensureBubbles();
-        for (const b of bubbles) spawnBubble(b, true);
-        setPointer(state.width * 0.5, state.height * 0.62);
-      }
-
-      function endGame(title, text) {
-        state.running = false;
-        state.paused = false;
-        overlayTitle.textContent = title;
-        overlayText.textContent = text;
-        startButton.textContent = "Opnieuw starten";
-        pauseToggle.textContent = "Pauze";
-        overlay.classList.remove("hidden");
-      }
-
-      function togglePause() {
-        if (!state.running) return;
-        state.paused = !state.paused;
-        pauseToggle.textContent = state.paused ? "Verder" : "Pauze";
-        showToast(state.paused ? "Gepauzeerd" : "Verder spelen");
-      }
-
-      function setSettingsOpen(open) {
-        settingsPanel.classList.toggle("open", open);
-      }
-
-      function updateSettingsUi() {
-        for (const [key, value] of Object.entries(settings)) {
-          const input = document.querySelector(`[data-setting="${key}"]`);
-          const output = document.getElementById(`${key}Out`);
-          if (!input || !output) continue;
-          input.value = String(value);
-          if (key === "dangerRatio") output.textContent = `${Math.round(value * 100)}%`;
-          else if (key === "bubbleCount" || key === "playerRadius" || key === "popRadius") output.textContent = String(Math.round(value));
-          else output.textContent = Number(value).toFixed(2);
-        }
-        ensureBubbles();
-      }
-
-      function drawBackground(t) {
-        const w = state.width;
-        const h = state.height;
-        const g = ctx.createLinearGradient(0, 0, w, h);
-        g.addColorStop(0, "#070a16");
-        g.addColorStop(0.5, "#10203b");
-        g.addColorStop(1, "#071526");
-        ctx.fillStyle = g;
-        ctx.fillRect(0, 0, w, h);
-
-        ctx.save();
-        ctx.globalAlpha = 0.16;
-        const r1 = ctx.createRadialGradient(w * 0.18, h * 0.2, 0, w * 0.18, h * 0.2, Math.max(w, h) * 0.42);
-        r1.addColorStop(0, "#61ffe0");
-        r1.addColorStop(1, "rgba(97, 255, 224, 0)");
-        ctx.fillStyle = r1;
-        ctx.fillRect(0, 0, w, h);
-
-        const r2 = ctx.createRadialGradient(w * 0.82, h * 0.24, 0, w * 0.82, h * 0.24, Math.max(w, h) * 0.38);
-        r2.addColorStop(0, "#a88cff");
-        r2.addColorStop(1, "rgba(168, 140, 255, 0)");
-        ctx.fillStyle = r2;
-        ctx.fillRect(0, 0, w, h);
-        ctx.restore();
-
-        ctx.save();
-        ctx.globalAlpha = 0.08;
-        ctx.strokeStyle = "#ffffff";
-        ctx.lineWidth = 1;
-        const grid = 46;
-        const ox = (t * 10) % grid;
-        const oy = (t * 7) % grid;
-        for (let x = -grid + ox; x < w + grid; x += grid) {
-          ctx.beginPath();
-          ctx.moveTo(x, 0);
-          ctx.lineTo(x, h);
-          ctx.stroke();
-        }
-        for (let y = -grid + oy; y < h + grid; y += grid) {
-          ctx.beginPath();
-          ctx.moveTo(0, y);
-          ctx.lineTo(w, y);
-          ctx.stroke();
-        }
-        ctx.restore();
-      }
-
-      function playerPath(r, t) {
-        const wobble = Math.sin(t * 2.9) * 0.035 + player.wobble * 0.08;
-        if (state.shape === 0) {
-          ctx.beginPath();
-          ctx.ellipse(0, 0, r * (1 + wobble), r * (1 - wobble * 0.6), Math.sin(t * 0.8) * 0.18, 0, Math.PI * 2);
-        } else if (state.shape === 1) {
-          roundedRectPath(-r * 0.86, -r * 0.86, r * 1.72, r * 1.72, r * 0.32);
-        } else if (state.shape === 2) {
-          ctx.beginPath();
-          ctx.arc(0, 0, r * 0.98, 0, Math.PI * 2);
-          ctx.moveTo(r * 0.42, 0);
-          ctx.arc(0, 0, r * 0.42, 0, Math.PI * 2, true);
-        } else if (state.shape === 3) {
-          roundedRectPath(-r * 1.35, -r * 0.58, r * 2.7, r * 1.16, r * 0.56);
-        } else {
-          ctx.beginPath();
-          ctx.moveTo(0, -r * 1.12);
-          ctx.quadraticCurveTo(r * 0.75, -r * 0.7, r * 1.12, 0);
-          ctx.quadraticCurveTo(r * 0.7, r * 0.75, 0, r * 1.12);
-          ctx.quadraticCurveTo(-r * 0.75, r * 0.7, -r * 1.12, 0);
-          ctx.quadraticCurveTo(-r * 0.7, -r * 0.75, 0, -r * 1.12);
-          ctx.closePath();
-        }
-      }
-
-      function roundedRectPath(x, y, w, h, r) {
-        const rr = Math.min(r, w * 0.5, h * 0.5);
-        ctx.beginPath();
-        ctx.moveTo(x + rr, y);
-        ctx.lineTo(x + w - rr, y);
-        ctx.quadraticCurveTo(x + w, y, x + w, y + rr);
-        ctx.lineTo(x + w, y + h - rr);
-        ctx.quadraticCurveTo(x + w, y + h, x + w - rr, y + h);
-        ctx.lineTo(x + rr, y + h);
-        ctx.quadraticCurveTo(x, y + h, x, y + h - rr);
-        ctx.lineTo(x, y + rr);
-        ctx.quadraticCurveTo(x, y, x + rr, y);
-        ctx.closePath();
-      }
-
-      function drawLiquidBridge(b, t) {
-        if (settings.liquidBridge <= 0 || b.type === "bad") return;
-        const d = dist(player.x, player.y, b.x, b.y);
-        const reach = settings.playerRadius + b.r + 92 * settings.liquidBridge;
-        if (d > reach || d < 2) return;
-        const strength = (1 - d / reach) * settings.liquidBridge;
-        const dx = (b.x - player.x) / d;
-        const dy = (b.y - player.y) / d;
-        const nx = -dy;
-        const ny = dx;
-        const w1 = settings.playerRadius * 0.38 * strength;
-        const w2 = b.r * 0.85 * strength;
-        const midX = (player.x + b.x) * 0.5 + Math.sin(t * 3 + b.phase) * 10 * strength;
-        const midY = (player.y + b.y) * 0.5 + Math.cos(t * 2.7 + b.phase) * 10 * strength;
-
-        ctx.save();
-        ctx.globalAlpha = 0.18 + 0.28 * strength;
-        const g = ctx.createLinearGradient(player.x, player.y, b.x, b.y);
-        g.addColorStop(0, "rgba(255, 255, 255, 0.36)");
-        g.addColorStop(0.5, "rgba(214, 255, 248, 0.28)");
-        g.addColorStop(1, "rgba(154, 255, 223, 0.22)");
-        ctx.fillStyle = g;
-        ctx.beginPath();
-        ctx.moveTo(player.x + nx * w1, player.y + ny * w1);
-        ctx.quadraticCurveTo(midX + nx * w1, midY + ny * w1, b.x + nx * w2, b.y + ny * w2);
-        ctx.quadraticCurveTo(b.x - nx * w2, b.y - ny * w2, midX - nx * w1, midY - ny * w1);
-        ctx.quadraticCurveTo(player.x - nx * w1, player.y - ny * w1, player.x + nx * w1, player.y + ny * w1);
-        ctx.fill();
-        ctx.restore();
-      }
-
-      function drawPlayer(t) {
-        const r = settings.playerRadius;
-        const sx = 1 + Math.sin(t * 3.6) * 0.025 + player.wobble * 0.08;
-        const sy = 1 + Math.cos(t * 3.1) * 0.025 - player.wobble * 0.04;
-
-        ctx.save();
-        if (state.shake > 0) {
-          ctx.translate(rand(-5, 5) * state.shake * 4, rand(-4, 4) * state.shake * 4);
-        }
-        ctx.translate(player.x, player.y);
-        ctx.rotate(Math.sin(t * 0.9) * 0.08);
-        ctx.scale(sx, sy);
-
-        ctx.save();
-        ctx.globalAlpha = 0.22;
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
-        ctx.lineWidth = 1.5;
-        ctx.setLineDash([8, 8]);
-        ctx.beginPath();
-        ctx.arc(0, 0, settings.popRadius, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.restore();
-
-        ctx.shadowColor = "rgba(188, 255, 239, 0.42)";
-        ctx.shadowBlur = 36;
-        playerPath(r, t);
-        const fill = ctx.createRadialGradient(-r * 0.34, -r * 0.42, r * 0.08, 0, 0, r * 1.28);
-        fill.addColorStop(0, "rgba(255, 255, 255, 0.98)");
-        fill.addColorStop(0.18, "rgba(244, 255, 253, 0.72)");
-        fill.addColorStop(0.56, "rgba(166, 255, 231, 0.34)");
-        fill.addColorStop(1, "rgba(113, 148, 255, 0.18)");
-        ctx.fillStyle = fill;
-        ctx.fill(state.shape === 2 ? "evenodd" : "nonzero");
-
-        playerPath(r, t);
-        ctx.shadowBlur = 0;
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.58)";
-        ctx.stroke();
-
-        ctx.globalAlpha = 0.9;
-        ctx.fillStyle = "rgba(255, 255, 255, 0.72)";
-        ctx.beginPath();
-        ctx.ellipse(-r * 0.34, -r * 0.36, r * 0.2, r * 0.1, -0.45, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.globalAlpha = 0.25;
-        ctx.fillStyle = "rgba(255, 255, 255, 0.55)";
-        ctx.beginPath();
-        ctx.ellipse(r * 0.38, r * 0.4, r * 0.16, r * 0.08, -0.4, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      }
-
-      function drawBubble(b, t) {
-        const r = b.r * b.scale;
-        const pulse = 1 + Math.sin(t * 4 + b.phase) * 0.035;
-        const x = b.x;
-        const y = b.y;
-        const edge = typeEdge(b.type);
-        const core = typeColor(b.type);
-
-        ctx.save();
-        ctx.globalAlpha = b.alpha;
-        ctx.translate(x, y);
-        ctx.scale(pulse, pulse);
-        ctx.shadowColor = edge;
-        ctx.shadowBlur = b.type === "good" ? 26 : 20;
-
-        const g = ctx.createRadialGradient(-r * 0.38, -r * 0.42, r * 0.08, 0, 0, r * 1.12);
-        if (b.type === "good") {
-          g.addColorStop(0, "#ffffff");
-          g.addColorStop(0.22, "#fbfffe");
-          g.addColorStop(0.55, "#e9fff9");
-          g.addColorStop(1, "#9affdf");
-        } else if (b.type === "bad") {
-          g.addColorStop(0, "#fff0f4");
-          g.addColorStop(0.2, "#ff9ab0");
-          g.addColorStop(1, "#f22f61");
-        } else if (b.type === "gold") {
-          g.addColorStop(0, "#fffdf0");
-          g.addColorStop(0.28, "#fff0a8");
-          g.addColorStop(1, "#eaa600");
-        } else {
-          g.addColorStop(0, "#ffffff");
-          g.addColorStop(0.25, "#d8caff");
-          g.addColorStop(1, "#7e5cff");
-        }
-
-        ctx.fillStyle = g;
-        ctx.beginPath();
-        ctx.arc(0, 0, r, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.shadowBlur = 0;
-        ctx.lineWidth = b.type === "good" ? 2.5 : 2;
-        ctx.strokeStyle = b.type === "good" ? "rgba(255, 255, 255, 0.9)" : "rgba(255, 255, 255, 0.6)";
-        ctx.stroke();
-
-        ctx.fillStyle = "rgba(255, 255, 255, 0.82)";
-        ctx.beginPath();
-        ctx.ellipse(-r * 0.34, -r * 0.38, r * 0.18, r * 0.09, -0.45, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.globalAlpha *= b.type === "good" ? 0.55 : 0.35;
-        ctx.strokeStyle = core;
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.arc(0, 0, r * 0.72, Math.PI * 0.12, Math.PI * 1.32);
-        ctx.stroke();
-        ctx.restore();
-      }
-
-      function drawPops(dt) {
-        for (let i = pops.length - 1; i >= 0; i -= 1) {
-          const p = pops[i];
-          p.life -= dt;
-          if (p.life <= 0) {
-            pops.splice(i, 1);
-            continue;
-          }
-          const k = p.life / p.maxLife;
-          ctx.save();
-          ctx.globalAlpha = Math.max(0, k);
-          ctx.strokeStyle = p.color;
-          ctx.fillStyle = p.color;
-          ctx.shadowColor = p.color;
-          ctx.shadowBlur = 18;
-          if (p.ring) {
-            const radius = p.r + (1 - k) * 62;
-            ctx.lineWidth = 2 + k * 2;
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
-            ctx.stroke();
-          } else {
-            p.x += p.vx * dt;
-            p.y += p.vy * dt;
-            p.vx *= 0.98;
-            p.vy = p.vy * 0.98 + 55 * dt;
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.r * (0.4 + k), 0, Math.PI * 2);
-            ctx.fill();
-          }
-          ctx.restore();
-        }
-      }
-
-      function drawFloatTexts(dt) {
-        ctx.save();
-        ctx.font = "800 16px Inter, system-ui, sans-serif";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        for (let i = floatTexts.length - 1; i >= 0; i -= 1) {
-          const f = floatTexts[i];
-          f.life -= dt;
-          if (f.life <= 0) {
-            floatTexts.splice(i, 1);
-            continue;
-          }
-          f.y += f.vy * dt;
-          const k = f.life / f.maxLife;
-          ctx.globalAlpha = k;
-          ctx.fillStyle = "rgba(0, 0, 0, 0.35)";
-          ctx.fillText(f.text, f.x + 1, f.y + 2);
-          ctx.fillStyle = f.color;
-          ctx.fillText(f.text, f.x, f.y);
-        }
-        ctx.restore();
-      }
-
-      function update(dt, t) {
-        if (!state.running || state.paused) {
-          if (!state.hasPointer) {
-            player.tx = state.width * 0.5 + Math.cos(t * 0.45) * state.width * 0.18;
-            player.ty = state.height * 0.55 + Math.sin(t * 0.6) * state.height * 0.12;
-          }
-          player.x += (player.tx - player.x) * 0.04;
-          player.y += (player.ty - player.y) * 0.04;
-          return;
-        }
-
-        const oldX = player.x;
-        const oldY = player.y;
-        const ease = settings.controlEase;
-        player.x += (player.tx - player.x) * ease;
-        player.y += (player.ty - player.y) * ease;
-        player.vx = (player.x - oldX) / Math.max(dt, 0.001);
-        player.vy = (player.y - oldY) / Math.max(dt, 0.001);
-        player.wobble = Math.max(0, player.wobble - dt * 3.1);
-        state.shake = Math.max(0, state.shake - dt);
-
-        state.timeLeft -= dt;
-        if (state.timeLeft <= 0) {
-          state.timeLeft = 0;
-          endGame("Tijd op", `Je score is ${Math.round(state.score)}. Verhoog het aantal bubbles of de snelheid als je meer chaos wilt.`);
-          return;
-        }
-
-        if (state.streakTime > 0) {
-          state.streakTime -= dt;
-          if (state.streakTime <= 0) state.streak = 1;
-        }
-
-        for (const b of bubbles) {
-          b.justSpawned = Math.max(0, b.justSpawned - dt);
-          b.alpha += (1 - b.alpha) * 0.08;
-          b.scale += (1 - b.scale) * 0.12;
-
-          b.x += b.vx * dt;
-          b.y += b.vy * dt;
-          b.x += Math.sin(t * 2.2 + b.phase) * 0.24;
-          b.y += Math.cos(t * 1.9 + b.phase) * 0.2;
-
-          if (b.type !== "bad") {
-            const d = dist(player.x, player.y, b.x, b.y);
-            const attract = settings.playerRadius + b.r + 88;
-            if (d < attract && d > 1) {
-              const pull = (1 - d / attract) * 110;
-              b.vx += ((player.x - b.x) / d) * pull * dt;
-              b.vy += ((player.y - b.y) / d) * pull * dt;
+            if (sdf < dBad) {
+              dBad = sdf;
+              badVec = frag - o.xy;
             }
           }
-
-          b.vx *= 0.999;
-          b.vy *= 0.999;
-
-          if (b.x < -130 || b.x > state.width + 130 || b.y < -130 || b.y > state.height + 130) {
-            spawnBubble(b, false);
-            continue;
-          }
-
-          const hit = settings.playerRadius * 0.92 + b.r * 0.9;
-          if (b.justSpawned <= 0 && dist(player.x, player.y, b.x, b.y) <= hit) {
-            handleBubble(b, "touch");
-          }
         }
       }
 
-      function render(dt, t) {
-        drawBackground(t);
+      float fillGood = 1.0 - smoothstep(-1.0, 2.2, dGood);
+      float edgeGood = 1.0 - smoothstep(0.0, 7.0, abs(dGood));
+      float outerGood = 1.0 - smoothstep(8.0, 42.0, abs(dGood));
 
-        ctx.save();
-        if (state.shake > 0) {
-          ctx.translate(rand(-3, 3) * state.shake * 5, rand(-3, 3) * state.shake * 5);
-        }
-        for (const b of bubbles) drawLiquidBridge(b, t);
-        for (const b of bubbles) drawBubble(b, t);
-        drawPlayer(t);
-        ctx.restore();
+      float fillBad = 1.0 - smoothstep(-0.6, 2.0, dBad);
+      float edgeBad = 1.0 - smoothstep(0.0, 6.5, abs(dBad));
+      float outerBad = 1.0 - smoothstep(8.0, 36.0, abs(dBad));
 
-        drawPops(dt);
-        drawFloatTexts(dt);
+      vec2 eps = vec2(1.35, 0.0);
+      float gx = shapeSdf(frag + eps.xy - u_player, u_playerR, u_playerShape) - shapeSdf(frag - eps.xy - u_player, u_playerR, u_playerShape);
+      float gy = shapeSdf(frag + eps.yx - u_player, u_playerR, u_playerShape) - shapeSdf(frag - eps.yx - u_player, u_playerR, u_playerShape);
+      vec2 normal = normalize(vec2(gx, gy) + vec2(0.0001));
 
-        scoreEl.textContent = Math.round(state.score).toString();
-        timeEl.textContent = Math.ceil(state.timeLeft).toString();
-        livesEl.textContent = state.lives.toString();
-        streakEl.textContent = `x${state.streak}`;
-        shapeEl.textContent = shapeNames[state.shape];
+      float refr = fillGood * 0.02 + edgeGood * 0.012;
+      vec2 refrUv = uv + normal * refr * vec2(1.0 / aspect, 1.0);
+      vec3 refracted = bg(refrUv);
+
+      float light = dot(normalize(vec3(normal, 0.55)), normalize(vec3(-0.42, -0.78, 0.72))) * 0.5 + 0.5;
+      float sparkle = pow(max(0.0, dot(normalize(vec3(normal, 0.7)), normalize(vec3(-0.55, -0.7, 0.6)))), 32.0);
+      sparkle += pow(max(0.0, light), 18.0) * 0.35;
+      float inner = clamp(0.22 + fillGood * 0.62 + light * 0.32, 0.0, 1.0);
+      vec3 liquid = mix(refracted, goodColor(inner, edgeGood, sparkle), 0.70 + 0.18 * edgeGood);
+      liquid += vec3(0.68, 1.0, 1.0) * outerGood * 0.18;
+      liquid += vec3(1.0) * edgeGood * 0.28 * u_shine;
+
+      vec2 badN = normalize(badVec + vec2(0.0001));
+      float badLight = dot(normalize(vec3(badN, 0.52)), normalize(vec3(-0.35, -0.8, 0.65))) * 0.5 + 0.5;
+      float badSpark = pow(max(0.0, badLight), 20.0);
+      vec3 bad = badColor(clamp(0.18 + fillBad * 0.68 + badLight * 0.28, 0.0, 1.0), edgeBad, badSpark);
+      bad += vec3(1.0, 0.04, 0.12) * outerBad * 0.18;
+
+      vec3 col = base;
+      col = mix(col, liquid, clamp(fillGood * 0.74 + edgeGood * 0.42 + outerGood * 0.08, 0.0, 1.0));
+      col = mix(col, bad, clamp(fillBad * 0.78 + edgeBad * 0.44 + outerBad * 0.08, 0.0, 1.0));
+
+      for (int j = 0; j < MAX_BURSTS; j++) {
+        if (float(j) >= u_burstCount) break;
+        vec4 b = u_bursts[j];
+        float age = clamp(b.z, 0.0, 1.0);
+        float radius = mix(8.0, b.w, age);
+        float ring = 1.0 - smoothstep(0.0, 4.2 + age * 8.0, abs(length(frag - b.xy) - radius));
+        float fade = (1.0 - age) * (1.0 - age);
+        col += vec3(0.72, 1.0, 1.0) * ring * fade * 0.75;
       }
 
-      function loop(now) {
-        const dt = Math.min(0.04, (now - state.lastT) / 1000 || 0.016);
-        state.lastT = now;
-        const t = now / 1000;
-        update(dt, t);
-        render(dt, t);
-        requestAnimationFrame(loop);
+      col += vec3(0.7, 1.0, 1.0) * u_levelPulse * (0.18 + 0.18 * sin(uv.y * 38.0 - u_time * 7.0));
+      col = mix(col, vec3(1.0, 0.12, 0.18), u_flash * 0.33);
+      float vignette = smoothstep(0.95, 0.18, length((uv - 0.5) * vec2(aspect, 1.0)));
+      col *= 0.72 + 0.28 * vignette;
+      gl_FragColor = vec4(pow(max(col, 0.0), vec3(0.88)), 1.0);
+    }
+  `;
+
+  function compileShader(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+      throw new Error(gl.getShaderInfoLog(s) || 'Shader compile error');
+    }
+    return s;
+  }
+
+  function createProgram() {
+    const program = gl.createProgram();
+    gl.attachShader(program, compileShader(gl.VERTEX_SHADER, vertexSource));
+    gl.attachShader(program, compileShader(gl.FRAGMENT_SHADER, fragmentSource));
+    gl.linkProgram(program);
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+      throw new Error(gl.getProgramInfoLog(program) || 'Program link error');
+    }
+    return program;
+  }
+
+  let program = null;
+  let loc = null;
+  let positionBuffer = null;
+  let fallback2d = null;
+
+  function setupGL() {
+    if (!gl) {
+      fallback2d = canvas.getContext('2d');
+      return;
+    }
+    try {
+      program = createProgram();
+      gl.useProgram(program);
+      positionBuffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]), gl.STATIC_DRAW);
+      const posLoc = gl.getAttribLocation(program, 'a_position');
+      gl.enableVertexAttribArray(posLoc);
+      gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
+      loc = {
+        res: gl.getUniformLocation(program, 'u_res'),
+        time: gl.getUniformLocation(program, 'u_time'),
+        player: gl.getUniformLocation(program, 'u_player'),
+        playerR: gl.getUniformLocation(program, 'u_playerR'),
+        playerShape: gl.getUniformLocation(program, 'u_playerShape'),
+        count: gl.getUniformLocation(program, 'u_count'),
+        objs: gl.getUniformLocation(program, 'u_objs[0]'),
+        bursts: gl.getUniformLocation(program, 'u_bursts[0]'),
+        burstCount: gl.getUniformLocation(program, 'u_burstCount'),
+        flash: gl.getUniformLocation(program, 'u_flash'),
+        blend: gl.getUniformLocation(program, 'u_blend'),
+        shine: gl.getUniformLocation(program, 'u_shine'),
+        levelPulse: gl.getUniformLocation(program, 'u_levelPulse'),
+        shake: gl.getUniformLocation(program, 'u_shake')
+      };
+    } catch (err) {
+      console.warn(err);
+      fallback2d = canvas.getContext('2d');
+      program = null;
+    }
+  }
+
+  function resetGame() {
+    state.started = true;
+    state.paused = false;
+    state.gameOver = false;
+    state.level = 1;
+    state.shapeIndex = 0;
+    state.absorbed = 0;
+    state.score = 0;
+    state.lives = 3;
+    state.combo = 1;
+    state.comboTimer = 0;
+    state.flash = 0;
+    state.shake = 0;
+    state.levelPulse = 0;
+    state.spawnTimer = 0;
+    state.player.x = state.width * 0.5;
+    state.player.y = state.height * 0.76;
+    state.player.tx = state.player.x;
+    state.player.ty = state.player.y;
+    state.player.r = baseRadius();
+    state.player.targetR = baseRadius();
+    objects.length = 0;
+    bursts.length = 0;
+    ui.intro.style.display = 'none';
+    toast('Level 1: absorbeer bollen');
+    for (let i = 0; i < Math.min(8, settings.maxObjects); i++) spawnObject(-Math.random() * state.height);
+    updateHUD();
+  }
+
+  function endGame() {
+    state.gameOver = true;
+    state.paused = true;
+    ui.intro.style.display = '';
+    ui.intro.querySelector('h1').textContent = 'Game over';
+    ui.intro.querySelector('p').textContent = 'Je liquid werd te klein. Probeer opnieuw en ontwijk de rode vormen.';
+    ui.start.textContent = 'Opnieuw starten';
+  }
+
+  function startIntroText() {
+    ui.intro.querySelector('h1').textContent = 'Liquid Absorb';
+    ui.intro.querySelector('p').textContent = 'Beweeg het waterlichaam en absorbeer alleen dezelfde vorm. Elke 10 juiste absorpties verandert je liquid vorm en begint een nieuw level.';
+    ui.start.textContent = 'Start game';
+  }
+
+  function spawnObject(yOverride) {
+    if (objects.length >= MAX_OBJECTS) return;
+    const current = state.shapeIndex % SHAPES.length;
+    const isWrong = Math.random() < settings.wrongChance;
+    const shape = isWrong ? otherShape(current) : current;
+    const r = clamp(baseRadius() * rand(0.30, 0.49), 20, 38) * (shape === 1 ? 1.08 : 1);
+    const sideDrift = rand(-22, 22);
+    objects.push({
+      x: rand(r + 14, state.width - r - 14),
+      y: typeof yOverride === 'number' ? yOverride : -r - rand(0, state.height * 0.24),
+      r,
+      shape,
+      vy: rand(42, 82) * settings.speed * shapeDifficulty(),
+      vx: sideDrift,
+      wobble: rand(0, Math.PI * 2),
+      spin: rand(-1, 1),
+      age: 0,
+      magnet: 0,
+      pop: 0
+    });
+  }
+
+  function addBurst(x, y, radius) {
+    bursts.push({ x, y, age: 0, radius });
+    while (bursts.length > MAX_BURSTS) bursts.shift();
+  }
+
+  function absorbObject(obj, index) {
+    const correct = obj.shape === state.shapeIndex % SHAPES.length;
+    addBurst(obj.x, obj.y, obj.r * (correct ? 4.0 : 2.5));
+    objects.splice(index, 1);
+    if (correct) {
+      state.absorbed += 1;
+      state.combo = clamp(state.combo + 0.15, 1, 5);
+      state.comboTimer = 2.4;
+      const gained = Math.round((100 + state.level * 28) * state.combo);
+      state.score += gained;
+      state.player.targetR = clamp(state.player.targetR + obj.r * 0.18, baseRadius() * 0.62, baseRadius() * (1.45 + state.level * 0.035));
+      if (state.absorbed >= 10) nextLevel();
+    } else {
+      state.lives -= 1;
+      state.combo = 1;
+      state.comboTimer = 0;
+      state.flash = 1;
+      state.shake = 1;
+      state.player.targetR = Math.max(baseRadius() * 0.55, state.player.targetR * 0.72 - obj.r * 0.12);
+      toast('Verkeerde vorm. Je krimpt.');
+      if (state.lives <= 0 || state.player.targetR <= baseRadius() * 0.58) endGame();
+    }
+    updateHUD();
+  }
+
+  function nextLevel() {
+    state.level += 1;
+    state.shapeIndex = (state.shapeIndex + 1) % SHAPES.length;
+    state.absorbed = 0;
+    state.levelPulse = 1;
+    state.player.targetR = baseRadius() * (1.02 + Math.min(0.25, state.level * 0.015));
+    objects.length = 0;
+    const name = targetShape().name;
+    toast('Level ' + state.level + ': absorbeer nu ' + name);
+    for (let i = 0; i < Math.min(10, settings.maxObjects); i++) spawnObject(-Math.random() * state.height * 0.9);
+  }
+
+  function toast(text) {
+    ui.toast.textContent = text;
+    ui.toast.classList.add('show');
+    window.clearTimeout(toast.timer);
+    toast.timer = window.setTimeout(() => ui.toast.classList.remove('show'), 1800);
+  }
+
+  function updateHUD() {
+    const shape = targetShape();
+    ui.level.textContent = String(state.level);
+    ui.shape.textContent = shape.name;
+    ui.glyph.textContent = shape.glyph;
+    ui.score.textContent = String(state.score);
+    ui.size.textContent = Math.round((state.player.targetR / baseRadius()) * 100) + '%';
+    ui.life.textContent = String(state.lives);
+    ui.combo.textContent = 'x' + state.combo.toFixed(1);
+    ui.progress.style.width = clamp(state.absorbed / 10 * 100, 0, 100) + '%';
+  }
+
+  function update(dt) {
+    if (!state.started || state.paused) return;
+
+    state.time += dt;
+    state.flash = Math.max(0, state.flash - dt * 2.8);
+    state.shake = Math.max(0, state.shake - dt * 4.5);
+    state.levelPulse = Math.max(0, state.levelPulse - dt * 0.9);
+    state.comboTimer = Math.max(0, state.comboTimer - dt);
+    if (state.comboTimer <= 0) state.combo = lerp(state.combo, 1, 1 - Math.pow(0.0001, dt));
+
+    const p = state.player;
+    const margin = p.r * 0.65;
+    p.tx = clamp(p.tx, margin, state.width - margin);
+    p.ty = clamp(p.ty, state.height * 0.18, state.height - margin);
+
+    const smoothing = 1 - Math.pow(settings.smoothing, dt * 60);
+    p.x = lerp(p.x, p.tx, smoothing);
+    p.y = lerp(p.y, p.ty, smoothing);
+    p.r = lerp(p.r, p.targetR, 1 - Math.pow(0.08, dt));
+    p.wobble += dt;
+
+    if (keys.has('ArrowLeft') || keys.has('KeyA')) p.tx -= 420 * dt;
+    if (keys.has('ArrowRight') || keys.has('KeyD')) p.tx += 420 * dt;
+    if (keys.has('ArrowUp') || keys.has('KeyW')) p.ty -= 380 * dt;
+    if (keys.has('ArrowDown') || keys.has('KeyS')) p.ty += 380 * dt;
+
+    state.spawnTimer -= dt;
+    const desired = settings.maxObjects;
+    const spawnDelay = clamp(0.8 - state.level * 0.035, 0.28, 0.82) / settings.speed;
+    if (state.spawnTimer <= 0 && objects.length < desired) {
+      spawnObject();
+      state.spawnTimer = spawnDelay;
+    }
+
+    for (let i = objects.length - 1; i >= 0; i--) {
+      const o = objects[i];
+      o.age += dt;
+      o.wobble += dt * (0.8 + Math.abs(o.spin));
+      o.y += o.vy * dt;
+      o.x += Math.sin(o.wobble * 1.35) * o.vx * dt + o.spin * 8 * dt;
+      if (o.x < o.r) { o.x = o.r; o.vx *= -0.6; }
+      if (o.x > state.width - o.r) { o.x = state.width - o.r; o.vx *= -0.6; }
+
+      const d = dist(p.x, p.y, o.x, o.y);
+      const correct = o.shape === state.shapeIndex % SHAPES.length;
+      const magnetRange = correct ? p.r * 2.05 + o.r * 2.4 : p.r * 0.92 + o.r * 0.92;
+      if (correct && d < magnetRange) {
+        const pull = (1 - d / magnetRange) * (1.7 + state.level * 0.05);
+        o.x = lerp(o.x, p.x, pull * dt);
+        o.y = lerp(o.y, p.y, pull * dt);
+        o.magnet = lerp(o.magnet, 1, 0.12);
+      } else {
+        o.magnet = lerp(o.magnet, 0, 0.08);
       }
 
-      canvas.addEventListener("pointerdown", (event) => {
-        setPointer(event.clientX, event.clientY);
-        canvas.setPointerCapture(event.pointerId);
-        if (!state.running || state.paused) return;
-        const nearest = nearestBubble(event.clientX, event.clientY);
-        if (nearest.bubble && nearest.distance <= settings.popRadius + nearest.bubble.r) {
-          handleBubble(nearest.bubble, "tap");
-        }
-      });
+      const hitRadius = p.r * (correct ? 0.78 : 0.67) + o.r * (correct ? 0.68 : 0.56);
+      if (d < hitRadius) {
+        absorbObject(o, i);
+        continue;
+      }
 
-      canvas.addEventListener("pointermove", (event) => {
-        setPointer(event.clientX, event.clientY);
-      });
+      if (o.y > state.height + o.r * 2) {
+        objects.splice(i, 1);
+      }
+    }
 
-      canvas.addEventListener("pointerup", (event) => {
-        try {
-          canvas.releasePointerCapture(event.pointerId);
-        } catch (error) {
-          // Sommige browsers releasen automatisch.
-        }
-      });
+    for (let i = bursts.length - 1; i >= 0; i--) {
+      bursts[i].age += dt * 1.65;
+      if (bursts[i].age >= 1) bursts.splice(i, 1);
+    }
 
-      window.addEventListener("keydown", (event) => {
-        if (event.key === " " || event.code === "Space") {
-          event.preventDefault();
-          togglePause();
-        } else if (event.key.toLowerCase() === "s") {
-          setSettingsOpen(!settingsPanel.classList.contains("open"));
-        } else if (event.key.toLowerCase() === "r") {
-          startGame();
-        }
-      });
+    updateHUD();
+  }
 
-      document.querySelectorAll("[data-setting]").forEach((input) => {
-        input.addEventListener("input", () => {
-          const key = input.dataset.setting;
-          settings[key] = Number(input.value);
-          updateSettingsUi();
-        });
-      });
+  function renderGL() {
+    if (!gl || !program) return;
+    gl.useProgram(program);
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    gl.uniform2f(loc.res, canvas.width, canvas.height);
+    gl.uniform1f(loc.time, state.time);
+    gl.uniform2f(loc.player, state.player.x * state.dpr, (state.height - state.player.y) * state.dpr);
+    gl.uniform1f(loc.playerR, state.player.r * state.dpr);
+    gl.uniform1f(loc.playerShape, state.shapeIndex % SHAPES.length);
+    gl.uniform1f(loc.flash, state.flash);
+    gl.uniform1f(loc.blend, settings.blend);
+    gl.uniform1f(loc.shine, settings.shine);
+    gl.uniform1f(loc.levelPulse, state.levelPulse);
+    gl.uniform1f(loc.shake, state.shake);
 
-      settingsToggle.addEventListener("click", () => setSettingsOpen(!settingsPanel.classList.contains("open")));
-      closeSettings.addEventListener("click", () => setSettingsOpen(false));
-      overlaySettings.addEventListener("click", () => setSettingsOpen(true));
-      pauseToggle.addEventListener("click", togglePause);
-      startButton.addEventListener("click", startGame);
+    const objData = new Float32Array(MAX_OBJECTS * 4);
+    const count = Math.min(objects.length, MAX_OBJECTS);
+    for (let i = 0; i < count; i++) {
+      const o = objects[i];
+      objData[i * 4 + 0] = o.x * state.dpr;
+      objData[i * 4 + 1] = (state.height - o.y) * state.dpr;
+      objData[i * 4 + 2] = o.r * state.dpr;
+      objData[i * 4 + 3] = o.shape;
+    }
+    gl.uniform1f(loc.count, count);
+    gl.uniform4fv(loc.objs, objData);
 
-      resetSettings.addEventListener("click", () => {
-        Object.assign(settings, defaults);
-        updateSettingsUi();
-        showToast("Instellingen gereset");
-      });
+    const burstData = new Float32Array(MAX_BURSTS * 4);
+    const burstCount = Math.min(bursts.length, MAX_BURSTS);
+    for (let i = 0; i < burstCount; i++) {
+      const b = bursts[i];
+      burstData[i * 4 + 0] = b.x * state.dpr;
+      burstData[i * 4 + 1] = (state.height - b.y) * state.dpr;
+      burstData[i * 4 + 2] = b.age;
+      burstData[i * 4 + 3] = b.radius * state.dpr;
+    }
+    gl.uniform1f(loc.burstCount, burstCount);
+    gl.uniform4fv(loc.bursts, burstData);
 
-      window.addEventListener("resize", resize, { passive: true });
-      window.addEventListener("orientationchange", () => setTimeout(resize, 120), { passive: true });
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+  }
 
-      resize();
-      updateSettingsUi();
-      ensureBubbles();
-      requestAnimationFrame(loop);
-    })();
-  </script>
+  function drawFallbackShape(ctx, x, y, r, shape, bad) {
+    ctx.save();
+    const grad = ctx.createRadialGradient(x - r * 0.35, y - r * 0.38, r * 0.1, x, y, r * 1.2);
+    if (bad) {
+      grad.addColorStop(0, 'rgba(255, 245, 250, .95)');
+      grad.addColorStop(0.28, 'rgba(255, 105, 135, .82)');
+      grad.addColorStop(1, 'rgba(120, 5, 28, .38)');
+    } else {
+      grad.addColorStop(0, 'rgba(255, 255, 255, .98)');
+      grad.addColorStop(0.36, 'rgba(220, 253, 255, .78)');
+      grad.addColorStop(1, 'rgba(80, 205, 230, .24)');
+    }
+    ctx.fillStyle = grad;
+    ctx.strokeStyle = bad ? 'rgba(255,120,150,.95)' : 'rgba(255,255,255,.95)';
+    ctx.lineWidth = Math.max(2, r * 0.08);
+    ctx.shadowColor = bad ? 'rgba(255,60,100,.55)' : 'rgba(150,250,255,.45)';
+    ctx.shadowBlur = r * 0.6;
+    ctx.beginPath();
+    if (shape === 1) {
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.moveTo(x + r * 0.42, y);
+      ctx.arc(x, y, r * 0.42, 0, Math.PI * 2, true);
+    } else if (shape === 2) {
+      ctx.roundRect(x - r * 0.95, y - r * 0.5, r * 1.9, r, r * 0.5);
+    } else if (shape === 3) {
+      ctx.moveTo(x, y - r);
+      ctx.lineTo(x + r, y);
+      ctx.lineTo(x, y + r);
+      ctx.lineTo(x - r, y);
+      ctx.closePath();
+    } else if (shape === 4) {
+      ctx.roundRect(x - r * 0.74, y - r * 0.74, r * 1.48, r * 1.48, r * 0.32);
+    } else {
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+    }
+    ctx.fill('evenodd');
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function renderFallback() {
+    if (!fallback2d) return;
+    const ctx = fallback2d;
+    ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+    const grad = ctx.createLinearGradient(0, 0, 0, state.height);
+    grad.addColorStop(0, '#061129');
+    grad.addColorStop(1, '#03121a');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, state.width, state.height);
+    for (const o of objects) drawFallbackShape(ctx, o.x, o.y, o.r, o.shape, o.shape !== state.shapeIndex % SHAPES.length);
+    drawFallbackShape(ctx, state.player.x, state.player.y, state.player.r, state.shapeIndex % SHAPES.length, false);
+    for (const b of bursts) {
+      ctx.strokeStyle = 'rgba(170,255,255,' + (1 - b.age) + ')';
+      ctx.lineWidth = 3 + b.age * 6;
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, b.radius * b.age, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  }
+
+  function loop(now) {
+    const dt = Math.min(0.033, (now - state.last) / 1000 || 0.016);
+    state.last = now;
+    update(dt);
+    if (program) renderGL(); else renderFallback();
+    requestAnimationFrame(loop);
+  }
+
+  function setPointer(clientX, clientY) {
+    state.player.tx = clientX;
+    state.player.ty = clientY;
+  }
+
+  function tapAction(clientX, clientY) {
+    if (!state.started || state.paused) return;
+    let best = -1;
+    let bestD = Infinity;
+    for (let i = 0; i < objects.length; i++) {
+      const o = objects[i];
+      const d = dist(clientX, clientY, o.x, o.y);
+      if (d < o.r * 1.55 && d < bestD) {
+        best = i;
+        bestD = d;
+      }
+    }
+    if (best >= 0) {
+      absorbObject(objects[best], best);
+    }
+  }
+
+  function updatePauseButton() {
+    ui.pause.textContent = state.paused ? 'Verder' : 'Pauze';
+  }
+
+  window.addEventListener('resize', resize);
+  window.addEventListener('pointermove', (e) => {
+    if (!ui.settings.contains(e.target)) setPointer(e.clientX, e.clientY);
+  }, { passive: false });
+  window.addEventListener('pointerdown', (e) => {
+    if (ui.settings.contains(e.target) || ui.settingsBtn.contains(e.target) || ui.intro.contains(e.target)) return;
+    state.pointerDown = true;
+    setPointer(e.clientX, e.clientY);
+    tapAction(e.clientX, e.clientY);
+  }, { passive: false });
+  window.addEventListener('pointerup', () => { state.pointerDown = false; }, { passive: true });
+  window.addEventListener('keydown', (e) => {
+    keys.add(e.code);
+    if (e.code === 'Space') {
+      state.paused = !state.paused;
+      updatePauseButton();
+    }
+  });
+  window.addEventListener('keyup', (e) => keys.delete(e.code));
+
+  ui.start.addEventListener('click', () => resetGame());
+  ui.restart.addEventListener('click', () => {
+    startIntroText();
+    resetGame();
+  });
+  ui.pause.addEventListener('click', () => {
+    if (!state.started) return;
+    state.paused = !state.paused;
+    updatePauseButton();
+  });
+  ui.settingsBtn.addEventListener('click', () => ui.settings.classList.toggle('open'));
+  document.addEventListener('pointerdown', (e) => {
+    if (!ui.settings.contains(e.target) && !ui.settingsBtn.contains(e.target)) ui.settings.classList.remove('open');
+  });
+
+  [ui.spawn, ui.speed, ui.shine, ui.blend, ui.wrong, ui.smooth].forEach(input => {
+    input.addEventListener('input', updateSettingsLabels);
+    input.addEventListener('pointerdown', (e) => e.stopPropagation());
+    input.addEventListener('pointermove', (e) => e.stopPropagation());
+  });
+
+  if (!CanvasRenderingContext2D.prototype.roundRect) {
+    CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+      r = Math.min(r, Math.abs(w) / 2, Math.abs(h) / 2);
+      this.moveTo(x + r, y);
+      this.arcTo(x + w, y, x + w, y + h, r);
+      this.arcTo(x + w, y + h, x, y + h, r);
+      this.arcTo(x, y + h, x, y, r);
+      this.arcTo(x, y, x + w, y, r);
+      this.closePath();
+      return this;
+    };
+  }
+
+  updateSettingsLabels();
+  resize();
+  setupGL();
+  startIntroText();
+  requestAnimationFrame(loop);
+})();
+</script>
 </body>
 </html>
