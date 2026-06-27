@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Liquid Absorb v10 Stable</title>
+  <title>Liquid Absorb v11 Liquid Touch</title>
   <style>
     :root{
       --hud-bg:rgba(3,6,16,.82);
@@ -114,16 +114,230 @@
 
   <script type="module">
     const SHADER=`
+
       precision highp float;
-      uniform sampler2D src;uniform vec2 resolution;uniform vec2 offset;uniform float time;uniform vec2 playerPx;uniform float playerR;uniform float distortion;uniform int shapeIndex;uniform float pulseAge;uniform float bubbleData[96];out vec4 outColor;const int MAX_ITEMS=24;
-      float smin(float a,float b,float k){float h=clamp(.5+.5*(b-a)/k,0.,1.);return mix(b,a,h)-k*h*(1.-h);}mat2 rot(float a){float c=cos(a),s=sin(a);return mat2(c,-s,s,c);}float sdSphere(vec3 p,float r){return length(p)-r;}
-      float sdBox(vec3 p,vec3 b,float r){vec3 q=abs(p)-b+r;return length(max(q,0.))+min(max(q.x,max(q.y,q.z)),0.)-r;}float sdTorus(vec3 p,vec2 t){vec2 q=vec2(length(p.xy)-t.x,p.z);return length(q)-t.y;}
-      float sdCapsule(vec3 p,vec3 a,vec3 b,float r){vec3 pa=p-a,ba=b-a;float h=clamp(dot(pa,ba)/dot(ba,ba),0.,1.);return length(pa-ba*h)-r;}float sdOctahedron(vec3 p,float s){p=abs(p);return(p.x+p.y+p.z-s)*.57735027;}
-      vec3 playerCenter(){vec2 uv=playerPx/resolution;float aspect=resolution.y/resolution.x;return vec3((uv-.5)*vec2(1.,aspect),0.);} 
-      float shapeDistance(vec3 q,float r){q.xy*=rot(sin(time*1.13)*.13+sin(time*2.7)*.03);q.xz*=rot(cos(time*.91)*.10);q.yz*=rot(sin(time*.73)*.08);q.z+=sin(q.x*35.+q.y*18.+time*4.4)*.007;q.x+=sin(q.y*27.+time*2.8)*.0045;if(shapeIndex==1)return sdTorus(q,vec2(r*.75,r*.24));if(shapeIndex==2)return sdBox(q,vec3(r*.70),r*.22);if(shapeIndex==3)return sdCapsule(q,vec3(-r*.86,0.,0.),vec3(r*.86,0.,0.),r*.43);if(shapeIndex==4)return sdOctahedron(q,r*1.12);return sdSphere(q,r);} 
-      float scene(vec3 p){vec3 c=playerCenter();float pulse=exp(-pulseAge*4.6)*sin(pulseAge*24.)*.13;float breathe=sin(time*2.05)*.018+sin(time*3.7)*.010;float d=shapeDistance(p-c,playerR*(1.+pulse+breathe));for(int i=0;i<MAX_ITEMS;i++){int k=i*4;float br=bubbleData[k+3];if(br>.0001){vec3 bp=vec3(bubbleData[k],bubbleData[k+1],bubbleData[k+2]);vec3 q=p-bp;q.xy*=rot(time*.45+float(i)*.47);float bd=sdSphere(q,br*(1.+sin(time*3.+float(i))*.04));d=smin(d,bd,max(.014,br*.86));}}return d;} 
-      vec3 normalAt(vec3 p){vec2 e=vec2(.0013,0.);return normalize(vec3(scene(p+e.xyy)-scene(p-e.xyy),scene(p+e.yxy)-scene(p-e.yxy),scene(p+e.yyx)-scene(p-e.yyx)));}vec4 sampleSrc(vec2 uv){vec2 safeUv=clamp(uv,vec2(.001),vec2(.999));vec4 c=texture(src,safeUv);return mix(vec4(.018,.030,.070,1.),c,c.a);} 
-      void main(){vec2 uv=(gl_FragCoord.xy-offset)/resolution;float aspect=resolution.y/resolution.x;vec2 p2=(uv-.5)*vec2(1.,aspect);vec3 ro=vec3(0.,0.,-1.95),rd=normalize(vec3(p2,1.62));float t=0.;bool hit=false;vec3 pos=vec3(0.);for(int i=0;i<72;i++){pos=ro+rd*t;float d=scene(pos);if(d<.0011){hit=true;break;}t+=d*.72;if(t>4.2)break;}if(!hit){outColor=sampleSrc(uv);return;}vec3 n=normalAt(pos);float ndv=max(dot(n,-rd),0.);float fres=pow(1.-ndv,3.4);float thickness=clamp(1.-t*.27,0.,1.);vec2 micro=vec2(sin(uv.y*86.+time*3.15)+sin(uv.x*37.-time*1.8),cos(uv.x*74.-time*2.85)+cos(uv.y*31.+time*1.65))*.00115;vec2 refr=uv-n.xy*distortion*(.78+fres*2.+thickness*.34)+micro;float disp=distortion*(.26+fres*.18);vec3 col;col.r=sampleSrc(refr+n.xy*disp*1.15).r;col.g=sampleSrc(refr).g;col.b=sampleSrc(refr-n.xy*disp*.92).b;vec3 lightA=normalize(vec3(-.38,.74,-.56)),lightB=normalize(vec3(.68,-.24,-.35));float specA=pow(max(dot(reflect(-lightA,n),-rd),0.),170.);float specB=pow(max(dot(reflect(-lightB,n),-rd),0.),54.);float rim=smoothstep(.18,.95,fres);col=mix(col,vec3(1.),.09+fres*.26);col+=vec3(.52,1.,.92)*rim*.22;col+=vec3(1.)*specA*1.95;col+=vec3(.72,.92,1.)*specB*.58;col-=vec3(0.,.03,.02)*thickness*.12;outColor=vec4(clamp(col,0.,1.),1.);} 
+
+      uniform sampler2D src;
+      uniform vec2 resolution;
+      uniform vec2 offset;
+      uniform float time;
+      uniform vec2 playerPx;
+      uniform float playerR;
+      uniform float distortion;
+      uniform int shapeIndex;
+      uniform float pulseAge;
+      uniform float bubbleData[96];
+      out vec4 outColor;
+
+      const int MAX_ITEMS = 24;
+      const int DISP_STEPS = 12;
+      const float SCATTER = 0.030;
+      const float BUBBLE_SMOOTH = 0.025;
+      const vec3 ABSORB = vec3(2.0, 1.2, 1.0) * 3.0;
+
+      float smin(float a, float b, float k) {
+        float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);
+        return mix(b, a, h) - k * h * (1.0 - h);
+      }
+
+      vec2 hash22(vec2 p) {
+        vec3 p3 = fract(vec3(p.xyx) * vec3(0.1031, 0.1030, 0.0973));
+        p3 += dot(p3, p3.yzx + 33.33);
+        return fract((p3.xx + p3.yz) * p3.zy) * 2.0 - 1.0;
+      }
+
+      mat2 rot(float t) {
+        float c = cos(t), s = sin(t);
+        return mat2(c, -s, s, c);
+      }
+
+      float sdSphere(vec3 p, float r) { return length(p) - r; }
+
+      float sdBox(vec3 p, vec3 b, float r) {
+        vec3 q = abs(p) - b + r;
+        return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0) - r;
+      }
+
+      float sdRing(vec3 p, vec2 r) {
+        float s = length(p.xy) - r.x;
+        return length(vec2(s, p.z)) - r.y;
+      }
+
+      float sdCapsule(vec3 p, vec3 a, vec3 b, float r) {
+        vec3 pa = p - a;
+        vec3 ba = b - a;
+        float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
+        return length(pa - ba * h) - r;
+      }
+
+      float sdOctahedron(vec3 p, float s) {
+        p = abs(p);
+        return (p.x + p.y + p.z - s) * 0.57735027;
+      }
+
+      vec3 playerCenter() {
+        vec2 uv = playerPx / resolution;
+        float aspect = resolution.y / resolution.x;
+        return vec3((uv - 0.5) * vec2(1.0, aspect), 0.0);
+      }
+
+      float baseShape(vec3 sp, float r) {
+        int objType = shapeIndex;
+        if (objType == 1) {
+          return sdRing(sp, vec2(r * 1.06, max(0.010, r * 0.14)));
+        }
+        if (objType == 2) {
+          return sdBox(sp, vec3(r * 0.78), max(0.006, r * 0.09));
+        }
+        if (objType == 3) {
+          return sdCapsule(sp, vec3(-r * 0.92, 0.0, 0.0), vec3(r * 0.92, 0.0, 0.0), r * 0.46);
+        }
+        if (objType == 4) {
+          return sdOctahedron(sp, r * 1.16);
+        }
+        return sdSphere(sp, r);
+      }
+
+      float map(vec3 p, vec3 c) {
+        vec3 q = p - c;
+
+        float tt = pulseAge * 5.0;
+        float bounce = exp(-tt) * sin(tt) * 5.0 + (1.0 - exp(-tt));
+        float s = bounce * 0.5 + 0.5;
+        q /= s;
+
+        q.xz *= rot(exp(-pulseAge * 3.0) * 8.0);
+
+        vec3 sp = q;
+        sp.y += sin(sp.z * 29.0 + time * 6.5) * 0.010;
+        sp.z += sin(sp.x * 23.0 + sp.y * 11.0 + time * 7.0) * 0.010;
+        sp.x += sin(sp.y * 19.0 + time * 4.7) * 0.004;
+        sp.xy *= rot(time * 1.30);
+        sp.xz *= rot(time * 1.10);
+
+        float d = baseShape(sp, playerR);
+
+        for (int i = 0; i < MAX_ITEMS; i++) {
+          int b = i * 4;
+          vec3 bPos = vec3(bubbleData[b], bubbleData[b + 1], bubbleData[b + 2]);
+          float r = bubbleData[b + 3];
+          if (r > 0.0001) {
+            d = smin(d, sdSphere(q - bPos, max(r, 0.001)), BUBBLE_SMOOTH);
+          }
+        }
+
+        return d * s;
+      }
+
+      vec3 calcNormal(vec3 p, vec3 c) {
+        vec2 e = vec2(0.001, 0.0);
+        return normalize(vec3(
+          map(p + e.xyy, c) - map(p - e.xyy, c),
+          map(p + e.yxy, c) - map(p - e.yxy, c),
+          map(p + e.yyx, c) - map(p - e.yyx, c)
+        ));
+      }
+
+      vec3 spectrum(float x) {
+        return clamp(vec3(
+          1.5 - abs(4.0 * x - 1.0),
+          1.5 - abs(4.0 * x - 2.0),
+          1.5 - abs(4.0 * x - 3.0)
+        ), 0.0, 1.0);
+      }
+
+      vec4 getSrc(vec2 uv) {
+        vec4 c = texture(src, clamp(uv, vec2(0.001), vec2(0.999)));
+        return mix(vec4(1.0), c, c.a);
+      }
+
+      void main() {
+        vec2 uv = (gl_FragCoord.xy - offset) / resolution;
+        float aspect = resolution.y / resolution.x;
+        vec2 p = (uv - 0.5) * vec2(1.0, aspect);
+
+        vec3 ro = vec3(0.0, 0.0, -2.0);
+        vec3 rd = normalize(vec3(p, 2.0));
+        vec3 c = playerCenter();
+
+        vec3 firstN = vec3(0.0);
+        vec3 lastN = vec3(0.0);
+        int hitCount = 0;
+        float thickness = 0.0;
+        float tEntry = 0.0;
+        float t = 0.0;
+        bool inside = false;
+
+        for (int i = 0; i < 50; i++) {
+          if (t > 10.0) break;
+          vec3 pos = ro + rd * t;
+          float d = map(pos, c);
+          float stepD = inside ? -d : d;
+          if (stepD < 0.0003) {
+            vec3 n = calcNormal(pos, c);
+            if (hitCount == 0) firstN = n;
+            lastN = n;
+            if (!inside) {
+              tEntry = t;
+            } else {
+              thickness += t - tEntry;
+            }
+            hitCount++;
+            if (hitCount >= 4) break;
+            inside = !inside;
+            t += 0.01;
+          } else {
+            t += stepD;
+          }
+        }
+
+        if (hitCount > 0) {
+          vec2 baseDisp = -(firstN.xy + lastN.xy) * 0.5 * distortion;
+          float NdotR = max(dot(firstN, -rd), 0.0);
+          float scatter = pow(1.0 - NdotR, 2.0) * SCATTER;
+
+          vec3 acc = vec3(0.0);
+          vec3 wsum = vec3(0.0);
+          for (int i = 0; i < DISP_STEPS; i++) {
+            float wl = float(i) / float(DISP_STEPS - 1);
+            float k = mix(0.0, 1.0, wl) * (1.3 + float(hitCount) * 0.2);
+            vec2 h = hash22(uv * 1000.0 + float(i) * 7.13 + time) * scatter;
+            vec3 w = spectrum(wl);
+            acc += getSrc(uv + baseDisp * k + h).rgb * w;
+            wsum += w;
+          }
+
+          vec3 col = acc / wsum * 0.99;
+          col -= float(hitCount) * 0.05;
+          col += 0.10;
+
+          float fres = pow(1.0 - NdotR, 5.0);
+          col *= 1.0 + fres;
+
+          float f2 = 1.0 - pow(NdotR, 3.0);
+          col *= mix(vec3(1.0), exp(-ABSORB * thickness), f2);
+          col *= 1.0 + f2;
+
+          vec3 ld = normalize(vec3(0.5, 0.9, -0.3));
+          float spec = pow(max(dot(reflect(-ld, firstN), -rd), 0.0), 200.0);
+          col += spec * 30.0;
+
+          ld = normalize(vec3(-0.9, 0.4, -0.3));
+          spec = pow(max(dot(reflect(-ld, firstN), -rd), 0.0), 300.0);
+          col += spec * 3.0;
+
+          ld = normalize(vec3(-0.1, -0.9, -0.1));
+          spec = pow(max(dot(reflect(-ld, firstN), -rd), 0.0), 30.0);
+          col += spec * 0.5;
+
+          col = min(col, 1.0);
+          col = 1.0 - abs(col + fres * 0.5 - 1.0);
+          outColor = vec4(col, 1.0);
+        } else {
+          outColor = getSrc(uv);
+        }
+      }
+
     `;
 
     const GOAL=10,MAX_SHADER_BUBBLES=24,MAX_OBJECTS=34;
@@ -151,8 +365,14 @@
     function absorb(o){o.alive=false;state.lastPulse=performance.now()/1000;state.absorbed++;state.score+=100+state.level*20+state.combo*22;state.combo=clamp(state.combo+1,1,12);state.comboTime=2.5;player.r=clamp(player.r+4.2,50,140);addParticles(o.x,o.y,"good");if(state.absorbed>=GOAL)nextLevel();}
     function damage(o){o.alive=false;state.lastPulse=performance.now()/1000;state.lives--;state.combo=1;state.comboTime=0;player.r=clamp(player.r-18,48,140);addParticles(o.x,o.y,"enemy");document.body.animate([{transform:"translate3d(0,0,0)"},{transform:"translate3d(-8px,0,0)"},{transform:"translate3d(7px,0,0)"},{transform:"translate3d(0,0,0)"}],{duration:220,easing:"ease-out"});if(state.lives<=0){state.over=true;state.running=false;pauseBtn.textContent="Verder";showMessage(`Game over. Score ${Math.round(state.score)}. Tik reset om opnieuw te starten.`,999);}}
     function updateHud(){const c=counts();scoreEl.textContent=Math.round(state.score);levelEl.textContent=state.level;targetNameEl.textContent=levelData().name;livesEl.textContent=state.lives;comboEl.textContent=`x${state.combo}`;enemyCountEl.textContent=c.enemy;goalFill.style.width=clamp(state.absorbed/GOAL*100,0,100)+"%";}
-    function pointer(x,y){player.tx=clamp(x,0,innerWidth);player.ty=clamp(y,0,innerHeight);state.hasPointer=true;}
-    addEventListener("pointermove",e=>pointer(e.clientX,e.clientY),{passive:true});addEventListener("pointerdown",e=>{if(e.target.closest("button"))return;pointer(e.clientX,e.clientY);state.lastPulse=performance.now()/1000;if(state.over)resetGame();},{passive:true});
+    function touchLead(){return clamp(innerHeight*.135,86,138);}
+    function pointer(x,y,type="mouse"){
+      const lead=type==="touch"?touchLead():0;
+      player.tx=clamp(x,0,innerWidth);
+      player.ty=clamp(y-lead,0,innerHeight);
+      state.hasPointer=true;
+    }
+    addEventListener("pointermove",e=>pointer(e.clientX,e.clientY,e.pointerType),{passive:true});addEventListener("pointerdown",e=>{if(e.target.closest("button"))return;pointer(e.clientX,e.clientY,e.pointerType);state.lastPulse=performance.now()/1000;if(state.over)resetGame();},{passive:true});
     pauseBtn.onclick=()=>{if(state.over){resetGame();return;}state.running=!state.running;pauseBtn.textContent=state.running?"Pauze":"Verder";showMessage(state.running?"Verder.":"Gepauzeerd.",1.1);};resetBtn.onclick=resetGame;addEventListener("keydown",e=>{if(e.code==="Space"){e.preventDefault();pauseBtn.click();}if(e.key.toLowerCase()==="r")resetGame();});
     function updateObjects(dt,now){if(!state.running)return;state.spawnGood-=dt;state.spawnEnemy-=dt;const c=counts();if((state.spawnGood<=0||c.good<2)&&c.good<clamp(5+Math.floor(state.level*.55),5,10)){spawnGood(false);state.spawnGood=clamp(.58-state.level*.014,.28,.58);}if((state.spawnEnemy<=0||c.enemy<1)&&c.enemy<clamp(2+Math.floor(state.level*.42),2,7)){spawnEnemy(false);state.spawnEnemy=clamp(1.1-state.level*.02,.42,1.1);}const magnet=player.r*2.75,hitGood=player.r*.64,hitEnemy=player.r*.59,data=levelData();for(const o of objects){if(!o.alive)continue;o.age+=dt;o.angle+=o.spin*dt;const dx=player.x-o.x,dy=player.y-o.y,d=Math.hypot(dx,dy)||1;if(o.kind==="good"&&d<magnet){const pull=(1-d/magnet)*(360+state.level*16);o.vx+=dx/d*pull*dt;o.vy+=dy/d*pull*dt;}if(o.kind==="enemy"&&d<player.r*3.0){const chase=(1-d/(player.r*3.0))*(75+state.level*5);o.vx+=dx/d*chase*dt;}o.x+=o.vx*dt;o.y+=o.vy*dt;o.vx+=Math.sin(now*.0018+o.pulse)*3*dt;o.vx*=.996;o.vy=clamp(o.vy,58,310+state.level*13);if(o.kind==="good"&&o.shape===data.shape&&d<hitGood+o.size*.55)absorb(o);else if(o.kind==="enemy"&&d<hitEnemy+o.size*.52)damage(o);if(o.y>innerHeight+140||o.x<-180||o.x>innerWidth+180)o.alive=false;}for(let i=objects.length-1;i>=0;i--)if(!objects[i].alive)objects.splice(i,1);}
     function updateParticles(dt){for(const p of particles){p.life-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=220*dt;p.vx*=.985;}for(let i=particles.length-1;i>=0;i--)if(particles[i].life<=0)particles.splice(i,1);}
@@ -183,11 +403,42 @@
       octx.restore();
     }
     function renderObjects(now){octx.clearRect(0,0,innerWidth,innerHeight);for(const o of objects)drawObject(o,now);drawCanvasHud();pctx.clearRect(0,0,innerWidth,innerHeight);for(const p of particles){const a=clamp(p.life/p.max,0,1);pctx.beginPath();pctx.arc(p.x,p.y,p.size*a,0,Math.PI*2);pctx.fillStyle=`rgba(${p.color},${a})`;pctx.shadowBlur=18;pctx.shadowColor=`rgba(${p.color},${a})`;pctx.fill();}pctx.shadowBlur=0;}
-    function updateShaderBubbles(now){const w=Math.max(1,innerWidth),h=Math.max(1,innerHeight),aspect=h/w;let j=0;for(const o of objects){if(j>=MAX_SHADER_BUBBLES)break;if(!o.alive||o.kind!=="good")continue;const k=j*4;bubbleUniform[k]=o.x/w-.5;bubbleUniform[k+1]=((h-o.y)/h-.5)*aspect;bubbleUniform[k+2]=Math.sin(now*.0015+o.pulse)*.026;bubbleUniform[k+3]=o.size*.48/w;j++;}for(;j<MAX_SHADER_BUBBLES;j++){const k=j*4;bubbleUniform[k]=0;bubbleUniform[k+1]=0;bubbleUniform[k+2]=0;bubbleUniform[k+3]=0;}}
+    function updateShaderBubbles(now){
+      const t=now*.001;
+      const N=MAX_SHADER_BUBBLES;
+      const w=Math.max(1,innerWidth),h=Math.max(1,innerHeight);
+      const aspect=h/w;
+      const fr=x=>x-Math.floor(x);
+      const baseR=player.r/w;
+      const centerX=player.x/w-.5;
+      const centerY=((h-player.y)/h-.5)*aspect;
+      for(let i=0;i<N;i++){
+        const life=fr(t*.70+i/N);
+        const orbitR=baseR*(.30+life*.82);
+        const orbitAngle=t*(.80+fr(i*.618)*.70)+i*1.256;
+        let bx=Math.cos(orbitAngle)*orbitR;
+        let by=0;
+        let bz=Math.sin(orbitAngle)*orbitR;
+        const c1=Math.cos(i*2.3),s1=Math.sin(i*2.3);
+        [bx,by]=[bx*c1-by*s1,bx*s1+by*c1];
+        const c2=Math.cos(i*1.8),s2=Math.sin(i*1.8);
+        [by,bz]=[by*c2-bz*s2,by*s2+bz*c2];
+        by+=life*baseR*.78;
+        bx+=Math.sin(t*2.7+i*4.1)*baseR*.065*life;
+        bz+=Math.cos(t*3.1+i*3.7)*baseR*.065*life;
+        const k=i*4;
+        bubbleUniform[k]=bx;
+        bubbleUniform[k+1]=by;
+        bubbleUniform[k+2]=bz;
+        const range=baseR*.30;
+        const maxR=baseR*.18+range*fr(i*.618);
+        bubbleUniform[k+3]=maxR*Math.sin(life*Math.PI);
+      }
+    }
     function update(dt,now){if(!state.hasPointer&&state.running){player.tx=innerWidth/2+Math.sin(now*.00034)*innerWidth*.16;player.ty=innerHeight*.72+Math.cos(now*.00043)*innerHeight*.06;}const sm=state.hasPointer?.22:.045;player.x+=(player.tx-player.x)*sm;player.y+=(player.ty-player.y)*sm;if(state.comboTime>0&&state.running){state.comboTime-=dt;if(state.comboTime<=0)state.combo=1;}if(msgTimer>0){msgTimer-=dt;if(msgTimer<=0&&!state.over)message.classList.remove("show");}updateObjects(dt,now);updateParticles(dt);updateShaderBubbles(now);updateHud();}
     function render(now){fallbackOrb.style.left=player.x+"px";fallbackOrb.style.top=player.y+"px";fallbackOrb.style.width=player.r*2+"px";fallbackOrb.style.height=player.r*2+"px";renderObjects(now);}
     function frame(now){const dt=Math.min(.04,(now-lastNow)/1000||.016);lastNow=now;update(dt,now);render(now);if(Math.floor(now)%500<18)bringLayersForward();requestAnimationFrame(frame);} 
-    async function setupVfx(){try{const {VFX}=await import("https://esm.sh/@vfx-js/core@0.11.1");const vfx=new VFX({postEffect:{shader:SHADER,uniforms:{time:()=>performance.now()/1000,playerPx:()=>[player.x*dpr,(innerHeight-player.y)*dpr],playerR:()=>player.r/Math.max(1,innerWidth),distortion:()=>.076,shapeIndex:()=>levelData().shader,pulseAge:()=>performance.now()/1000-state.lastPulse,bubbleData:()=>bubbleUniform}}});await vfx.addHTML(fxStage,{shader:"none"});vfx.play();vfxReady=true;document.body.classList.remove("no-vfx");shaderNote.textContent="Liquid shader actief. Statusbar en vijanden staan boven de shader.";bringLayersForward();setInterval(bringLayersForward,500);}catch(err){console.warn("VFX JS kon niet laden",err);document.body.classList.add("no-vfx");shaderNote.textContent="Shader kon niet laden. Fallback orb actief, game blijft speelbaar.";}}
+    async function setupVfx(){try{const {VFX}=await import("https://esm.sh/@vfx-js/core@0.11.1");const vfx=new VFX({postEffect:{shader:SHADER,uniforms:{time:()=>performance.now()/1000,playerPx:()=>[player.x*dpr,(innerHeight-player.y)*dpr],playerR:()=>player.r/Math.max(1,innerWidth),distortion:()=>.025,shapeIndex:()=>levelData().shader,pulseAge:()=>performance.now()/1000-state.lastPulse,bubbleData:()=>bubbleUniform}}});await vfx.addHTML(fxStage,{shader:"none"});vfx.play();vfxReady=true;document.body.classList.remove("no-vfx");shaderNote.textContent="Liquid shader actief. Statusbar en vijanden staan boven de shader.";bringLayersForward();setInterval(bringLayersForward,500);}catch(err){console.warn("VFX JS kon niet laden",err);document.body.classList.add("no-vfx");shaderNote.textContent="Shader kon niet laden. Fallback orb actief, game blijft speelbaar.";}}
     addEventListener("resize",resize);resize();resetGame();bringLayersForward();setupVfx();requestAnimationFrame(frame);
   </script>
 </body>
