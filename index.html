@@ -2,493 +2,588 @@
 <html lang="nl">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Liquid Absorb v4</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Liquid Absorb v6</title>
   <style>
     :root {
-      --panel: rgba(10, 16, 28, 0.72);
-      --panel2: rgba(255, 255, 255, 0.12);
-      --text: rgba(255, 255, 255, 0.94);
-      --muted: rgba(255, 255, 255, 0.64);
+      --text: #f7fbff;
+      --muted: rgba(247, 251, 255, 0.72);
+      --panel: rgba(12, 16, 31, 0.56);
       --line: rgba(255, 255, 255, 0.18);
-      --mint: #aefcea;
-      --red: #ff4f70;
-      --gold: #ffd86b;
+      --good: #f6fffb;
+      --good-glow: rgba(106, 255, 220, 0.82);
+      --danger: #ff3e6f;
+      --gold: #ffe16b;
+      --bg0: #060814;
+      --bg1: #10162c;
+      --bg2: #f8fbff;
     }
 
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
 
-    html, body {
+    html,
+    body {
       width: 100%;
       height: 100%;
       margin: 0;
       overflow: hidden;
-      background: #070a12;
+      background: var(--bg0);
       color: var(--text);
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", sans-serif;
       user-select: none;
       touch-action: none;
     }
 
-    button, input, #panel, #hud, #message {
-      touch-action: auto;
+    button {
+      font: inherit;
     }
 
-    #game {
-      position: fixed;
-      inset: 0;
+    #app {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
       overflow: hidden;
-      background:
-        radial-gradient(circle at 18% 18%, rgba(88, 229, 255, 0.22), transparent 30%),
-        radial-gradient(circle at 80% 12%, rgba(255, 131, 245, 0.18), transparent 34%),
-        radial-gradient(circle at 60% 82%, rgba(125, 255, 190, 0.16), transparent 34%),
-        linear-gradient(135deg, #08101f 0%, #050712 48%, #101225 100%);
-    }
-
-    #scene {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
+      background: #070917;
       isolation: isolate;
+      cursor: none;
     }
 
-    #bgCanvas {
+    #effectTarget {
       position: absolute;
       inset: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      z-index: 1;
-    }
-
-    .source-layer {
-      position: absolute;
-      inset: 0;
+      overflow: hidden;
       z-index: 0;
+      background: #fbfbfd;
+    }
+
+    .stage-background {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: linear-gradient(180deg, #fbfbfd 0%, #f2f5fb 48%, #e8edf7 100%);
+    }
+
+    .hero-band {
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 58vh;
       overflow: hidden;
       background:
-        linear-gradient(115deg, rgba(255,255,255,0.06), transparent 25%, rgba(120,255,224,0.06) 55%, transparent 80%),
-        repeating-linear-gradient(90deg, rgba(255,255,255,0.045) 0 1px, transparent 1px 92px),
-        repeating-linear-gradient(0deg, rgba(255,255,255,0.035) 0 1px, transparent 1px 92px);
+        radial-gradient(circle at 16% 22%, rgba(52, 239, 196, 0.42), transparent 29%),
+        radial-gradient(circle at 78% 18%, rgba(92, 95, 255, 0.36), transparent 30%),
+        linear-gradient(135deg, #08132c 0%, #122e54 46%, #06121e 100%);
     }
 
-    .source-layer::before,
-    .source-layer::after {
+    .hero-band::before {
       content: "";
       position: absolute;
-      width: 55vmin;
-      height: 55vmin;
+      inset: -24%;
+      background:
+        linear-gradient(rgba(255,255,255,0.12) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.12) 1px, transparent 1px),
+        radial-gradient(circle at 40% 40%, rgba(255,255,255,0.18), transparent 42%);
+      background-size: 54px 54px, 54px 54px, 100% 100%;
+      transform: rotate(-8deg);
+      animation: drift 26s linear infinite;
+      opacity: 0.76;
+    }
+
+    .hero-copy {
+      position: absolute;
+      left: 50%;
+      top: 21vh;
+      transform: translate(-50%, -50%);
+      width: min(860px, calc(100vw - 40px));
+      text-align: center;
+      color: #fff;
+      z-index: 1;
+      text-shadow: 0 8px 36px rgba(0,0,0,0.46);
+    }
+
+    .hero-copy h1 {
+      margin: 0 0 10px;
+      font-size: clamp(42px, 8vw, 94px);
+      line-height: 0.88;
+      letter-spacing: -0.07em;
+      font-weight: 740;
+    }
+
+    .hero-copy p {
+      margin: 0 auto;
+      max-width: 54ch;
+      font-size: clamp(16px, 2.4vw, 25px);
+      opacity: 0.84;
+      line-height: 1.35;
+      letter-spacing: -0.02em;
+    }
+
+    .tile-field {
+      position: absolute;
+      left: clamp(10px, 2vw, 22px);
+      right: clamp(10px, 2vw, 22px);
+      bottom: clamp(10px, 2vw, 22px);
+      top: min(45vh, 430px);
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: clamp(8px, 1.8vw, 18px);
+    }
+
+    .tile {
+      position: relative;
+      overflow: hidden;
+      border-radius: clamp(18px, 3vw, 34px);
+      background: #1d2338;
+      min-height: 140px;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.22), 0 30px 90px rgba(13, 19, 39, 0.18);
+    }
+
+    .tile.light {
+      background:
+        radial-gradient(circle at 70% 30%, rgba(120, 255, 224, 0.45), transparent 32%),
+        linear-gradient(135deg, #ffffff, #dce7ff);
+      color: #142136;
+    }
+
+    .tile.dark {
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.22), transparent 32%),
+        radial-gradient(circle at 78% 82%, rgba(86, 254, 207, 0.22), transparent 34%),
+        linear-gradient(135deg, #101831, #020716);
+      color: #fff;
+    }
+
+    .tile.wide {
+      grid-column: span 2;
+    }
+
+    .tile::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(120deg, transparent 0 36%, rgba(255,255,255,0.22) 37% 38%, transparent 39% 100%),
+        repeating-linear-gradient(135deg, rgba(255,255,255,0.09) 0 1px, transparent 1px 18px);
+      opacity: 0.72;
+    }
+
+    .tile strong {
+      position: absolute;
+      left: clamp(16px, 2.4vw, 32px);
+      bottom: clamp(16px, 2.4vw, 32px);
+      z-index: 1;
+      font-size: clamp(22px, 3.3vw, 54px);
+      letter-spacing: -0.05em;
+      line-height: 0.92;
+    }
+
+    .tile span {
+      position: absolute;
+      left: clamp(16px, 2.4vw, 32px);
+      top: clamp(16px, 2.4vw, 32px);
+      z-index: 1;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.13em;
+      opacity: 0.7;
+    }
+
+    #targets {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .target {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: var(--size, 54px);
+      height: var(--size, 54px);
+      aspect-ratio: 1 / 1;
+      transform: translate3d(-50%, -50%, 0) rotate(var(--rot, 0deg)) scale(var(--scale, 1));
+      opacity: 0.96;
+      filter: drop-shadow(0 18px 28px rgba(15, 22, 40, 0.18));
+      will-change: transform, left, top, opacity;
+    }
+
+    .target::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background:
+        radial-gradient(circle at 30% 22%, rgba(255,255,255,0.96), rgba(255,255,255,0.2) 18%, transparent 32%),
+        radial-gradient(circle at 72% 78%, rgba(255,255,255,0.18), transparent 34%),
+        linear-gradient(135deg, rgba(255,255,255,0.84), rgba(208,255,246,0.5));
+      box-shadow:
+        inset 10px 14px 24px rgba(255,255,255,0.55),
+        inset -14px -18px 24px rgba(0, 53, 76, 0.18),
+        0 0 30px var(--good-glow);
+      border: 1px solid rgba(255,255,255,0.72);
+    }
+
+    .target.sphere {
       border-radius: 999px;
-      filter: blur(34px);
-      opacity: 0.52;
-      animation: drift 16s ease-in-out infinite alternate;
     }
 
-    .source-layer::before {
-      left: -12vmin;
-      top: 12vmin;
-      background: conic-gradient(from 80deg, rgba(81, 224, 255, 0.34), rgba(255, 255, 255, 0.06), rgba(111, 255, 194, 0.32), rgba(81, 224, 255, 0.34));
+    .target.ring {
+      border-radius: 999px;
     }
 
-    .source-layer::after {
-      right: -12vmin;
-      bottom: 7vmin;
-      background: conic-gradient(from 240deg, rgba(255, 117, 217, 0.28), rgba(255, 255, 255, 0.08), rgba(255, 221, 117, 0.28), rgba(94, 184, 255, 0.28));
-      animation-delay: -6s;
+    .target.ring::after {
+      content: "";
+      position: absolute;
+      inset: 28%;
+      border-radius: 999px;
+      background: rgba(8, 15, 32, 0.72);
+      box-shadow: inset 0 0 16px rgba(255,255,255,0.32), 0 0 18px rgba(255,255,255,0.14);
+    }
+
+    .target.cube {
+      border-radius: 28%;
+    }
+
+    .target.bad::before {
+      background:
+        radial-gradient(circle at 31% 25%, rgba(255,255,255,0.94), rgba(255,255,255,0.16) 18%, transparent 32%),
+        linear-gradient(135deg, rgba(255,134,168,0.88), rgba(255,41,92,0.68));
+      box-shadow:
+        inset 10px 14px 24px rgba(255,255,255,0.36),
+        inset -14px -18px 24px rgba(72,0,24,0.24),
+        0 0 34px rgba(255,48,96,0.72);
+      border-color: rgba(255,255,255,0.48);
+    }
+
+    .target.wrong {
+      opacity: 0.86;
+    }
+
+    .target.absorbing {
+      transition: opacity 160ms ease;
+      opacity: 0.22;
+    }
+
+    .hud {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      right: 14px;
+      z-index: 20;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: flex-start;
+      pointer-events: none;
+    }
+
+    .stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      max-width: min(780px, calc(100vw - 28px));
+    }
+
+    .chip,
+    .panel,
+    .button {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--text);
+      backdrop-filter: blur(18px) saturate(170%);
+      box-shadow: 0 18px 54px rgba(0, 0, 0, 0.24);
+    }
+
+    .chip {
+      min-width: 86px;
+      border-radius: 999px;
+      padding: 9px 12px 10px;
+      font-size: 12px;
+      line-height: 1.05;
+      letter-spacing: 0.02em;
+    }
+
+    .chip strong {
+      display: block;
+      margin-top: 3px;
+      font-size: 18px;
+      line-height: 1;
+      letter-spacing: -0.04em;
+    }
+
+    .meter {
+      width: min(320px, 40vw);
+      min-width: 160px;
+      border-radius: 999px;
+      padding: 10px 12px;
+      font-size: 12px;
+    }
+
+    .meter-track {
+      height: 8px;
+      margin-top: 7px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.14);
+      overflow: hidden;
+    }
+
+    .meter-fill {
+      width: 0%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, rgba(255,255,255,0.96), rgba(106,255,220,0.9), rgba(255,225,107,0.9));
+      box-shadow: 0 0 18px rgba(106,255,220,0.72);
+      transition: width 150ms ease;
+    }
+
+    .controls {
+      display: flex;
+      gap: 8px;
+      pointer-events: auto;
+    }
+
+    .button {
+      border-radius: 999px;
+      padding: 10px 14px;
+      cursor: pointer;
+      color: #fff;
+    }
+
+    .button:hover {
+      background: rgba(255,255,255,0.16);
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 30;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background: radial-gradient(circle at 50% 42%, rgba(12,16,31,0.24), rgba(12,16,31,0.72));
+      backdrop-filter: blur(10px);
+    }
+
+    .overlay.hidden {
+      display: none;
+    }
+
+    .card {
+      width: min(640px, calc(100vw - 36px));
+      border-radius: 34px;
+      padding: clamp(24px, 4vw, 44px);
+      text-align: center;
+      border: 1px solid var(--line);
+      background:
+        linear-gradient(145deg, rgba(255,255,255,0.2), rgba(255,255,255,0.08)),
+        rgba(9, 13, 28, 0.7);
+      box-shadow: 0 26px 90px rgba(0,0,0,0.38);
+    }
+
+    .card h2 {
+      margin: 0 0 12px;
+      font-size: clamp(34px, 6vw, 72px);
+      line-height: 0.92;
+      letter-spacing: -0.07em;
+    }
+
+    .card p {
+      margin: 0 auto 20px;
+      max-width: 52ch;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .primary {
+      border: 0;
+      border-radius: 999px;
+      padding: 13px 19px;
+      cursor: pointer;
+      color: #06101a;
+      font-weight: 800;
+      background: linear-gradient(135deg, #ffffff, #7dffe5 52%, #ffe68c);
+      box-shadow: 0 20px 56px rgba(112,255,224,0.25);
+    }
+
+    .hint {
+      position: absolute;
+      left: 16px;
+      bottom: 14px;
+      z-index: 20;
+      max-width: min(560px, calc(100vw - 32px));
+      color: rgba(255,255,255,0.72);
+      font-size: 12px;
+      line-height: 1.4;
+      pointer-events: none;
+      text-shadow: 0 2px 12px rgba(0,0,0,0.46);
+    }
+
+    .pulse {
+      position: absolute;
+      z-index: 16;
+      left: 0;
+      top: 0;
+      width: 30px;
+      height: 30px;
+      border-radius: 999px;
+      border: 2px solid rgba(255,255,255,0.9);
+      transform: translate3d(-50%, -50%, 0) scale(0.35);
+      pointer-events: none;
+      animation: pulse 560ms ease-out forwards;
+      box-shadow: 0 0 28px rgba(112,255,224,0.8);
+    }
+
+    .shake {
+      animation: shake 250ms ease-out;
+    }
+
+    @keyframes pulse {
+      to {
+        opacity: 0;
+        transform: translate3d(-50%, -50%, 0) scale(5.2);
+      }
+    }
+
+    @keyframes shake {
+      20% { transform: translate3d(-8px, 0, 0); }
+      45% { transform: translate3d(7px, 0, 0); }
+      70% { transform: translate3d(-4px, 0, 0); }
     }
 
     @keyframes drift {
-      from { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
-      to { transform: translate3d(12vmin, -7vmin, 0) rotate(35deg) scale(1.15); }
+      from { transform: translate3d(0, 0, 0) rotate(-8deg); }
+      to { transform: translate3d(-54px, -54px, 0) rotate(-6deg); }
     }
 
-    #hud {
-      position: absolute;
-      z-index: 20;
-      left: max(12px, env(safe-area-inset-left));
-      right: max(12px, env(safe-area-inset-right));
-      top: max(12px, env(safe-area-inset-top));
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 10px;
-      align-items: start;
-      pointer-events: none;
+    .no-vfx .hint strong {
+      color: var(--gold);
     }
 
-    .hud-card,
-    #panel {
-      border: 1px solid var(--line);
-      background: var(--panel);
-      backdrop-filter: blur(18px) saturate(160%);
-      box-shadow: 0 22px 80px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.16);
-      border-radius: 22px;
-    }
-
-    .hud-card {
-      width: min(560px, 100%);
-      padding: 12px;
-      pointer-events: auto;
-    }
-
-    .top-row {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .metric {
-      min-width: 74px;
-      padding: 8px 10px;
-      border-radius: 16px;
-      background: var(--panel2);
-      border: 1px solid rgba(255,255,255,0.1);
-    }
-
-    .metric .label {
-      display: block;
-      font-size: 10px;
-      letter-spacing: .09em;
-      text-transform: uppercase;
-      color: var(--muted);
-      line-height: 1.1;
-    }
-
-    .metric .value {
-      display: block;
-      margin-top: 3px;
-      font-size: 17px;
-      font-weight: 800;
-      line-height: 1.05;
-    }
-
-    .goal {
-      margin-top: 10px;
-      display: grid;
-      gap: 6px;
-    }
-
-    .goal-line {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      color: rgba(255,255,255,0.86);
-      font-size: 13px;
-      line-height: 1.25;
-    }
-
-    .bar {
-      height: 9px;
-      overflow: hidden;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.12);
-      border: 1px solid rgba(255,255,255,0.11);
-    }
-
-    #progressBar {
-      display: block;
-      height: 100%;
-      width: 0%;
-      border-radius: 999px;
-      background: linear-gradient(90deg, #b8fff0, #fff, #ffd86b);
-      box-shadow: 0 0 24px rgba(184,255,240,0.55);
-      transition: width .18s ease;
-    }
-
-    #buttons {
-      display: flex;
-      gap: 8px;
-      justify-content: flex-end;
-      pointer-events: auto;
-    }
-
-    button {
-      appearance: none;
-      border: 1px solid var(--line);
-      color: var(--text);
-      background: rgba(255,255,255,0.13);
-      min-height: 44px;
-      padding: 0 14px;
-      border-radius: 999px;
-      font: inherit;
-      font-weight: 800;
-      letter-spacing: .01em;
-      cursor: pointer;
-      backdrop-filter: blur(14px);
-      box-shadow: 0 12px 36px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.16);
-    }
-
-    button:active { transform: translateY(1px) scale(.99); }
-
-    #panel {
-      position: absolute;
-      z-index: 30;
-      top: max(76px, calc(env(safe-area-inset-top) + 76px));
-      right: max(12px, env(safe-area-inset-right));
-      width: min(390px, calc(100vw - 24px));
-      max-height: calc(100vh - 96px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-      overflow: auto;
-      -webkit-overflow-scrolling: touch;
-      padding: 14px;
-      display: none;
-      pointer-events: auto;
-    }
-
-    #panel.open { display: block; }
-
-    #panel h2 {
-      margin: 0 0 10px;
-      font-size: 17px;
-      line-height: 1.15;
-    }
-
-    .setting {
-      padding: 10px 0;
-      border-top: 1px solid rgba(255,255,255,0.11);
-    }
-
-    .setting:first-of-type { border-top: 0; }
-
-    .setting label {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      font-size: 13px;
-      font-weight: 800;
-      color: rgba(255,255,255,0.92);
-    }
-
-    .setting label span:last-child {
-      color: var(--muted);
-      font-variant-numeric: tabular-nums;
-    }
-
-    input[type="range"] {
-      width: 100%;
-      height: 38px;
-      margin: 4px 0 0;
-      accent-color: #dffef6;
-      touch-action: pan-y;
-    }
-
-    #message {
-      position: absolute;
-      z-index: 25;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      width: min(520px, calc(100vw - 32px));
-      padding: 20px;
-      text-align: center;
-      border-radius: 28px;
-      background: rgba(3,8,18,0.72);
-      border: 1px solid rgba(255,255,255,0.18);
-      backdrop-filter: blur(22px) saturate(180%);
-      box-shadow: 0 28px 100px rgba(0,0,0,0.44), inset 0 1px 0 rgba(255,255,255,0.18);
-      pointer-events: auto;
-    }
-
-    #message h1 {
-      margin: 0 0 10px;
-      font-size: clamp(28px, 7vw, 56px);
-      line-height: .95;
-      letter-spacing: -.05em;
-    }
-
-    #message p {
-      margin: 0 0 16px;
-      color: rgba(255,255,255,0.76);
-      line-height: 1.45;
-      font-size: 15px;
-    }
-
-    .hidden { display: none !important; }
-
-    #notice {
-      position: absolute;
-      z-index: 22;
-      left: 50%;
-      bottom: max(18px, env(safe-area-inset-bottom));
-      transform: translateX(-50%);
-      padding: 10px 14px;
-      border-radius: 999px;
-      background: rgba(0,0,0,0.44);
-      border: 1px solid rgba(255,255,255,0.14);
-      color: rgba(255,255,255,0.74);
-      font-size: 12px;
-      text-align: center;
-      pointer-events: none;
-      transition: opacity .25s ease;
-    }
-
-    @media (max-width: 720px) {
-      #hud {
-        grid-template-columns: 1fr;
+    @media (max-width: 760px) {
+      .tile-field {
+        grid-template-columns: 1fr 1fr;
+        top: 47vh;
       }
 
-      #buttons {
-        justify-content: flex-start;
+      .tile:nth-child(n+5) {
+        display: none;
       }
 
-      .hud-card {
-        padding: 10px;
+      .hud {
+        gap: 8px;
       }
 
-      .metric {
-        min-width: 65px;
-        padding: 7px 9px;
+      .chip {
+        min-width: 72px;
+        padding: 8px 10px 9px;
       }
 
-      .metric .value {
-        font-size: 15px;
+      .chip strong {
+        font-size: 16px;
       }
 
-      #panel {
-        left: max(12px, env(safe-area-inset-left));
-        right: max(12px, env(safe-area-inset-right));
-        top: auto;
-        bottom: max(12px, env(safe-area-inset-bottom));
-        width: auto;
-        max-height: min(62vh, 420px);
-      }
-    }
-
-    @media (max-height: 500px) and (orientation: landscape) {
-      #hud {
-        grid-template-columns: minmax(360px, 1fr) auto;
+      .meter {
+        order: 10;
+        width: calc(100vw - 28px);
       }
 
-      .hud-card {
-        max-width: 520px;
-        padding: 8px;
-      }
-
-      .goal { margin-top: 6px; }
-
-      .goal-line { font-size: 12px; }
-
-      .metric {
-        min-width: 62px;
-        padding: 6px 8px;
-      }
-
-      #panel {
-        top: max(62px, calc(env(safe-area-inset-top) + 62px));
-        right: max(10px, env(safe-area-inset-right));
-        bottom: max(10px, env(safe-area-inset-bottom));
-        max-height: none;
-        width: min(370px, 46vw);
+      .controls {
+        position: absolute;
+        right: 0;
+        bottom: -54px;
       }
     }
   </style>
 </head>
 <body>
-  <main id="game" aria-label="Liquid Absorb game">
-    <section id="scene" aria-hidden="true">
-      <div class="source-layer"></div>
-      <canvas id="bgCanvas"></canvas>
-    </section>
-
-    <section id="hud">
-      <div class="hud-card">
-        <div class="top-row">
-          <div class="metric"><span class="label">Level</span><span class="value" id="levelText">1</span></div>
-          <div class="metric"><span class="label">Vorm</span><span class="value" id="shapeText">Bol</span></div>
-          <div class="metric"><span class="label">Score</span><span class="value" id="scoreText">0</span></div>
-          <div class="metric"><span class="label">Levens</span><span class="value" id="livesText">3</span></div>
+  <div id="app">
+    <div id="effectTarget" aria-hidden="true">
+      <div class="stage-background">
+        <div class="hero-band"></div>
+        <div class="hero-copy">
+          <h1>Liquid Absorb</h1>
+          <p>Vang alleen de juiste vorm. Elke absorptie maakt het glas groter.</p>
         </div>
-        <div class="goal">
-          <div class="goal-line">
-            <span id="goalText">Absorbeer 10 bollen. Vermijd rode vormen.</span>
-            <strong id="countText">0/10</strong>
-          </div>
-          <div class="bar"><span id="progressBar"></span></div>
+        <div class="tile-field">
+          <div class="tile dark wide"><span>Liquid</span><strong>Glass<br>Field</strong></div>
+          <div class="tile light"><span>Target</span><strong>Absorb</strong></div>
+          <div class="tile light"><span>Level</span><strong>Shape</strong></div>
+          <div class="tile dark"><span>Danger</span><strong>Avoid</strong></div>
+          <div class="tile dark"><span>Flow</span><strong>Grow</strong></div>
+          <div class="tile light"><span>Score</span><strong>Combo</strong></div>
+        </div>
+        <div id="targets"></div>
+      </div>
+    </div>
+
+    <div class="hud">
+      <div class="stats">
+        <div class="chip">Score<strong id="score">0</strong></div>
+        <div class="chip">Level<strong id="level">1</strong></div>
+        <div class="chip">Levens<strong id="lives">3</strong></div>
+        <div class="chip">Vorm<strong id="shape">Bol</strong></div>
+        <div class="meter panel">
+          Absorptie <span id="progressText">0/10</span>
+          <div class="meter-track"><div id="progressFill" class="meter-fill"></div></div>
         </div>
       </div>
-      <div id="buttons">
-        <button id="settingsBtn" type="button">Instellingen</button>
-        <button id="restartBtn" type="button">Restart</button>
+      <div class="controls">
+        <button id="restart" class="button" type="button">Reset</button>
       </div>
-    </section>
+    </div>
 
-    <aside id="panel" aria-label="Instellingen">
-      <h2>Liquid tuning</h2>
-      <div class="setting">
-        <label for="glass"><span>Glas effect</span><span id="glassVal">1.25</span></label>
-        <input id="glass" type="range" min="0.6" max="2.2" step="0.05" value="1.25" />
-      </div>
-      <div class="setting">
-        <label for="scatter"><span>Sparkle</span><span id="scatterVal">1.00</span></label>
-        <input id="scatter" type="range" min="0.35" max="2.4" step="0.05" value="1.00" />
-      </div>
-      <div class="setting">
-        <label for="spawn"><span>Aantal vallende vormen</span><span id="spawnVal">15</span></label>
-        <input id="spawn" type="range" min="8" max="28" step="1" value="15" />
-      </div>
-      <div class="setting">
-        <label for="speed"><span>Valsnelheid</span><span id="speedVal">1.00</span></label>
-        <input id="speed" type="range" min="0.55" max="1.9" step="0.05" value="1.00" />
-      </div>
-      <div class="setting">
-        <label for="danger"><span>Kans op rode vorm</span><span id="dangerVal">28%</span></label>
-        <input id="danger" type="range" min="8" max="52" step="1" value="28" />
-      </div>
-      <div class="setting">
-        <label for="pull"><span>Absorptie bereik</span><span id="pullVal">1.65</span></label>
-        <input id="pull" type="range" min="1.05" max="2.5" step="0.05" value="1.65" />
-      </div>
-      <div class="setting">
-        <label for="baseSize"><span>Startgrootte</span><span id="baseSizeVal">0.092</span></label>
-        <input id="baseSize" type="range" min="0.065" max="0.13" step="0.001" value="0.092" />
-      </div>
-    </aside>
+    <p id="hint" class="hint"><strong>Shader:</strong> exactere basis van het oorspronkelijke VFX liquid glass effect. Beweeg met muis of vinger, vang de witte juiste vorm, ontwijk rood.</p>
 
-    <section id="message">
-      <h1>Liquid Absorb</h1>
-      <p>Beweeg je water/glass vorm. Absorbeer alleen dezelfde vorm. Na 10 juiste absorpties verander je van level. Raak rood en je krimpt.</p>
-      <button id="startBtn" type="button">Start game</button>
-    </section>
-
-    <div id="notice">Shader laadt. Met internet zie je het echte glass/liquid effect.</div>
-  </main>
+    <div id="overlay" class="overlay">
+      <div class="card">
+        <h2>Liquid Absorb</h2>
+        <p>Dit prototype gebruikt het oorspronkelijke glass post effect als speler. Verzamel 10 juiste vormen om door te gaan naar de volgende vorm.</p>
+        <button id="start" class="primary" type="button">Start game</button>
+      </div>
+    </div>
+  </div>
 
   <script type="module">
-    const MAX_OBJECTS = 30;
-    const TARGET = 10;
-    const DATA_STRIDE = 6;
+    const PARAMS = {
+      sphereR: 0.12,
+      bubbleCount: 8,
+      bubbleRadiusMin: 0.03,
+      bubbleRadiusMax: 0.07,
+      bubbleSpeed: 0.7,
+      mouseSmoothing: 0.05
+    };
 
-    const levels = [
-      { name: "Bol", plural: "bollen", shape: 0 },
-      { name: "Donut", plural: "donuts", shape: 2 },
-      { name: "Capsule", plural: "capsules", shape: 3 },
-      { name: "Diamant", plural: "diamanten", shape: 4 },
-      { name: "Cube", plural: "soft cubes", shape: 1 }
-    ];
-
-    const shader = `
+    const postEffectShader = `
       precision highp float;
       uniform sampler2D src;
       uniform vec2 resolution;
       uniform vec2 offset;
+      uniform vec2 mouse;
+      uniform vec2 lag;
       uniform float time;
-      uniform vec2 player;
-      uniform float playerR;
-      uniform int levelShape;
-      uniform float objectData[${MAX_OBJECTS * DATA_STRIDE}];
-      uniform int objectCount;
-      uniform float glass;
-      uniform float sparkle;
-      uniform float hitFlash;
-      uniform float levelFlash;
+      uniform float clickTime;
+      uniform int clickCount;
+      uniform int forcedShape;
+      uniform float sphereScale;
       out vec4 outColor;
+      const float SPHERE_R = ${PARAMS.sphereR.toFixed(4)};
 
-      const float BUBBLE_SMOOTH = 0.033;
-      const int DISP_STEPS = 12;
-      const vec3 ABSORB = vec3(2.0, 1.2, 1.0) * 2.9;
+      const float DISP = 0.025;
+      const int   DISP_STEPS = 12;
+      const float DISP_LO = 0.0;
+      const float DISP_HI = 1.0;
 
+      const float SCATTER = 0.03;
+
+      const int N_BUBBLES = ${PARAMS.bubbleCount};
+      const float BUBBLE_SMOOTH = 0.025;
+      uniform float bubbleData[${PARAMS.bubbleCount * 4}];
+
+      const vec3 ABSORB = vec3(2.0, 1.2, 1.0) * 3.;
       float smin(float a, float b, float k) {
         float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);
         return mix(b, a, h) - k * h * (1.0 - h);
@@ -504,108 +599,60 @@
         float c = cos(t), s = sin(t);
         return mat2(c, -s, s, c);
       }
-
       float sdSphere(vec3 p, float r) {
         return length(p) - r;
       }
 
-      float sdRoundBox(vec3 p, vec3 b, float r) {
+      float sdBox(vec3 p, vec3 b, float r) {
         vec3 q = abs(p) - b + r;
-        return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0) - r;
+        return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)),0.0) - r;
       }
 
-      float sdTorus(vec3 p, vec2 t) {
-        vec2 q = vec2(length(p.xy) - t.x, p.z);
-        return length(q) - t.y;
+      float sdRing(vec3 p, vec2 r) {
+        float s = length(p.xy) - r.x;
+        return length(vec2(s, p.z)) - r.y;
       }
 
-      float sdCapsule(vec3 p, float h, float r) {
-        p.x -= clamp(p.x, -h, h);
-        return length(p) - r;
-      }
+      float map(vec3 p, vec3 c) {
+        vec3 q = p - c;
+        float tt = clickTime * 5.0;
+        float bounce = exp(-tt) * sin(tt) * 5. + (1. - exp(-tt));
+        float s = bounce * 0.5 + 0.5;
+        q /= s;
 
-      float sdOctahedron(vec3 p, float s) {
-        p = abs(p);
-        float m = p.x + p.y + p.z - s;
-        vec3 q;
-        if (3.0 * p.x < m) q = p.xyz;
-        else if (3.0 * p.y < m) q = p.yzx;
-        else if (3.0 * p.z < m) q = p.zxy;
-        else return m * 0.57735027;
-        float k = clamp(0.5 * (q.z - q.y + s), 0.0, s);
-        return length(vec3(q.x, q.y - s + k, q.z - k));
-      }
+        q.xz *= rot(exp(-clickTime*3.0) * 8.);
 
-      float liquidShape(vec3 p, float r, int shape, float seed) {
-        vec3 q = p;
-        q.y += sin(q.z * 31.0 + time * 3.2 + seed) * r * 0.055;
-        q.z += sin(q.x * 27.0 + q.y * 13.0 + time * 3.6 + seed) * r * 0.05;
-        q.xy *= rot(sin(time * 0.55 + seed) * 0.12);
-        q.xz *= rot(cos(time * 0.45 + seed) * 0.12);
-
-        if (shape == 0) {
-          return sdSphere(q, r);
+        vec3 sp = q;
+        sp.y += sin(sp.z * 29. + time * 6.5) * 0.01;
+        sp.z += sin(sp.x * 23. + sp.y * 11. + time * 7.) * 0.01;
+        sp.xy *= rot(time*1.3);
+        sp.xz *= rot(time*1.1);
+        float d;
+        int objType = forcedShape;
+        float rr = SPHERE_R * sphereScale;
+        if (objType == 0) {
+          d = sdSphere(sp, rr);
+        } else if (objType == 1) {
+          d = sdBox(sp, vec3(rr*0.8), 0.01);
+        } else {
+          d = sdRing(sp, vec2(rr*1.1, 0.015 * sphereScale));
         }
-        if (shape == 1) {
-          return sdRoundBox(q, vec3(r * 0.78), r * 0.18);
+        for (int i = 0; i < N_BUBBLES; i++) {
+          int b = i * 4;
+          vec3 bPos = vec3(bubbleData[b], bubbleData[b+1], bubbleData[b+2]);
+          float r = bubbleData[b+3];
+          d = smin(d, sdSphere(q - bPos, max(r, 0.001)), BUBBLE_SMOOTH);
         }
-        if (shape == 2) {
-          return sdTorus(q, vec2(r * 0.72, r * 0.22));
-        }
-        if (shape == 3) {
-          q.xy *= rot(1.5708);
-          return sdCapsule(q, r * 0.56, r * 0.42);
-        }
-        return sdOctahedron(q, r * 1.25) - r * 0.05;
+
+        return d * s;
       }
-
-      float sceneMap(vec3 p) {
-        vec3 pc = vec3(player, 0.0);
-        float wobble = 1.0 + 0.035 * sin(time * 4.0) + levelFlash * 0.14 - hitFlash * 0.08;
-        float d = liquidShape(p - pc, playerR * wobble, levelShape, 0.0);
-
-        for (int i = 0; i < ${MAX_OBJECTS}; i++) {
-          if (i >= objectCount) break;
-          int j = i * ${DATA_STRIDE};
-          vec3 oc = vec3(objectData[j], objectData[j + 1], objectData[j + 2]);
-          float r = max(objectData[j + 3], 0.0001);
-          int shape = int(objectData[j + 4] + 0.5);
-          float danger = objectData[j + 5];
-          float od = liquidShape(p - oc, r, shape, float(i) * 1.71 + 2.0);
-          if (danger > 0.5) {
-            d = min(d, od);
-          } else {
-            d = smin(d, od, BUBBLE_SMOOTH);
-          }
-        }
-        return d;
-      }
-
-      vec3 calcNormal(vec3 p) {
+      vec3 calcNormal(vec3 p, vec3 c) {
         vec2 e = vec2(0.001, 0.0);
         return normalize(vec3(
-          sceneMap(p + e.xyy) - sceneMap(p - e.xyy),
-          sceneMap(p + e.yxy) - sceneMap(p - e.yxy),
-          sceneMap(p + e.yyx) - sceneMap(p - e.yyx)
+          map(p + e.xyy, c) - map(p - e.xyy, c),
+          map(p + e.yxy, c) - map(p - e.yxy, c),
+          map(p + e.yyx, c) - map(p - e.yyx, c)
         ));
-      }
-
-      float dangerAt(vec3 p) {
-        float best = abs(liquidShape(p - vec3(player, 0.0), playerR, levelShape, 0.0));
-        float danger = 0.0;
-        for (int i = 0; i < ${MAX_OBJECTS}; i++) {
-          if (i >= objectCount) break;
-          int j = i * ${DATA_STRIDE};
-          vec3 oc = vec3(objectData[j], objectData[j + 1], objectData[j + 2]);
-          float r = max(objectData[j + 3], 0.0001);
-          int shape = int(objectData[j + 4] + 0.5);
-          float d = abs(liquidShape(p - oc, r, shape, float(i) * 1.71 + 2.0));
-          if (d < best) {
-            best = d;
-            danger = objectData[j + 5];
-          }
-        }
-        return danger;
       }
 
       vec3 spectrum(float x) {
@@ -615,100 +662,95 @@
           1.5 - abs(4.0 * x - 3.0)
         ), 0.0, 1.0);
       }
-
       vec4 getSrc(vec2 uv) {
         vec4 c = texture(src, uv);
-        return mix(vec4(1.0), c, c.a);
+        return mix(vec4(1), c, c.a);
       }
 
       void main() {
         vec2 uv = (gl_FragCoord.xy - offset) / resolution;
         float aspect = resolution.y / resolution.x;
-        vec2 p2 = (uv - 0.5) * vec2(1.0, aspect);
+
+        vec2 p = (uv - 0.5) * vec2(1.0, aspect);
+        vec2 mp = ((mouse + lag) / resolution - 0.5) * vec2(1.0, aspect);
 
         vec3 ro = vec3(0.0, 0.0, -2.0);
         float focal = 2.0;
-        vec3 rd = normalize(vec3(p2, focal));
+        vec3 rd = normalize(vec3(p, focal));
+        vec3 c = vec3(mp, 0.0);
 
         vec3 firstN = vec3(0.0);
         vec3 lastN = vec3(0.0);
-        vec3 hitPos = vec3(0.0);
         int hitCount = 0;
+
         float thickness = 0.0;
         float tEntry = 0.0;
         float t = 0.0;
         bool inside = false;
-
-        for (int i = 0; i < 58; i++) {
+        for (int i = 0; i < 50; i++) {
           if (t > 10.0) break;
+
           vec3 pos = ro + rd * t;
-          float d = sceneMap(pos);
-          float stepSize = inside ? -d : d;
-          if (stepSize < 3e-4) {
-            vec3 n = calcNormal(pos);
-            if (hitCount == 0) {
-              firstN = n;
-              hitPos = pos;
-            }
+          float d = map(pos, c);
+          float step = inside ? -d : d;
+          if (step < 3e-4) {
+            vec3 n = calcNormal(pos, c);
+            if (hitCount == 0) firstN = n;
             lastN = n;
-            if (!inside) tEntry = t;
-            else thickness += t - tEntry;
+            if (!inside) {
+              tEntry = t;
+            } else {
+              thickness += t - tEntry;
+            }
+
             hitCount++;
-            if (hitCount >= 4) break;
+            if (hitCount >= 4) { break; }
             inside = !inside;
             t += 0.01;
           } else {
-            t += stepSize;
+            t += step;
           }
         }
 
         if (hitCount > 0) {
+          vec2 baseDisp = -(firstN.xy + lastN.xy) * 0.5 * DISP;
+
           float NdotR = max(dot(firstN, -rd), 0.0);
-          float scatter = pow((1.0 - NdotR), 2.0) * 0.036 * sparkle;
-          vec2 baseDisp = -(firstN.xy + lastN.xy) * 0.5 * 0.03 * glass;
+          float scatter = pow((1.0 - NdotR), 2.0) * SCATTER;
           vec3 acc = vec3(0.0);
           vec3 wsum = vec3(0.0);
-
           for (int i = 0; i < DISP_STEPS; i++) {
             float wl = float(i) / float(DISP_STEPS - 1);
-            float k = wl * (1.25 + float(hitCount) * 0.24);
+            float k = mix(DISP_LO, DISP_HI, wl) * (1.3 + float(hitCount) * 0.2);
             vec2 h = hash22(uv * 1000.0 + float(i) * 7.13 + time) * scatter;
             vec3 w = spectrum(wl);
             acc += getSrc(uv + baseDisp * k + h).rgb * w;
             wsum += w;
           }
-
-          vec3 col = acc / wsum;
-          col -= float(hitCount) * 0.035;
-          col += 0.16;
+          vec3 col = acc / wsum * 0.99;
+          col -= float(hitCount) * 0.05;
+          col += 0.1;
 
           float fres = pow(1.0 - NdotR, 5.0);
-          col *= 1.0 + fres * 1.15;
+          col *= 1. + fres;
 
-          float f2 = 1.0 - pow(NdotR, 3.0);
-          col *= mix(vec3(1.0), exp(-ABSORB * thickness), f2 * 0.92);
-          col *= 1.0 + f2 * 0.95;
+          float f2 = 1. - pow(NdotR, 3.0);
+          col *= mix(vec3(1), exp(-ABSORB * thickness), f2);
+          col *= 1. + f2;
 
           vec3 ld = normalize(vec3(0.5, 0.9, -0.3));
-          float spec = pow(max(dot(reflect(-ld, firstN), -rd), 0.0), 210.0);
-          col += spec * 35.0;
-
+          float spec = pow(max(dot(reflect(-ld, firstN), -rd), 0.0), 200.0);
+          col += spec * 30.;
           ld = normalize(vec3(-0.9, 0.4, -0.3));
-          spec = pow(max(dot(reflect(-ld, firstN), -rd), 0.0), 320.0);
-          col += spec * 4.2;
+          spec = pow(max(dot(reflect(-ld, firstN), -rd), 0.0), 300.0);
+          col += spec * 3.;
 
           ld = normalize(vec3(-0.1, -0.9, -0.1));
-          spec = pow(max(dot(reflect(-ld, firstN), -rd), 0.0), 34.0);
-          col += spec * 0.72;
+          spec = pow(max(dot(reflect(-ld, firstN), -rd), 0.0), 30.0);
+          col += spec * 0.5;
 
-          float hazard = dangerAt(hitPos);
-          col = mix(col, vec3(1.0, 0.10, 0.08), hazard * 0.62);
-          col += vec3(0.45, 0.02, 0.0) * hazard * fres;
-          col += vec3(0.9, 1.0, 1.0) * levelFlash * 0.18;
-          col += vec3(1.0, 0.07, 0.04) * hitFlash * 0.22;
-
-          col = min(col, 1.0);
-          col = 1.0 - abs(col + fres * 0.5 - 1.0);
+          col = min(col, 1.);
+          col = 1. - abs(col + fres * .5 - 1.);
           outColor = vec4(col, 1.0);
         } else {
           outColor = getSrc(uv);
@@ -716,542 +758,379 @@
       }
     `;
 
-    const els = {
-      scene: document.getElementById("scene"),
-      canvas: document.getElementById("bgCanvas"),
-      levelText: document.getElementById("levelText"),
-      shapeText: document.getElementById("shapeText"),
-      scoreText: document.getElementById("scoreText"),
-      livesText: document.getElementById("livesText"),
-      goalText: document.getElementById("goalText"),
-      countText: document.getElementById("countText"),
-      progressBar: document.getElementById("progressBar"),
-      message: document.getElementById("message"),
-      startBtn: document.getElementById("startBtn"),
-      restartBtn: document.getElementById("restartBtn"),
-      settingsBtn: document.getElementById("settingsBtn"),
-      panel: document.getElementById("panel"),
-      notice: document.getElementById("notice")
-    };
+    const app = document.getElementById("app");
+    const effectTarget = document.getElementById("effectTarget");
+    const targetsLayer = document.getElementById("targets");
+    const overlay = document.getElementById("overlay");
+    const startButton = document.getElementById("start");
+    const restartButton = document.getElementById("restart");
+    const hint = document.getElementById("hint");
+    const scoreEl = document.getElementById("score");
+    const levelEl = document.getElementById("level");
+    const livesEl = document.getElementById("lives");
+    const shapeEl = document.getElementById("shape");
+    const progressText = document.getElementById("progressText");
+    const progressFill = document.getElementById("progressFill");
 
-    const ctx = els.canvas.getContext("2d", { alpha: true });
-    const objectData = new Float32Array(MAX_OBJECTS * DATA_STRIDE);
-
-    const settings = {
-      glass: 1.25,
-      sparkle: 1.0,
-      spawn: 15,
-      speed: 1.0,
-      danger: 0.28,
-      pull: 1.65,
-      baseSize: 0.092
-    };
+    const shapeSequence = [
+      { shader: 0, name: "Bol", className: "sphere" },
+      { shader: 2, name: "Donut", className: "ring" },
+      { shader: 1, name: "Cube", className: "cube" }
+    ];
 
     const state = {
       running: false,
-      gameOver: false,
-      level: 0,
       score: 0,
       lives: 3,
+      level: 0,
       absorbed: 0,
-      objects: [],
-      particles: [],
-      dpr: 1,
-      w: 1,
-      h: 1,
-      aspect: 1,
-      player: { x: 0, y: 0, tx: 0, ty: 0 },
-      playerR: settings.baseSize,
-      targetR: settings.baseSize,
-      hitFlash: 0,
-      levelFlash: 0,
-      shaderReady: false,
-      fallback: false,
-      last: performance.now()
+      targetAbsorb: 10,
+      growth: 1,
+      lastHitTime: performance.now() / 1000,
+      clickCount: 0,
+      hasPointer: false
     };
 
-    function rand(min, max) {
-      return min + Math.random() * (max - min);
+    const player = {
+      x: window.innerWidth / 2,
+      y: window.innerHeight / 2
+    };
+
+    const p0 = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+    const p1 = { x: p0.x, y: window.innerHeight - p0.y };
+    const p2 = { x: p0.x, y: window.innerHeight - p0.y };
+    let centerBlend = 1.0;
+
+    const gameObjects = [];
+    const N = PARAMS.bubbleCount;
+    const shaderBubbles = new Float32Array(N * 4);
+    const fract = (x) => x - Math.floor(x);
+    const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+    const rand = (min, max) => min + Math.random() * (max - min);
+    const dist = (ax, ay, bx, by) => Math.hypot(ax - bx, ay - by);
+
+    function rot2d(x, y, t) {
+      const c = Math.cos(t);
+      const s = Math.sin(t);
+      return [x * c - y * s, x * s + y * c];
     }
 
-    function clamp(v, min, max) {
-      return Math.max(min, Math.min(max, v));
+    function currentShape() {
+      return shapeSequence[state.level % shapeSequence.length];
     }
 
-    function currentLevel() {
-      return levels[state.level % levels.length];
+    function setPointer(clientX, clientY) {
+      player.x = clamp(clientX, 0, window.innerWidth);
+      player.y = clamp(clientY, 0, window.innerHeight);
+      p0.x = player.x;
+      p0.y = window.innerHeight - player.y;
+      state.hasPointer = true;
     }
 
-    function otherShape(shape) {
-      const choices = [0, 1, 2, 3, 4].filter(v => v !== shape);
-      return choices[Math.floor(Math.random() * choices.length)];
-    }
+    window.addEventListener("pointermove", (event) => {
+      setPointer(event.clientX, event.clientY);
+    });
 
-    function resize() {
-      state.dpr = Math.min(2, window.devicePixelRatio || 1);
-      state.w = Math.max(1, window.innerWidth);
-      state.h = Math.max(1, window.innerHeight);
-      state.aspect = state.h / state.w;
-      els.canvas.width = Math.floor(state.w * state.dpr);
-      els.canvas.height = Math.floor(state.h * state.dpr);
-      els.canvas.style.width = state.w + "px";
-      els.canvas.style.height = state.h + "px";
-      ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
-      state.player.tx = clamp(state.player.tx, -0.48, 0.48);
-      state.player.ty = clamp(state.player.ty, -state.aspect * 0.48, state.aspect * 0.48);
-    }
+    window.addEventListener("pointerdown", (event) => {
+      if (event.target.closest("button")) return;
+      setPointer(event.clientX, event.clientY);
+      state.lastHitTime = performance.now() / 1000;
+      state.clickCount += 1;
+    });
 
-    function screenToWorld(clientX, clientY) {
-      return {
-        x: clientX / state.w - 0.5,
-        y: (0.5 - clientY / state.h) * state.aspect
-      };
-    }
-
-    function worldToScreen(x, y) {
-      return {
-        x: (x + 0.5) * state.w,
-        y: (0.5 - y / state.aspect) * state.h
-      };
-    }
-
-    function setPointerFromEvent(e) {
-      if (e.target.closest && e.target.closest("button, input, #panel, #hud, #message")) return;
-      const p = screenToWorld(e.clientX, e.clientY);
-      state.player.tx = clamp(p.x, -0.48, 0.48);
-      state.player.ty = clamp(p.y, -state.aspect * 0.48, state.aspect * 0.48);
-    }
-
-    window.addEventListener("pointermove", setPointerFromEvent, { passive: true });
-    window.addEventListener("pointerdown", setPointerFromEvent, { passive: true });
-    window.addEventListener("resize", resize);
-
-    function spawnObject(forceGood = false) {
-      const lvl = currentLevel();
-      const danger = forceGood ? false : Math.random() < settings.danger;
-      const r = rand(0.032, 0.048) * (1 + state.level * 0.018);
-      const top = state.aspect * 0.55 + r + rand(0.02, 0.18);
-      return {
-        x: rand(-0.43, 0.43),
-        y: top,
-        z: rand(-0.018, 0.018),
-        r,
-        baseR: r,
-        shape: danger ? otherShape(lvl.shape) : lvl.shape,
-        danger,
-        vy: rand(0.12, 0.20) * (1 + state.level * 0.075),
-        vx: rand(-0.012, 0.012),
-        phase: rand(0, Math.PI * 2),
+    function makeTarget() {
+      const el = document.createElement("div");
+      el.className = "target sphere";
+      targetsLayer.appendChild(el);
+      const obj = {
+        el,
+        x: 0,
+        y: 0,
+        vx: 0,
+        vy: 0,
+        size: 54,
+        shape: 0,
+        kind: "good",
+        rot: 0,
+        spin: 0,
         absorbing: false,
-        dead: false,
-        pulse: 0,
-        age: 0
+        dead: false
       };
+      gameObjects.push(obj);
+      resetTarget(obj, true);
+    }
+
+    function resetTarget(obj, first = false) {
+      const active = currentShape();
+      const roll = Math.random();
+      let chosen = active;
+      obj.kind = "good";
+
+      if (roll < 0.18) {
+        obj.kind = "bad";
+        const other = shapeSequence[Math.floor(Math.random() * shapeSequence.length)];
+        chosen = other;
+      } else if (roll < 0.36) {
+        obj.kind = "wrong";
+        const options = shapeSequence.filter((s) => s.shader !== active.shader);
+        chosen = options[Math.floor(Math.random() * options.length)];
+      }
+
+      obj.shape = chosen.shader;
+      obj.size = rand(42, 66) * clamp(1 - state.level * 0.025, 0.82, 1);
+      obj.x = rand(obj.size, window.innerWidth - obj.size);
+      obj.y = first ? rand(-window.innerHeight, -80) : rand(-260, -80);
+      obj.vx = rand(-18, 18);
+      obj.vy = rand(72, 128) + state.level * 12;
+      obj.rot = rand(-20, 20);
+      obj.spin = rand(-28, 28);
+      obj.absorbing = false;
+      obj.dead = false;
+      obj.el.className = `target ${chosen.className} ${obj.kind === "bad" ? "bad" : ""} ${obj.kind === "wrong" ? "wrong" : ""}`;
+      obj.el.style.setProperty("--size", `${obj.size}px`);
+      obj.el.style.opacity = obj.kind === "wrong" ? "0.82" : "0.96";
+    }
+
+    function ensureTargets() {
+      const desired = clamp(7 + Math.floor(state.level / 2), 7, 12);
+      while (gameObjects.length < desired) makeTarget();
+      while (gameObjects.length > desired) {
+        const obj = gameObjects.pop();
+        obj.el.remove();
+      }
+    }
+
+    function showPulse(x, y, color = "rgba(112,255,224,0.9)") {
+      const pulse = document.createElement("div");
+      pulse.className = "pulse";
+      pulse.style.left = `${x}px`;
+      pulse.style.top = `${y}px`;
+      pulse.style.borderColor = color;
+      pulse.style.boxShadow = `0 0 30px ${color}`;
+      app.appendChild(pulse);
+      pulse.addEventListener("animationend", () => pulse.remove());
+    }
+
+    function absorb(obj) {
+      state.score += 100 + state.level * 20;
+      state.absorbed += 1;
+      state.growth = 1 + state.absorbed * 0.035;
+      state.lastHitTime = performance.now() / 1000;
+      state.clickCount += 1;
+      showPulse(player.x, player.y);
+      resetTarget(obj, false);
+
+      if (state.absorbed >= state.targetAbsorb) {
+        state.level += 1;
+        state.absorbed = 0;
+        state.growth = 1;
+        state.lastHitTime = performance.now() / 1000;
+        state.clickCount += 1;
+        showPulse(player.x, player.y, "rgba(255,225,107,0.96)");
+        ensureTargets();
+      }
+    }
+
+    function damage(obj) {
+      state.lives -= 1;
+      state.absorbed = clamp(state.absorbed - 3, 0, state.targetAbsorb);
+      state.growth = 1 + state.absorbed * 0.035;
+      state.lastHitTime = performance.now() / 1000;
+      state.clickCount += 1;
+      showPulse(obj.x, obj.y, "rgba(255,62,111,0.92)");
+      app.classList.remove("shake");
+      void app.offsetWidth;
+      app.classList.add("shake");
+      resetTarget(obj, false);
+      if (state.lives <= 0) endGame();
     }
 
     function resetGame() {
       state.running = true;
-      state.gameOver = false;
-      state.level = 0;
       state.score = 0;
       state.lives = 3;
+      state.level = 0;
       state.absorbed = 0;
-      state.objects.length = 0;
-      state.particles.length = 0;
-      state.player.x = 0;
-      state.player.y = -state.aspect * 0.26;
-      state.player.tx = 0;
-      state.player.ty = -state.aspect * 0.26;
-      state.playerR = settings.baseSize;
-      state.targetR = settings.baseSize;
-      state.hitFlash = 0;
-      state.levelFlash = 0.6;
-      for (let i = 0; i < settings.spawn; i++) {
-        const obj = spawnObject(i < 5);
-        obj.y += rand(-state.aspect * 0.9, state.aspect * 0.2);
-        state.objects.push(obj);
-      }
-      els.message.classList.add("hidden");
-      updateHud();
-    }
-
-    function updateHud() {
-      const lvl = currentLevel();
-      els.levelText.textContent = String(state.level + 1);
-      els.shapeText.textContent = lvl.name;
-      els.scoreText.textContent = String(state.score);
-      els.livesText.textContent = String(state.lives);
-      els.goalText.textContent = `Absorbeer ${TARGET} ${lvl.plural}. Vermijd rode vormen.`;
-      els.countText.textContent = `${state.absorbed}/${TARGET}`;
-      els.progressBar.style.width = `${clamp(state.absorbed / TARGET, 0, 1) * 100}%`;
-    }
-
-    function levelUp() {
-      state.level++;
-      state.absorbed = 0;
-      state.targetR = settings.baseSize + Math.min(0.018, state.level * 0.004);
-      state.levelFlash = 1.0;
-      state.score += 100;
-      state.objects.length = 0;
-      for (let i = 0; i < settings.spawn; i++) {
-        const obj = spawnObject(i < 6);
-        obj.y += rand(-state.aspect * 0.7, state.aspect * 0.24);
-        state.objects.push(obj);
-      }
-      burst(state.player.x, state.player.y, "level", 26);
+      state.growth = 1;
+      state.lastHitTime = performance.now() / 1000;
+      state.clickCount += 1;
+      ensureTargets();
+      for (const obj of gameObjects) resetTarget(obj, true);
+      overlay.classList.add("hidden");
       updateHud();
     }
 
     function endGame() {
       state.running = false;
-      state.gameOver = true;
-      els.message.classList.remove("hidden");
-      els.message.querySelector("h1").textContent = "Game over";
-      els.message.querySelector("p").textContent = `Score ${state.score}. Je haalde level ${state.level + 1}. Probeer alleen dezelfde liquid vorm te absorberen.`;
-      els.startBtn.textContent = "Opnieuw starten";
+      overlay.classList.remove("hidden");
+      overlay.querySelector("h2").textContent = "Game over";
+      overlay.querySelector("p").textContent = `Score ${state.score}. Start opnieuw om verder te tweaken.`;
+      startButton.textContent = "Opnieuw starten";
     }
 
-    function absorbObject(obj) {
-      obj.dead = true;
-      state.absorbed++;
-      state.score += 10 + state.level * 3;
-      state.targetR = Math.min(0.185, state.targetR + 0.0065);
-      state.levelFlash = Math.max(state.levelFlash, 0.22);
-      burst(obj.x, obj.y, "good", 10);
-      if (state.absorbed >= TARGET) levelUp();
-      else updateHud();
-    }
+    startButton.addEventListener("click", () => {
+      overlay.querySelector("h2").textContent = "Liquid Absorb";
+      resetGame();
+    });
 
-    function hitDanger(obj) {
-      obj.dead = true;
-      state.lives--;
-      state.hitFlash = 1.0;
-      state.targetR = Math.max(settings.baseSize * 0.72, state.targetR - 0.027);
-      burst(obj.x, obj.y, "danger", 16);
-      updateHud();
-      if (state.lives <= 0) endGame();
-    }
+    restartButton.addEventListener("click", resetGame);
 
-    function burst(x, y, kind, amount) {
-      for (let i = 0; i < amount; i++) {
-        const a = rand(0, Math.PI * 2);
-        const s = rand(0.05, 0.18);
-        state.particles.push({
-          x,
-          y,
-          vx: Math.cos(a) * s,
-          vy: Math.sin(a) * s,
-          life: 1,
-          kind,
-          size: rand(2, 6)
-        });
-      }
-    }
+    function updateShaderBubbles(time) {
+      const visible = clamp(3 + state.absorbed, 3, N);
+      for (let i = 0; i < N; i++) {
+        const life = fract(time * PARAMS.bubbleSpeed + i / N);
+        const orbitR = PARAMS.sphereR * (0.3 + life * 0.8) * state.growth;
+        const orbitAngle = time * (0.8 + fract(i * 0.618) * 0.7) + i * 1.256;
 
-    function updateObjects(dt) {
-      const lvl = currentLevel();
-      while (state.objects.length < settings.spawn) {
-        state.objects.push(spawnObject());
-      }
-      if (state.objects.length > settings.spawn) {
-        state.objects.splice(settings.spawn);
-      }
+        let bx = Math.cos(orbitAngle) * orbitR;
+        let by = 0;
+        let bz = Math.sin(orbitAngle) * orbitR;
 
-      for (const obj of state.objects) {
-        obj.age += dt;
-        obj.pulse += dt;
-        const dx = state.player.x - obj.x;
-        const dy = state.player.y - obj.y;
-        const dist = Math.hypot(dx, dy);
-        const attract = state.playerR * settings.pull * 1.45 + obj.r * 3.2;
-        const touch = state.playerR + obj.r * 1.12;
+        [bx, by] = rot2d(bx, by, i * 2.3);
+        [by, bz] = rot2d(by, bz, i * 1.8);
 
-        if (!obj.danger && dist < attract) obj.absorbing = true;
+        by += life * 0.1;
+        bx += Math.sin(time * 2.7 + i * 4.1) * 0.008 * life;
+        bz += Math.cos(time * 3.1 + i * 3.7) * 0.008 * life;
 
-        if (obj.absorbing && !obj.danger) {
-          const pullStrength = clamp(11.0 * dt * (1.22 - dist / Math.max(0.001, attract)), 0.10, 0.52);
-          obj.x += dx * pullStrength;
-          obj.y += dy * pullStrength;
-          obj.z *= 0.86;
-          obj.r *= 0.985;
-          if (dist < touch * 0.82 || obj.r < obj.baseR * 0.48) absorbObject(obj);
-        } else {
-          obj.y -= obj.vy * settings.speed * dt;
-          obj.x += (obj.vx + Math.sin(obj.age * 2.2 + obj.phase) * 0.014) * settings.speed * dt;
-          obj.x = clamp(obj.x, -0.48, 0.48);
-          if (obj.danger && dist < touch * 0.78) hitDanger(obj);
-        }
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        bx += ((p2.x - p1.x) / w) * (h / w);
+        by += (p2.y - p1.y) / h;
 
-        if (obj.y < -state.aspect * 0.62 - obj.r) {
-          obj.dead = true;
-        }
-      }
-
-      state.objects = state.objects.filter(obj => !obj.dead);
-
-      for (const p of state.particles) {
-        p.life -= dt * 1.8;
-        p.x += p.vx * dt;
-        p.y += p.vy * dt;
-        p.vy -= 0.035 * dt;
-      }
-      state.particles = state.particles.filter(p => p.life > 0);
-
-      for (const obj of state.objects) {
-        if (!obj.danger && obj.shape !== lvl.shape) obj.shape = lvl.shape;
+        const range = PARAMS.bubbleRadiusMax - PARAMS.bubbleRadiusMin;
+        const maxR = PARAMS.bubbleRadiusMin + range * fract(i * 0.618);
+        const j = i * 4;
+        shaderBubbles[j] = bx;
+        shaderBubbles[j + 1] = by;
+        shaderBubbles[j + 2] = bz;
+        shaderBubbles[j + 3] = i < visible ? maxR * Math.sin(life * Math.PI) * (0.92 + state.absorbed * 0.02) : 0;
       }
     }
 
-    function fillObjectData() {
-      objectData.fill(0);
-      const n = Math.min(MAX_OBJECTS, state.objects.length);
-      for (let i = 0; i < n; i++) {
-        const obj = state.objects[i];
-        const j = i * DATA_STRIDE;
-        objectData[j] = obj.x;
-        objectData[j + 1] = obj.y;
-        objectData[j + 2] = obj.z;
-        objectData[j + 3] = obj.r;
-        objectData[j + 4] = obj.shape;
-        objectData[j + 5] = obj.danger ? 1 : 0;
-      }
+    function updateHud() {
+      const shape = currentShape();
+      scoreEl.textContent = String(state.score);
+      levelEl.textContent = String(state.level + 1);
+      livesEl.textContent = String(state.lives);
+      shapeEl.textContent = shape.name;
+      progressText.textContent = `${state.absorbed}/${state.targetAbsorb}`;
+      progressFill.style.width = `${(state.absorbed / state.targetAbsorb) * 100}%`;
     }
 
-    function drawBackground(t) {
-      const w = state.w;
-      const h = state.h;
-      ctx.clearRect(0, 0, w, h);
+    let last = performance.now();
+    const t0 = performance.now() / 1000;
 
-      const grad = ctx.createLinearGradient(0, 0, w, h);
-      grad.addColorStop(0, "rgba(45, 199, 255, 0.16)");
-      grad.addColorStop(0.46, "rgba(255, 255, 255, 0.035)");
-      grad.addColorStop(1, "rgba(255, 104, 225, 0.14)");
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, w, h);
+    function tick(nowMs) {
+      const dt = Math.min(0.04, (nowMs - last) / 1000);
+      last = nowMs;
+      const time = performance.now() / 1000 - t0;
+      const sm = PARAMS.mouseSmoothing;
 
-      ctx.save();
-      ctx.globalAlpha = 0.22;
-      ctx.lineWidth = 1;
-      for (let x = ((t * 18) % 94) - 94; x < w + 94; x += 94) {
-        ctx.strokeStyle = "rgba(255,255,255,0.09)";
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x + h * 0.18, h);
-        ctx.stroke();
-      }
-      ctx.restore();
-
-      for (const obj of state.objects) {
-        const s = worldToScreen(obj.x, obj.y);
-        const pxR = Math.max(10, obj.r * w);
-        const g = ctx.createRadialGradient(s.x, s.y, 1, s.x, s.y, pxR * 2.1);
-        if (obj.danger) {
-          g.addColorStop(0, "rgba(255, 60, 82, 0.72)");
-          g.addColorStop(0.28, "rgba(255, 60, 82, 0.22)");
-          g.addColorStop(1, "rgba(255, 60, 82, 0)");
-        } else if (obj.absorbing) {
-          g.addColorStop(0, "rgba(255,255,255,0.9)");
-          g.addColorStop(0.22, "rgba(174,252,234,0.5)");
-          g.addColorStop(1, "rgba(174,252,234,0)");
-        } else {
-          g.addColorStop(0, "rgba(255,255,255,0.34)");
-          g.addColorStop(0.32, "rgba(174,252,234,0.18)");
-          g.addColorStop(1, "rgba(174,252,234,0)");
-        }
-        ctx.fillStyle = g;
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, pxR * 2.15, 0, Math.PI * 2);
-        ctx.fill();
-
-        if (obj.danger) {
-          ctx.save();
-          ctx.translate(s.x, s.y);
-          ctx.rotate(Math.sin(obj.age * 2 + obj.phase) * 0.45);
-          ctx.strokeStyle = "rgba(255,255,255,0.46)";
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.moveTo(-pxR * 0.42, -pxR * 0.42);
-          ctx.lineTo(pxR * 0.42, pxR * 0.42);
-          ctx.moveTo(pxR * 0.42, -pxR * 0.42);
-          ctx.lineTo(-pxR * 0.42, pxR * 0.42);
-          ctx.stroke();
-          ctx.restore();
-        }
+      if (!state.hasPointer) {
+        const cx = window.innerWidth / 2 + Math.cos(time * 0.36) * window.innerWidth * 0.16;
+        const cy = window.innerHeight / 2 + Math.sin(time * 0.42) * window.innerHeight * 0.12;
+        setPointer(cx, cy);
+        state.hasPointer = false;
       }
 
-      const ps = worldToScreen(state.player.x, state.player.y);
-      const pr = state.playerR * w;
-      const rg = ctx.createRadialGradient(ps.x, ps.y, pr * 0.2, ps.x, ps.y, pr * 2.55);
-      rg.addColorStop(0, "rgba(255,255,255,0.24)");
-      rg.addColorStop(0.35, "rgba(174,252,234,0.14)");
-      rg.addColorStop(1, "rgba(174,252,234,0)");
-      ctx.fillStyle = rg;
-      ctx.beginPath();
-      ctx.arc(ps.x, ps.y, pr * 2.55, 0, Math.PI * 2);
-      ctx.fill();
+      p1.x += (p0.x - p1.x) * sm;
+      p1.y += (p0.y - p1.y) * sm;
+      p2.x += (p1.x - p2.x) * sm;
+      p2.y += (p1.y - p2.y) * sm;
+      if (state.hasPointer) centerBlend *= 0.95;
 
-      ctx.save();
-      ctx.globalAlpha = 0.32 + Math.sin(t * 3) * 0.06;
-      ctx.strokeStyle = "rgba(255,255,255,0.42)";
-      ctx.lineWidth = 1.5;
-      ctx.setLineDash([5, 8]);
-      ctx.beginPath();
-      ctx.arc(ps.x, ps.y, pr * settings.pull, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.restore();
+      if (state.running) {
+        const active = currentShape();
+        const playerRadius = Math.max(58, Math.min(window.innerWidth, window.innerHeight) * 0.15 * state.growth);
+        const magnetRadius = playerRadius * 2.3;
 
-      for (const p of state.particles) {
-        const s = worldToScreen(p.x, p.y);
-        ctx.globalAlpha = clamp(p.life, 0, 1);
-        ctx.fillStyle = p.kind === "danger" ? "rgba(255,79,112,0.95)" : p.kind === "level" ? "rgba(255,216,107,0.95)" : "rgba(222,255,249,0.95)";
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, p.size, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.globalAlpha = 1;
-
-      if (state.fallback) {
-        drawFallbackShapes();
-      }
-    }
-
-    function drawFallbackShapes() {
-      const draw = (x, y, r, shape, danger) => {
-        const s = worldToScreen(x, y);
-        const pxR = r * state.w;
-        ctx.save();
-        ctx.translate(s.x, s.y);
-        const g = ctx.createRadialGradient(-pxR * .35, -pxR * .45, 1, 0, 0, pxR * 1.4);
-        if (danger) {
-          g.addColorStop(0, "rgba(255,255,255,0.9)");
-          g.addColorStop(.42, "rgba(255,78,100,0.75)");
-          g.addColorStop(1, "rgba(255,78,100,0.16)");
-        } else {
-          g.addColorStop(0, "rgba(255,255,255,0.95)");
-          g.addColorStop(.42, "rgba(207,255,247,0.65)");
-          g.addColorStop(1, "rgba(120,255,231,0.13)");
-        }
-        ctx.fillStyle = g;
-        ctx.strokeStyle = "rgba(255,255,255,0.78)";
-        ctx.lineWidth = 2;
-        if (shape === 2) {
-          ctx.beginPath(); ctx.arc(0, 0, pxR, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-          ctx.globalCompositeOperation = "destination-out";
-          ctx.beginPath(); ctx.arc(0, 0, pxR * .42, 0, Math.PI * 2); ctx.fill();
-          ctx.globalCompositeOperation = "source-over";
-        } else if (shape === 1) {
-          roundRect(ctx, -pxR, -pxR, pxR * 2, pxR * 2, pxR * .32); ctx.fill(); ctx.stroke();
-        } else if (shape === 3) {
-          roundRect(ctx, -pxR * 1.25, -pxR * .62, pxR * 2.5, pxR * 1.24, pxR * .62); ctx.fill(); ctx.stroke();
-        } else if (shape === 4) {
-          ctx.beginPath(); ctx.moveTo(0, -pxR * 1.2); ctx.lineTo(pxR * 1.05, 0); ctx.lineTo(0, pxR * 1.2); ctx.lineTo(-pxR * 1.05, 0); ctx.closePath(); ctx.fill(); ctx.stroke();
-        } else {
-          ctx.beginPath(); ctx.arc(0, 0, pxR, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-        }
-        ctx.restore();
-      };
-      draw(state.player.x, state.player.y, state.playerR, currentLevel().shape, false);
-      for (const obj of state.objects) draw(obj.x, obj.y, obj.r, obj.shape, obj.danger);
-    }
-
-    function roundRect(ctx, x, y, w, h, r) {
-      const rr = Math.min(r, Math.abs(w) / 2, Math.abs(h) / 2);
-      ctx.beginPath();
-      ctx.moveTo(x + rr, y);
-      ctx.arcTo(x + w, y, x + w, y + h, rr);
-      ctx.arcTo(x + w, y + h, x, y + h, rr);
-      ctx.arcTo(x, y + h, x, y, rr);
-      ctx.arcTo(x, y, x + w, y, rr);
-      ctx.closePath();
-    }
-
-    function loop(now) {
-      const dt = Math.min(0.033, (now - state.last) / 1000 || 0.016);
-      state.last = now;
-
-      state.player.x += (state.player.tx - state.player.x) * 0.16;
-      state.player.y += (state.player.ty - state.player.y) * 0.16;
-      state.playerR += (state.targetR - state.playerR) * 0.08;
-      state.hitFlash += (0 - state.hitFlash) * 0.08;
-      state.levelFlash += (0 - state.levelFlash) * 0.055;
-
-      if (state.running) updateObjects(dt);
-      fillObjectData();
-      drawBackground(now / 1000);
-      requestAnimationFrame(loop);
-    }
-
-    function bindSettings() {
-      const pairs = [
-        ["glass", "glassVal", v => settings.glass = Number(v), v => Number(v).toFixed(2)],
-        ["scatter", "scatterVal", v => settings.sparkle = Number(v), v => Number(v).toFixed(2)],
-        ["spawn", "spawnVal", v => settings.spawn = Number(v), v => String(v)],
-        ["speed", "speedVal", v => settings.speed = Number(v), v => Number(v).toFixed(2)],
-        ["danger", "dangerVal", v => settings.danger = Number(v) / 100, v => `${v}%`],
-        ["pull", "pullVal", v => settings.pull = Number(v), v => Number(v).toFixed(2)],
-        ["baseSize", "baseSizeVal", v => {
-          settings.baseSize = Number(v);
-          if (!state.running) {
-            state.playerR = settings.baseSize;
-            state.targetR = settings.baseSize;
+        for (const obj of gameObjects) {
+          const d = dist(obj.x, obj.y, player.x, player.y);
+          if (obj.kind === "good" && obj.shape === active.shader && d < magnetRadius) {
+            const pull = clamp(1 - d / magnetRadius, 0, 1);
+            obj.vx += (player.x - obj.x) * pull * 5.8 * dt;
+            obj.vy += (player.y - obj.y) * pull * 5.8 * dt;
+            obj.el.classList.add("absorbing");
+          } else {
+            obj.el.classList.remove("absorbing");
           }
-        }, v => Number(v).toFixed(3)]
-      ];
-      for (const [inputId, valueId, setter, formatter] of pairs) {
-        const input = document.getElementById(inputId);
-        const out = document.getElementById(valueId);
-        const apply = () => {
-          setter(input.value);
-          out.textContent = formatter(input.value);
-        };
-        input.addEventListener("input", apply);
-        apply();
+
+          obj.x += obj.vx * dt;
+          obj.y += obj.vy * dt;
+          obj.rot += obj.spin * dt;
+
+          if (obj.y > window.innerHeight + 120) resetTarget(obj, false);
+
+          const hitRadius = playerRadius * 0.78 + obj.size * 0.46;
+          if (d < hitRadius) {
+            if (obj.kind === "good" && obj.shape === active.shader) {
+              absorb(obj);
+            } else {
+              damage(obj);
+            }
+          }
+
+          obj.el.style.left = `${obj.x}px`;
+          obj.el.style.top = `${obj.y}px`;
+          obj.el.style.setProperty("--rot", `${obj.rot}deg`);
+          obj.el.style.setProperty("--scale", obj.el.classList.contains("absorbing") ? "0.78" : "1");
+        }
+      } else {
+        for (const obj of gameObjects) {
+          obj.y += obj.vy * dt * 0.22;
+          if (obj.y > window.innerHeight + 120) resetTarget(obj, false);
+          obj.el.style.left = `${obj.x}px`;
+          obj.el.style.top = `${obj.y}px`;
+          obj.el.style.setProperty("--rot", `${obj.rot}deg`);
+        }
       }
+
+      updateShaderBubbles(time);
+      updateHud();
+      requestAnimationFrame(tick);
     }
 
-    els.settingsBtn.addEventListener("click", () => els.panel.classList.toggle("open"));
-    els.restartBtn.addEventListener("click", resetGame);
-    els.startBtn.addEventListener("click", resetGame);
-
-    async function initVfx() {
+    async function setupVfx() {
       try {
-        const mod = await import("https://esm.sh/@vfx-js/core@0.11.1");
-        const vfx = new mod.VFX({
+        const { VFX } = await import("https://esm.sh/@vfx-js/core@0.11.1");
+        const vfx = new VFX({
           postEffect: {
-            shader,
+            shader: postEffectShader,
             uniforms: {
-              player: () => [state.player.x, state.player.y],
-              playerR: () => state.playerR,
-              levelShape: () => currentLevel().shape,
-              objectData: () => objectData,
-              objectCount: () => Math.min(MAX_OBJECTS, state.objects.length),
-              glass: () => settings.glass,
-              sparkle: () => settings.sparkle,
-              hitFlash: () => state.hitFlash,
-              levelFlash: () => state.levelFlash
+              lag: () => {
+                const lx = (p1.x - p0.x) * devicePixelRatio;
+                const ly = (p1.y - p0.y) * devicePixelRatio;
+                const cx = window.innerWidth / 2 * devicePixelRatio * centerBlend;
+                const cy = window.innerHeight / 2 * devicePixelRatio * centerBlend;
+                return [cx + lx, cy + ly];
+              },
+              clickTime: () => performance.now() / 1000 - state.lastHitTime,
+              clickCount: () => state.clickCount,
+              forcedShape: () => currentShape().shader,
+              sphereScale: () => state.growth,
+              bubbleData: () => shaderBubbles
             }
           }
         });
-        await vfx.addHTML(els.scene, { shader: "none" });
+        await vfx.addHTML(effectTarget, { shader: "none" });
         vfx.play();
-        state.shaderReady = true;
-        els.notice.textContent = "Echt liquid glass effect actief. Absorbeer alleen dezelfde vorm.";
-        setTimeout(() => { els.notice.style.opacity = "0"; }, 3600);
-      } catch (err) {
-        state.fallback = true;
-        els.notice.textContent = "VFX shader kon niet laden. De game draait in fallback weergave.";
-        console.warn("VFX kon niet laden", err);
+        hint.innerHTML = "<strong>Shader:</strong> actief. Deze versie gebruikt de oorspronkelijke liquid glass shader als basis en zet de game eromheen.";
+      } catch (error) {
+        console.warn(error);
+        app.classList.add("no-vfx");
+        hint.innerHTML = "<strong>Fallback:</strong> VFX JS kon niet laden. Open met internetverbinding voor het echte liquid glass effect.";
       }
     }
 
-    resize();
-    bindSettings();
+    window.addEventListener("resize", () => {
+      setPointer(clamp(player.x, 0, window.innerWidth), clamp(player.y, 0, window.innerHeight));
+    });
+
+    ensureTargets();
     updateHud();
-    state.player.y = -state.aspect * 0.26;
-    state.player.ty = state.player.y;
-    state.last = performance.now();
-    requestAnimationFrame(loop);
-    initVfx();
+    setupVfx();
+    requestAnimationFrame(tick);
   </script>
 </body>
 </html>
