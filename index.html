@@ -1,1197 +1,1257 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="nl">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Liquid Absorb</title>
-<style>
-  :root {
-    --panel: rgba(6, 12, 24, 0.62);
-    --panel2: rgba(11, 20, 38, 0.78);
-    --text: rgba(245, 251, 255, 0.95);
-    --muted: rgba(220, 239, 255, 0.72);
-    --line: rgba(255, 255, 255, 0.16);
-    --good: #ecfeff;
-    --danger: #ff6b8f;
-    --accent: #8ff7ff;
-  }
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Liquid Absorb v4</title>
+  <style>
+    :root {
+      --panel: rgba(10, 16, 28, 0.72);
+      --panel2: rgba(255, 255, 255, 0.12);
+      --text: rgba(255, 255, 255, 0.94);
+      --muted: rgba(255, 255, 255, 0.64);
+      --line: rgba(255, 255, 255, 0.18);
+      --mint: #aefcea;
+      --red: #ff4f70;
+      --gold: #ffd86b;
+    }
 
-  * { box-sizing: border-box; }
-  html, body {
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    overflow: hidden;
-    background: #040713;
-    color: var(--text);
-    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    touch-action: none;
-    user-select: none;
-  }
+    * { box-sizing: border-box; }
 
-  #game {
-    position: fixed;
-    inset: 0;
-    width: 100vw;
-    height: 100vh;
-    display: block;
-  }
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #070a12;
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      user-select: none;
+      touch-action: none;
+    }
 
-  #safe {
-    position: fixed;
-    inset: max(10px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
-    pointer-events: none;
-  }
+    button, input, #panel, #hud, #message {
+      touch-action: auto;
+    }
 
-  .hud {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 10px;
-    align-items: start;
-    pointer-events: none;
-  }
-
-  .stats {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    max-width: min(720px, calc(100vw - 76px));
-  }
-
-  .pill {
-    min-height: 38px;
-    padding: 8px 12px;
-    border: 1px solid var(--line);
-    border-radius: 999px;
-    background: linear-gradient(135deg, rgba(255,255,255,0.16), rgba(255,255,255,0.05));
-    backdrop-filter: blur(18px) saturate(1.2);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 12px 36px rgba(0,0,0,0.18);
-    font-size: 13px;
-    line-height: 1.15;
-    letter-spacing: 0.02em;
-  }
-
-  .pill strong {
-    display: block;
-    font-size: 16px;
-    letter-spacing: 0;
-  }
-
-  .target {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 10px;
-    align-items: center;
-    min-width: 210px;
-    border-radius: 22px;
-  }
-
-  .shapeIcon {
-    width: 34px;
-    height: 34px;
-    display: grid;
-    place-items: center;
-    border-radius: 50%;
-    background: radial-gradient(circle at 34% 28%, #ffffff 0 12%, #eafcff 28%, rgba(158,247,255,0.5) 52%, rgba(24,78,106,0.18) 72%);
-    box-shadow: inset -6px -8px 16px rgba(0, 35, 64, 0.28), inset 4px 5px 11px rgba(255,255,255,0.88), 0 0 24px rgba(150,250,255,0.38);
-    color: #052b38;
-    font-weight: 900;
-  }
-
-  .progressWrap {
-    width: 100%;
-    height: 9px;
-    border-radius: 999px;
-    overflow: hidden;
-    background: rgba(255,255,255,0.12);
-    margin-top: 6px;
-  }
-
-  .progressBar {
-    width: 0%;
-    height: 100%;
-    border-radius: 999px;
-    background: linear-gradient(90deg, #ffffff, #9dfaff);
-    box-shadow: 0 0 18px rgba(157, 250, 255, 0.58);
-    transition: width 0.2s ease;
-  }
-
-  button {
-    appearance: none;
-    border: 1px solid rgba(255,255,255,0.2);
-    border-radius: 16px;
-    background: rgba(255,255,255,0.12);
-    color: var(--text);
-    font: inherit;
-    min-height: 44px;
-    padding: 10px 13px;
-    cursor: pointer;
-    backdrop-filter: blur(14px);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 12px 26px rgba(0,0,0,0.2);
-  }
-  button:active { transform: translateY(1px) scale(0.99); }
-
-  #settingsBtn {
-    pointer-events: auto;
-    width: 46px;
-    height: 46px;
-    border-radius: 50%;
-    padding: 0;
-    font-size: 20px;
-  }
-
-  .settings {
-    position: absolute;
-    top: 56px;
-    right: 0;
-    width: min(360px, calc(100vw - 20px));
-    max-height: min(66vh, 560px);
-    overflow: auto;
-    overscroll-behavior: contain;
-    padding: 14px;
-    border: 1px solid var(--line);
-    border-radius: 24px;
-    background: var(--panel2);
-    backdrop-filter: blur(24px) saturate(1.25);
-    box-shadow: 0 26px 70px rgba(0,0,0,0.42), inset 0 1px 0 rgba(255,255,255,0.14);
-    pointer-events: auto;
-    transform-origin: top right;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(-8px) scale(0.96);
-    transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease;
-  }
-  .settings.open {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0) scale(1);
-  }
-
-  .settings h2 {
-    margin: 0 0 10px;
-    font-size: 17px;
-  }
-  .setting {
-    padding: 11px 0;
-    border-top: 1px solid rgba(255,255,255,0.1);
-  }
-  .setting label {
-    display: flex;
-    justify-content: space-between;
-    gap: 10px;
-    font-size: 13px;
-    color: var(--muted);
-    margin-bottom: 8px;
-  }
-  .setting label span:first-child { color: var(--text); }
-  input[type="range"] {
-    width: 100%;
-    height: 30px;
-    accent-color: #c5fbff;
-  }
-  .settingActions {
-    display: flex;
-    gap: 8px;
-    margin-top: 12px;
-  }
-  .settingActions button { flex: 1; border-radius: 14px; }
-
-  .message {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    width: min(520px, calc(100vw - 28px));
-    transform: translate(-50%, -50%);
-    padding: 22px;
-    border: 1px solid rgba(255,255,255,0.18);
-    border-radius: 30px;
-    background: rgba(5, 11, 23, 0.64);
-    backdrop-filter: blur(28px) saturate(1.25);
-    box-shadow: 0 28px 100px rgba(0,0,0,0.48), inset 0 1px 0 rgba(255,255,255,0.15);
-    pointer-events: auto;
-    text-align: center;
-  }
-  .message h1 {
-    margin: 0 0 6px;
-    font-size: clamp(28px, 6vw, 54px);
-    line-height: 0.95;
-    letter-spacing: -0.06em;
-  }
-  .message p {
-    margin: 9px auto;
-    color: var(--muted);
-    max-width: 430px;
-    line-height: 1.45;
-  }
-  .message .rules {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    margin: 16px 0;
-    text-align: left;
-  }
-  .rule {
-    padding: 10px;
-    border-radius: 16px;
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.1);
-    font-size: 13px;
-    color: var(--muted);
-  }
-  .rule strong { display: block; color: var(--text); margin-bottom: 4px; }
-  .primary {
-    min-width: 160px;
-    color: #062a31;
-    background: linear-gradient(135deg, #ffffff, #a8fbff 58%, #6eeeff);
-    border-color: rgba(255,255,255,0.58);
-    font-weight: 800;
-  }
-
-  #toast {
-    position: absolute;
-    left: 50%;
-    bottom: 18px;
-    transform: translateX(-50%);
-    min-width: 220px;
-    max-width: calc(100vw - 36px);
-    padding: 12px 16px;
-    border-radius: 999px;
-    background: rgba(6, 12, 24, 0.72);
-    border: 1px solid rgba(255,255,255,0.16);
-    backdrop-filter: blur(20px);
-    color: var(--text);
-    text-align: center;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.2s ease, transform 0.2s ease;
-  }
-  #toast.show {
-    opacity: 1;
-    transform: translateX(-50%) translateY(-6px);
-  }
-
-  .help {
-    position: absolute;
-    left: 0;
-    bottom: 0;
-    max-width: 450px;
-    padding: 10px 12px;
-    border-radius: 18px;
-    background: rgba(4,8,18,0.42);
-    border: 1px solid rgba(255,255,255,0.09);
-    color: rgba(235,247,255,0.7);
-    font-size: 12px;
-    line-height: 1.35;
-    backdrop-filter: blur(14px);
-  }
-
-  @media (max-width: 760px), (max-height: 520px) {
-    .pill { min-height: 32px; padding: 7px 10px; font-size: 12px; }
-    .pill strong { font-size: 14px; }
-    .target { min-width: 185px; }
-    .shapeIcon { width: 30px; height: 30px; }
-    .help { display: none; }
-    .message { padding: 18px; border-radius: 24px; }
-    .message .rules { grid-template-columns: 1fr; }
-    .settings {
+    #game {
       position: fixed;
-      top: 58px;
-      right: 0;
-      width: min(380px, calc(100vw - 20px));
-      max-height: calc(100vh - 88px - env(safe-area-inset-bottom));
+      inset: 0;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 18% 18%, rgba(88, 229, 255, 0.22), transparent 30%),
+        radial-gradient(circle at 80% 12%, rgba(255, 131, 245, 0.18), transparent 34%),
+        radial-gradient(circle at 60% 82%, rgba(125, 255, 190, 0.16), transparent 34%),
+        linear-gradient(135deg, #08101f 0%, #050712 48%, #101225 100%);
     }
-  }
 
-  @media (orientation: landscape) and (max-height: 520px) {
-    .stats { max-width: calc(100vw - 80px); gap: 6px; }
-    .target { min-width: 205px; }
-    .settings {
-      top: 52px;
-      max-height: calc(100vh - 74px);
+    #scene {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      isolation: isolate;
+    }
+
+    #bgCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .source-layer {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+      background:
+        linear-gradient(115deg, rgba(255,255,255,0.06), transparent 25%, rgba(120,255,224,0.06) 55%, transparent 80%),
+        repeating-linear-gradient(90deg, rgba(255,255,255,0.045) 0 1px, transparent 1px 92px),
+        repeating-linear-gradient(0deg, rgba(255,255,255,0.035) 0 1px, transparent 1px 92px);
+    }
+
+    .source-layer::before,
+    .source-layer::after {
+      content: "";
+      position: absolute;
+      width: 55vmin;
+      height: 55vmin;
+      border-radius: 999px;
+      filter: blur(34px);
+      opacity: 0.52;
+      animation: drift 16s ease-in-out infinite alternate;
+    }
+
+    .source-layer::before {
+      left: -12vmin;
+      top: 12vmin;
+      background: conic-gradient(from 80deg, rgba(81, 224, 255, 0.34), rgba(255, 255, 255, 0.06), rgba(111, 255, 194, 0.32), rgba(81, 224, 255, 0.34));
+    }
+
+    .source-layer::after {
+      right: -12vmin;
+      bottom: 7vmin;
+      background: conic-gradient(from 240deg, rgba(255, 117, 217, 0.28), rgba(255, 255, 255, 0.08), rgba(255, 221, 117, 0.28), rgba(94, 184, 255, 0.28));
+      animation-delay: -6s;
+    }
+
+    @keyframes drift {
+      from { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
+      to { transform: translate3d(12vmin, -7vmin, 0) rotate(35deg) scale(1.15); }
+    }
+
+    #hud {
+      position: absolute;
+      z-index: 20;
+      left: max(12px, env(safe-area-inset-left));
+      right: max(12px, env(safe-area-inset-right));
+      top: max(12px, env(safe-area-inset-top));
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: start;
+      pointer-events: none;
+    }
+
+    .hud-card,
+    #panel {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      backdrop-filter: blur(18px) saturate(160%);
+      box-shadow: 0 22px 80px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+      border-radius: 22px;
+    }
+
+    .hud-card {
+      width: min(560px, 100%);
       padding: 12px;
+      pointer-events: auto;
     }
-    .setting { padding: 8px 0; }
-    .message {
-      width: min(720px, calc(100vw - 36px));
-      padding: 16px 18px;
+
+    .top-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
     }
-    .message .rules { grid-template-columns: repeat(4, 1fr); }
-    .message h1 { font-size: clamp(26px, 5vw, 44px); }
-  }
-</style>
+
+    .metric {
+      min-width: 74px;
+      padding: 8px 10px;
+      border-radius: 16px;
+      background: var(--panel2);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .metric .label {
+      display: block;
+      font-size: 10px;
+      letter-spacing: .09em;
+      text-transform: uppercase;
+      color: var(--muted);
+      line-height: 1.1;
+    }
+
+    .metric .value {
+      display: block;
+      margin-top: 3px;
+      font-size: 17px;
+      font-weight: 800;
+      line-height: 1.05;
+    }
+
+    .goal {
+      margin-top: 10px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .goal-line {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      color: rgba(255,255,255,0.86);
+      font-size: 13px;
+      line-height: 1.25;
+    }
+
+    .bar {
+      height: 9px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.11);
+    }
+
+    #progressBar {
+      display: block;
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #b8fff0, #fff, #ffd86b);
+      box-shadow: 0 0 24px rgba(184,255,240,0.55);
+      transition: width .18s ease;
+    }
+
+    #buttons {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      pointer-events: auto;
+    }
+
+    button {
+      appearance: none;
+      border: 1px solid var(--line);
+      color: var(--text);
+      background: rgba(255,255,255,0.13);
+      min-height: 44px;
+      padding: 0 14px;
+      border-radius: 999px;
+      font: inherit;
+      font-weight: 800;
+      letter-spacing: .01em;
+      cursor: pointer;
+      backdrop-filter: blur(14px);
+      box-shadow: 0 12px 36px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.16);
+    }
+
+    button:active { transform: translateY(1px) scale(.99); }
+
+    #panel {
+      position: absolute;
+      z-index: 30;
+      top: max(76px, calc(env(safe-area-inset-top) + 76px));
+      right: max(12px, env(safe-area-inset-right));
+      width: min(390px, calc(100vw - 24px));
+      max-height: calc(100vh - 96px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 14px;
+      display: none;
+      pointer-events: auto;
+    }
+
+    #panel.open { display: block; }
+
+    #panel h2 {
+      margin: 0 0 10px;
+      font-size: 17px;
+      line-height: 1.15;
+    }
+
+    .setting {
+      padding: 10px 0;
+      border-top: 1px solid rgba(255,255,255,0.11);
+    }
+
+    .setting:first-of-type { border-top: 0; }
+
+    .setting label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      font-size: 13px;
+      font-weight: 800;
+      color: rgba(255,255,255,0.92);
+    }
+
+    .setting label span:last-child {
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      height: 38px;
+      margin: 4px 0 0;
+      accent-color: #dffef6;
+      touch-action: pan-y;
+    }
+
+    #message {
+      position: absolute;
+      z-index: 25;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: min(520px, calc(100vw - 32px));
+      padding: 20px;
+      text-align: center;
+      border-radius: 28px;
+      background: rgba(3,8,18,0.72);
+      border: 1px solid rgba(255,255,255,0.18);
+      backdrop-filter: blur(22px) saturate(180%);
+      box-shadow: 0 28px 100px rgba(0,0,0,0.44), inset 0 1px 0 rgba(255,255,255,0.18);
+      pointer-events: auto;
+    }
+
+    #message h1 {
+      margin: 0 0 10px;
+      font-size: clamp(28px, 7vw, 56px);
+      line-height: .95;
+      letter-spacing: -.05em;
+    }
+
+    #message p {
+      margin: 0 0 16px;
+      color: rgba(255,255,255,0.76);
+      line-height: 1.45;
+      font-size: 15px;
+    }
+
+    .hidden { display: none !important; }
+
+    #notice {
+      position: absolute;
+      z-index: 22;
+      left: 50%;
+      bottom: max(18px, env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.44);
+      border: 1px solid rgba(255,255,255,0.14);
+      color: rgba(255,255,255,0.74);
+      font-size: 12px;
+      text-align: center;
+      pointer-events: none;
+      transition: opacity .25s ease;
+    }
+
+    @media (max-width: 720px) {
+      #hud {
+        grid-template-columns: 1fr;
+      }
+
+      #buttons {
+        justify-content: flex-start;
+      }
+
+      .hud-card {
+        padding: 10px;
+      }
+
+      .metric {
+        min-width: 65px;
+        padding: 7px 9px;
+      }
+
+      .metric .value {
+        font-size: 15px;
+      }
+
+      #panel {
+        left: max(12px, env(safe-area-inset-left));
+        right: max(12px, env(safe-area-inset-right));
+        top: auto;
+        bottom: max(12px, env(safe-area-inset-bottom));
+        width: auto;
+        max-height: min(62vh, 420px);
+      }
+    }
+
+    @media (max-height: 500px) and (orientation: landscape) {
+      #hud {
+        grid-template-columns: minmax(360px, 1fr) auto;
+      }
+
+      .hud-card {
+        max-width: 520px;
+        padding: 8px;
+      }
+
+      .goal { margin-top: 6px; }
+
+      .goal-line { font-size: 12px; }
+
+      .metric {
+        min-width: 62px;
+        padding: 6px 8px;
+      }
+
+      #panel {
+        top: max(62px, calc(env(safe-area-inset-top) + 62px));
+        right: max(10px, env(safe-area-inset-right));
+        bottom: max(10px, env(safe-area-inset-bottom));
+        max-height: none;
+        width: min(370px, 46vw);
+      }
+    }
+  </style>
 </head>
 <body>
-<canvas id="game" aria-label="Liquid Absorb game"></canvas>
-<div id="safe">
-  <div class="hud">
-    <div class="stats">
-      <div class="pill target">
-        <div class="shapeIcon" id="shapeGlyph">●</div>
-        <div>
-          <div>Level <strong id="levelText">1</strong></div>
-          <div style="font-size:12px;color:var(--muted);margin-top:2px;">Absorbeer: <span id="shapeText">bollen</span></div>
-          <div class="progressWrap"><div class="progressBar" id="progressBar"></div></div>
+  <main id="game" aria-label="Liquid Absorb game">
+    <section id="scene" aria-hidden="true">
+      <div class="source-layer"></div>
+      <canvas id="bgCanvas"></canvas>
+    </section>
+
+    <section id="hud">
+      <div class="hud-card">
+        <div class="top-row">
+          <div class="metric"><span class="label">Level</span><span class="value" id="levelText">1</span></div>
+          <div class="metric"><span class="label">Vorm</span><span class="value" id="shapeText">Bol</span></div>
+          <div class="metric"><span class="label">Score</span><span class="value" id="scoreText">0</span></div>
+          <div class="metric"><span class="label">Levens</span><span class="value" id="livesText">3</span></div>
+        </div>
+        <div class="goal">
+          <div class="goal-line">
+            <span id="goalText">Absorbeer 10 bollen. Vermijd rode vormen.</span>
+            <strong id="countText">0/10</strong>
+          </div>
+          <div class="bar"><span id="progressBar"></span></div>
         </div>
       </div>
-      <div class="pill">Score<strong id="scoreText">0</strong></div>
-      <div class="pill">Grootte<strong id="sizeText">100%</strong></div>
-      <div class="pill">Levens<strong id="lifeText">3</strong></div>
-      <div class="pill">Combo<strong id="comboText">x1</strong></div>
-    </div>
-    <button id="settingsBtn" title="Instellingen" aria-label="Instellingen">⚙</button>
-  </div>
+      <div id="buttons">
+        <button id="settingsBtn" type="button">Instellingen</button>
+        <button id="restartBtn" type="button">Restart</button>
+      </div>
+    </section>
 
-  <div class="settings" id="settingsPanel" aria-label="Instellingenpaneel">
-    <h2>Instellingen</h2>
-    <div class="setting">
-      <label><span>Vallende objecten</span><span id="spawnValue">18</span></label>
-      <input id="spawnRange" type="range" min="8" max="34" value="18" />
-    </div>
-    <div class="setting">
-      <label><span>Snelheid</span><span id="speedValue">1.00</span></label>
-      <input id="speedRange" type="range" min="0.55" max="1.8" step="0.05" value="1" />
-    </div>
-    <div class="setting">
-      <label><span>Water glans</span><span id="shineValue">1.20</span></label>
-      <input id="shineRange" type="range" min="0.55" max="2.4" step="0.05" value="1.2" />
-    </div>
-    <div class="setting">
-      <label><span>Vloeibaarheid</span><span id="blendValue">0.68</span></label>
-      <input id="blendRange" type="range" min="0.25" max="1.25" step="0.01" value="0.68" />
-    </div>
-    <div class="setting">
-      <label><span>Verkeerde vormen</span><span id="wrongValue">38%</span></label>
-      <input id="wrongRange" type="range" min="18" max="62" value="38" />
-    </div>
-    <div class="setting">
-      <label><span>Stuur vertraging</span><span id="smoothValue">0.16</span></label>
-      <input id="smoothRange" type="range" min="0.04" max="0.35" step="0.01" value="0.16" />
-    </div>
-    <div class="settingActions">
-      <button id="restartBtn">Opnieuw</button>
-      <button id="pauseBtn">Pauze</button>
-    </div>
-  </div>
+    <aside id="panel" aria-label="Instellingen">
+      <h2>Liquid tuning</h2>
+      <div class="setting">
+        <label for="glass"><span>Glas effect</span><span id="glassVal">1.25</span></label>
+        <input id="glass" type="range" min="0.6" max="2.2" step="0.05" value="1.25" />
+      </div>
+      <div class="setting">
+        <label for="scatter"><span>Sparkle</span><span id="scatterVal">1.00</span></label>
+        <input id="scatter" type="range" min="0.35" max="2.4" step="0.05" value="1.00" />
+      </div>
+      <div class="setting">
+        <label for="spawn"><span>Aantal vallende vormen</span><span id="spawnVal">15</span></label>
+        <input id="spawn" type="range" min="8" max="28" step="1" value="15" />
+      </div>
+      <div class="setting">
+        <label for="speed"><span>Valsnelheid</span><span id="speedVal">1.00</span></label>
+        <input id="speed" type="range" min="0.55" max="1.9" step="0.05" value="1.00" />
+      </div>
+      <div class="setting">
+        <label for="danger"><span>Kans op rode vorm</span><span id="dangerVal">28%</span></label>
+        <input id="danger" type="range" min="8" max="52" step="1" value="28" />
+      </div>
+      <div class="setting">
+        <label for="pull"><span>Absorptie bereik</span><span id="pullVal">1.65</span></label>
+        <input id="pull" type="range" min="1.05" max="2.5" step="0.05" value="1.65" />
+      </div>
+      <div class="setting">
+        <label for="baseSize"><span>Startgrootte</span><span id="baseSizeVal">0.092</span></label>
+        <input id="baseSize" type="range" min="0.065" max="0.13" step="0.001" value="0.092" />
+      </div>
+    </aside>
 
-  <div class="message" id="intro">
-    <h1>Liquid Absorb</h1>
-    <p>Beweeg het waterlichaam en absorbeer alleen dezelfde vorm. Elke 10 juiste absorpties verandert je liquid vorm en begint een nieuw level.</p>
-    <div class="rules">
-      <div class="rule"><strong>Wit glas</strong>Goed. Absorberen en groeien.</div>
-      <div class="rule"><strong>Rood glas</strong>Fout. Je krimpt en verliest controle.</div>
-      <div class="rule"><strong>10 stuks</strong>Volgende vorm en level omhoog.</div>
-      <div class="rule"><strong>Besturing</strong>Muis, touch of pijltjes.</div>
-    </div>
-    <button class="primary" id="startBtn">Start game</button>
-  </div>
+    <section id="message">
+      <h1>Liquid Absorb</h1>
+      <p>Beweeg je water/glass vorm. Absorbeer alleen dezelfde vorm. Na 10 juiste absorpties verander je van level. Raak rood en je krimpt.</p>
+      <button id="startBtn" type="button">Start game</button>
+    </section>
 
-  <div id="toast"></div>
-  <div class="help">Doel: vang alleen objecten met dezelfde vorm als je speler. De liquid shader trekt goede vormen naar je toe zodra je dichtbij komt. Verkeerde vormen laten je krimpen.</div>
-</div>
+    <div id="notice">Shader laadt. Met internet zie je het echte glass/liquid effect.</div>
+  </main>
 
-<script>
-(() => {
-  'use strict';
+  <script type="module">
+    const MAX_OBJECTS = 30;
+    const TARGET = 10;
+    const DATA_STRIDE = 6;
 
-  const canvas = document.getElementById('game');
-  const gl = canvas.getContext('webgl', { alpha: false, antialias: false, premultipliedAlpha: false });
+    const levels = [
+      { name: "Bol", plural: "bollen", shape: 0 },
+      { name: "Donut", plural: "donuts", shape: 2 },
+      { name: "Capsule", plural: "capsules", shape: 3 },
+      { name: "Diamant", plural: "diamanten", shape: 4 },
+      { name: "Cube", plural: "soft cubes", shape: 1 }
+    ];
 
-  const ui = {
-    level: document.getElementById('levelText'),
-    shape: document.getElementById('shapeText'),
-    glyph: document.getElementById('shapeGlyph'),
-    score: document.getElementById('scoreText'),
-    size: document.getElementById('sizeText'),
-    life: document.getElementById('lifeText'),
-    combo: document.getElementById('comboText'),
-    progress: document.getElementById('progressBar'),
-    intro: document.getElementById('intro'),
-    start: document.getElementById('startBtn'),
-    settingsBtn: document.getElementById('settingsBtn'),
-    settings: document.getElementById('settingsPanel'),
-    restart: document.getElementById('restartBtn'),
-    pause: document.getElementById('pauseBtn'),
-    toast: document.getElementById('toast'),
-    spawn: document.getElementById('spawnRange'),
-    speed: document.getElementById('speedRange'),
-    shine: document.getElementById('shineRange'),
-    blend: document.getElementById('blendRange'),
-    wrong: document.getElementById('wrongRange'),
-    smooth: document.getElementById('smoothRange'),
-    spawnValue: document.getElementById('spawnValue'),
-    speedValue: document.getElementById('speedValue'),
-    shineValue: document.getElementById('shineValue'),
-    blendValue: document.getElementById('blendValue'),
-    wrongValue: document.getElementById('wrongValue'),
-    smoothValue: document.getElementById('smoothValue')
-  };
+    const shader = `
+      precision highp float;
+      uniform sampler2D src;
+      uniform vec2 resolution;
+      uniform vec2 offset;
+      uniform float time;
+      uniform vec2 player;
+      uniform float playerR;
+      uniform int levelShape;
+      uniform float objectData[${MAX_OBJECTS * DATA_STRIDE}];
+      uniform int objectCount;
+      uniform float glass;
+      uniform float sparkle;
+      uniform float hitFlash;
+      uniform float levelFlash;
+      out vec4 outColor;
 
-  const settings = {
-    maxObjects: 18,
-    speed: 1,
-    shine: 1.2,
-    blend: 0.68,
-    wrongChance: 0.38,
-    smoothing: 0.16
-  };
+      const float BUBBLE_SMOOTH = 0.033;
+      const int DISP_STEPS = 12;
+      const vec3 ABSORB = vec3(2.0, 1.2, 1.0) * 2.9;
 
-  const SHAPES = [
-    { name: 'bollen', short: 'Bol', glyph: '●', type: 0 },
-    { name: 'donuts', short: 'Donut', glyph: '◎', type: 1 },
-    { name: 'capsules', short: 'Capsule', glyph: '⬭', type: 2 },
-    { name: 'diamanten', short: 'Diamant', glyph: '◆', type: 3 },
-    { name: 'soft cubes', short: 'Cube', glyph: '■', type: 4 }
-  ];
+      float smin(float a, float b, float k) {
+        float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);
+        return mix(b, a, h) - k * h * (1.0 - h);
+      }
 
-  const MAX_OBJECTS = 42;
-  const MAX_BURSTS = 18;
-  const objects = [];
-  const bursts = [];
-  const keys = new Set();
+      vec2 hash22(vec2 p) {
+        vec3 p3 = fract(vec3(p.xyx) * vec3(0.1031, 0.1030, 0.0973));
+        p3 += dot(p3, p3.yzx + 33.33);
+        return fract((p3.xx + p3.yz) * p3.zy) * 2.0 - 1.0;
+      }
 
-  const state = {
-    started: false,
-    paused: false,
-    gameOver: false,
-    width: 1,
-    height: 1,
-    dpr: 1,
-    time: 0,
-    last: performance.now(),
-    level: 1,
-    shapeIndex: 0,
-    absorbed: 0,
-    score: 0,
-    lives: 3,
-    combo: 1,
-    comboTimer: 0,
-    player: { x: 0, y: 0, tx: 0, ty: 0, r: 62, targetR: 62, wobble: 0 },
-    flash: 0,
-    levelPulse: 0,
-    spawnTimer: 0,
-    shake: 0,
-    pointerDown: false
-  };
+      mat2 rot(float t) {
+        float c = cos(t), s = sin(t);
+        return mat2(c, -s, s, c);
+      }
 
-  function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
-  function lerp(a, b, t) { return a + (b - a) * t; }
-  function rand(min, max) { return min + Math.random() * (max - min); }
-  function dist(a, b, c, d) { const x = a - c; const y = b - d; return Math.hypot(x, y); }
-  function otherShape(current) {
-    let t = current;
-    while (t === current) t = Math.floor(Math.random() * SHAPES.length);
-    return t;
-  }
+      float sdSphere(vec3 p, float r) {
+        return length(p) - r;
+      }
 
-  function shapeDifficulty() {
-    return 1 + (state.level - 1) * 0.16;
-  }
+      float sdRoundBox(vec3 p, vec3 b, float r) {
+        vec3 q = abs(p) - b + r;
+        return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0) - r;
+      }
 
-  function baseRadius() {
-    return clamp(Math.min(state.width, state.height) * 0.068 + 30, 46, 78);
-  }
+      float sdTorus(vec3 p, vec2 t) {
+        vec2 q = vec2(length(p.xy) - t.x, p.z);
+        return length(q) - t.y;
+      }
 
-  function targetShape() {
-    return SHAPES[state.shapeIndex % SHAPES.length];
-  }
+      float sdCapsule(vec3 p, float h, float r) {
+        p.x -= clamp(p.x, -h, h);
+        return length(p) - r;
+      }
 
-  function updateSettingsLabels() {
-    settings.maxObjects = Number(ui.spawn.value);
-    settings.speed = Number(ui.speed.value);
-    settings.shine = Number(ui.shine.value);
-    settings.blend = Number(ui.blend.value);
-    settings.wrongChance = Number(ui.wrong.value) / 100;
-    settings.smoothing = Number(ui.smooth.value);
-    ui.spawnValue.textContent = String(settings.maxObjects);
-    ui.speedValue.textContent = settings.speed.toFixed(2);
-    ui.shineValue.textContent = settings.shine.toFixed(2);
-    ui.blendValue.textContent = settings.blend.toFixed(2);
-    ui.wrongValue.textContent = Math.round(settings.wrongChance * 100) + '%';
-    ui.smoothValue.textContent = settings.smoothing.toFixed(2);
-  }
+      float sdOctahedron(vec3 p, float s) {
+        p = abs(p);
+        float m = p.x + p.y + p.z - s;
+        vec3 q;
+        if (3.0 * p.x < m) q = p.xyz;
+        else if (3.0 * p.y < m) q = p.yzx;
+        else if (3.0 * p.z < m) q = p.zxy;
+        else return m * 0.57735027;
+        float k = clamp(0.5 * (q.z - q.y + s), 0.0, s);
+        return length(vec3(q.x, q.y - s + k, q.z - k));
+      }
 
-  function resize() {
-    state.dpr = Math.min(window.devicePixelRatio || 1, 2);
-    state.width = Math.max(1, Math.floor(window.innerWidth));
-    state.height = Math.max(1, Math.floor(window.innerHeight));
-    canvas.width = Math.floor(state.width * state.dpr);
-    canvas.height = Math.floor(state.height * state.dpr);
-    canvas.style.width = state.width + 'px';
-    canvas.style.height = state.height + 'px';
-    if (gl) gl.viewport(0, 0, canvas.width, canvas.height);
-    if (!state.started) {
-      state.player.x = state.width * 0.5;
-      state.player.y = state.height * 0.74;
-      state.player.tx = state.player.x;
-      state.player.ty = state.player.y;
-    }
-    state.player.r = clamp(state.player.r || baseRadius(), baseRadius() * 0.65, baseRadius() * 1.85);
-    state.player.targetR = clamp(state.player.targetR || baseRadius(), baseRadius() * 0.65, baseRadius() * 1.85);
-  }
+      float liquidShape(vec3 p, float r, int shape, float seed) {
+        vec3 q = p;
+        q.y += sin(q.z * 31.0 + time * 3.2 + seed) * r * 0.055;
+        q.z += sin(q.x * 27.0 + q.y * 13.0 + time * 3.6 + seed) * r * 0.05;
+        q.xy *= rot(sin(time * 0.55 + seed) * 0.12);
+        q.xz *= rot(cos(time * 0.45 + seed) * 0.12);
 
-  const vertexSource = `
-    attribute vec2 a_position;
-    varying vec2 v_uv;
-    void main() {
-      v_uv = a_position * 0.5 + 0.5;
-      gl_Position = vec4(a_position, 0.0, 1.0);
-    }
-  `;
+        if (shape == 0) {
+          return sdSphere(q, r);
+        }
+        if (shape == 1) {
+          return sdRoundBox(q, vec3(r * 0.78), r * 0.18);
+        }
+        if (shape == 2) {
+          return sdTorus(q, vec2(r * 0.72, r * 0.22));
+        }
+        if (shape == 3) {
+          q.xy *= rot(1.5708);
+          return sdCapsule(q, r * 0.56, r * 0.42);
+        }
+        return sdOctahedron(q, r * 1.25) - r * 0.05;
+      }
 
-  const fragmentSource = `
-    precision highp float;
-    #define MAX_OBJECTS ${MAX_OBJECTS}
-    #define MAX_BURSTS ${MAX_BURSTS}
+      float sceneMap(vec3 p) {
+        vec3 pc = vec3(player, 0.0);
+        float wobble = 1.0 + 0.035 * sin(time * 4.0) + levelFlash * 0.14 - hitFlash * 0.08;
+        float d = liquidShape(p - pc, playerR * wobble, levelShape, 0.0);
 
-    uniform vec2 u_res;
-    uniform float u_time;
-    uniform vec2 u_player;
-    uniform float u_playerR;
-    uniform float u_playerShape;
-    uniform float u_count;
-    uniform vec4 u_objs[MAX_OBJECTS];
-    uniform vec4 u_bursts[MAX_BURSTS];
-    uniform float u_burstCount;
-    uniform float u_flash;
-    uniform float u_blend;
-    uniform float u_shine;
-    uniform float u_levelPulse;
-    uniform float u_shake;
-    varying vec2 v_uv;
-
-    float hash(vec2 p) {
-      return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
-    }
-
-    float noise(vec2 p) {
-      vec2 i = floor(p);
-      vec2 f = fract(p);
-      f = f * f * (3.0 - 2.0 * f);
-      float a = hash(i);
-      float b = hash(i + vec2(1.0, 0.0));
-      float c = hash(i + vec2(0.0, 1.0));
-      float d = hash(i + vec2(1.0, 1.0));
-      return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
-    }
-
-    float roundedBox(vec2 p, vec2 b, float r) {
-      vec2 q = abs(p) - b + r;
-      return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;
-    }
-
-    float sdDiamond(vec2 p, float r) {
-      p = abs(p);
-      return (p.x + p.y - r) * 0.7071;
-    }
-
-    float capsule(vec2 p, float r) {
-      p.x = abs(p.x) - r * 0.42;
-      return length(max(p, vec2(0.0))) + min(max(p.x, p.y), 0.0) - r * 0.47;
-    }
-
-    float shapeSdf(vec2 p, float r, float shape) {
-      float wob = 1.0 + 0.018 * sin(u_time * 2.1 + p.x * 0.027) + 0.014 * sin(u_time * 3.3 + p.y * 0.021);
-      p *= wob;
-      if (shape < 0.5) return length(p) - r;
-      if (shape < 1.5) return abs(length(p) - r * 0.58) - r * 0.22;
-      if (shape < 2.5) return capsule(p, r);
-      if (shape < 3.5) return sdDiamond(p, r * 0.98);
-      return roundedBox(p, vec2(r * 0.72), r * 0.31);
-    }
-
-    float smin(float a, float b, float k) {
-      float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);
-      return mix(b, a, h) - k * h * (1.0 - h);
-    }
-
-    vec3 bg(vec2 uv) {
-      vec2 p = uv - 0.5;
-      float vignette = 1.0 - smoothstep(0.18, 0.88, length(p));
-      float grid = 0.0;
-      vec2 g = abs(fract((uv + vec2(0.0, u_time * 0.015)) * vec2(16.0, 10.0)) - 0.5);
-      grid = smoothstep(0.488, 0.5, max(g.x, g.y)) * 0.06;
-      float n = noise(uv * 6.0 + u_time * 0.04) * 0.08;
-      vec3 a = vec3(0.015, 0.027, 0.070);
-      vec3 b = vec3(0.030, 0.105, 0.145);
-      vec3 c = mix(a, b, uv.y * 0.75 + vignette * 0.25);
-      c += vec3(0.03, 0.12, 0.16) * grid;
-      c += n;
-      c += vec3(0.10, 0.22, 0.28) * pow(max(0.0, 1.0 - length(p * vec2(0.8, 1.25))), 4.0) * 0.44;
-      return c;
-    }
-
-    vec3 goodColor(float inner, float rim, float sparkle) {
-      vec3 pearl = vec3(0.98, 1.0, 1.0);
-      vec3 aqua = vec3(0.45, 0.95, 1.0);
-      vec3 deep = vec3(0.08, 0.33, 0.48);
-      vec3 c = mix(deep, pearl, inner);
-      c += aqua * rim * 0.92;
-      c += vec3(1.0) * sparkle * 0.72 * u_shine;
-      return c;
-    }
-
-    vec3 badColor(float inner, float rim, float sparkle) {
-      vec3 base = vec3(0.88, 0.10, 0.24);
-      vec3 hot = vec3(1.0, 0.62, 0.72);
-      vec3 dark = vec3(0.16, 0.02, 0.08);
-      vec3 c = mix(dark, base, inner * 0.7 + 0.2);
-      c += hot * rim * 0.85;
-      c += vec3(1.0, 0.55, 0.62) * sparkle * 0.45;
-      return c;
-    }
-
-    void main() {
-      vec2 uv = v_uv;
-      vec2 frag = uv * u_res;
-      float aspect = u_res.x / u_res.y;
-      vec2 shake = vec2(sin(u_time * 59.0), cos(u_time * 47.0)) * u_shake * 2.0;
-      frag += shake;
-      uv = frag / u_res;
-
-      vec3 base = bg(uv);
-
-      float dGood = shapeSdf(frag - u_player, u_playerR, u_playerShape);
-      float dBad = 99999.0;
-      vec2 badVec = vec2(0.0, 1.0);
-
-      for (int i = 0; i < MAX_OBJECTS; i++) {
-        if (float(i) >= u_count) break;
-        vec4 o = u_objs[i];
-        if (o.z > 0.5) {
-          float sdf = shapeSdf(frag - o.xy, abs(o.z), o.w);
-          float same = 1.0 - step(0.5, abs(o.w - u_playerShape));
-          if (same > 0.5) {
-            float joinRange = (u_playerR + abs(o.z)) * 0.38 * u_blend;
-            float bridge = length((frag - (u_player + o.xy) * 0.5) / vec2(max(18.0, length(u_player - o.xy) * 0.5), max(12.0, min(u_playerR, abs(o.z)) * 0.30))) - 1.0;
-            float bridgeSdf = bridge * min(u_playerR, abs(o.z)) * 0.38;
-            float goodObj = smin(sdf, bridgeSdf, joinRange * 0.55);
-            dGood = smin(dGood, goodObj, joinRange);
+        for (int i = 0; i < ${MAX_OBJECTS}; i++) {
+          if (i >= objectCount) break;
+          int j = i * ${DATA_STRIDE};
+          vec3 oc = vec3(objectData[j], objectData[j + 1], objectData[j + 2]);
+          float r = max(objectData[j + 3], 0.0001);
+          int shape = int(objectData[j + 4] + 0.5);
+          float danger = objectData[j + 5];
+          float od = liquidShape(p - oc, r, shape, float(i) * 1.71 + 2.0);
+          if (danger > 0.5) {
+            d = min(d, od);
           } else {
-            if (sdf < dBad) {
-              dBad = sdf;
-              badVec = frag - o.xy;
-            }
+            d = smin(d, od, BUBBLE_SMOOTH);
           }
+        }
+        return d;
+      }
+
+      vec3 calcNormal(vec3 p) {
+        vec2 e = vec2(0.001, 0.0);
+        return normalize(vec3(
+          sceneMap(p + e.xyy) - sceneMap(p - e.xyy),
+          sceneMap(p + e.yxy) - sceneMap(p - e.yxy),
+          sceneMap(p + e.yyx) - sceneMap(p - e.yyx)
+        ));
+      }
+
+      float dangerAt(vec3 p) {
+        float best = abs(liquidShape(p - vec3(player, 0.0), playerR, levelShape, 0.0));
+        float danger = 0.0;
+        for (int i = 0; i < ${MAX_OBJECTS}; i++) {
+          if (i >= objectCount) break;
+          int j = i * ${DATA_STRIDE};
+          vec3 oc = vec3(objectData[j], objectData[j + 1], objectData[j + 2]);
+          float r = max(objectData[j + 3], 0.0001);
+          int shape = int(objectData[j + 4] + 0.5);
+          float d = abs(liquidShape(p - oc, r, shape, float(i) * 1.71 + 2.0));
+          if (d < best) {
+            best = d;
+            danger = objectData[j + 5];
+          }
+        }
+        return danger;
+      }
+
+      vec3 spectrum(float x) {
+        return clamp(vec3(
+          1.5 - abs(4.0 * x - 1.0),
+          1.5 - abs(4.0 * x - 2.0),
+          1.5 - abs(4.0 * x - 3.0)
+        ), 0.0, 1.0);
+      }
+
+      vec4 getSrc(vec2 uv) {
+        vec4 c = texture(src, uv);
+        return mix(vec4(1.0), c, c.a);
+      }
+
+      void main() {
+        vec2 uv = (gl_FragCoord.xy - offset) / resolution;
+        float aspect = resolution.y / resolution.x;
+        vec2 p2 = (uv - 0.5) * vec2(1.0, aspect);
+
+        vec3 ro = vec3(0.0, 0.0, -2.0);
+        float focal = 2.0;
+        vec3 rd = normalize(vec3(p2, focal));
+
+        vec3 firstN = vec3(0.0);
+        vec3 lastN = vec3(0.0);
+        vec3 hitPos = vec3(0.0);
+        int hitCount = 0;
+        float thickness = 0.0;
+        float tEntry = 0.0;
+        float t = 0.0;
+        bool inside = false;
+
+        for (int i = 0; i < 58; i++) {
+          if (t > 10.0) break;
+          vec3 pos = ro + rd * t;
+          float d = sceneMap(pos);
+          float stepSize = inside ? -d : d;
+          if (stepSize < 3e-4) {
+            vec3 n = calcNormal(pos);
+            if (hitCount == 0) {
+              firstN = n;
+              hitPos = pos;
+            }
+            lastN = n;
+            if (!inside) tEntry = t;
+            else thickness += t - tEntry;
+            hitCount++;
+            if (hitCount >= 4) break;
+            inside = !inside;
+            t += 0.01;
+          } else {
+            t += stepSize;
+          }
+        }
+
+        if (hitCount > 0) {
+          float NdotR = max(dot(firstN, -rd), 0.0);
+          float scatter = pow((1.0 - NdotR), 2.0) * 0.036 * sparkle;
+          vec2 baseDisp = -(firstN.xy + lastN.xy) * 0.5 * 0.03 * glass;
+          vec3 acc = vec3(0.0);
+          vec3 wsum = vec3(0.0);
+
+          for (int i = 0; i < DISP_STEPS; i++) {
+            float wl = float(i) / float(DISP_STEPS - 1);
+            float k = wl * (1.25 + float(hitCount) * 0.24);
+            vec2 h = hash22(uv * 1000.0 + float(i) * 7.13 + time) * scatter;
+            vec3 w = spectrum(wl);
+            acc += getSrc(uv + baseDisp * k + h).rgb * w;
+            wsum += w;
+          }
+
+          vec3 col = acc / wsum;
+          col -= float(hitCount) * 0.035;
+          col += 0.16;
+
+          float fres = pow(1.0 - NdotR, 5.0);
+          col *= 1.0 + fres * 1.15;
+
+          float f2 = 1.0 - pow(NdotR, 3.0);
+          col *= mix(vec3(1.0), exp(-ABSORB * thickness), f2 * 0.92);
+          col *= 1.0 + f2 * 0.95;
+
+          vec3 ld = normalize(vec3(0.5, 0.9, -0.3));
+          float spec = pow(max(dot(reflect(-ld, firstN), -rd), 0.0), 210.0);
+          col += spec * 35.0;
+
+          ld = normalize(vec3(-0.9, 0.4, -0.3));
+          spec = pow(max(dot(reflect(-ld, firstN), -rd), 0.0), 320.0);
+          col += spec * 4.2;
+
+          ld = normalize(vec3(-0.1, -0.9, -0.1));
+          spec = pow(max(dot(reflect(-ld, firstN), -rd), 0.0), 34.0);
+          col += spec * 0.72;
+
+          float hazard = dangerAt(hitPos);
+          col = mix(col, vec3(1.0, 0.10, 0.08), hazard * 0.62);
+          col += vec3(0.45, 0.02, 0.0) * hazard * fres;
+          col += vec3(0.9, 1.0, 1.0) * levelFlash * 0.18;
+          col += vec3(1.0, 0.07, 0.04) * hitFlash * 0.22;
+
+          col = min(col, 1.0);
+          col = 1.0 - abs(col + fres * 0.5 - 1.0);
+          outColor = vec4(col, 1.0);
+        } else {
+          outColor = getSrc(uv);
+        }
+      }
+    `;
+
+    const els = {
+      scene: document.getElementById("scene"),
+      canvas: document.getElementById("bgCanvas"),
+      levelText: document.getElementById("levelText"),
+      shapeText: document.getElementById("shapeText"),
+      scoreText: document.getElementById("scoreText"),
+      livesText: document.getElementById("livesText"),
+      goalText: document.getElementById("goalText"),
+      countText: document.getElementById("countText"),
+      progressBar: document.getElementById("progressBar"),
+      message: document.getElementById("message"),
+      startBtn: document.getElementById("startBtn"),
+      restartBtn: document.getElementById("restartBtn"),
+      settingsBtn: document.getElementById("settingsBtn"),
+      panel: document.getElementById("panel"),
+      notice: document.getElementById("notice")
+    };
+
+    const ctx = els.canvas.getContext("2d", { alpha: true });
+    const objectData = new Float32Array(MAX_OBJECTS * DATA_STRIDE);
+
+    const settings = {
+      glass: 1.25,
+      sparkle: 1.0,
+      spawn: 15,
+      speed: 1.0,
+      danger: 0.28,
+      pull: 1.65,
+      baseSize: 0.092
+    };
+
+    const state = {
+      running: false,
+      gameOver: false,
+      level: 0,
+      score: 0,
+      lives: 3,
+      absorbed: 0,
+      objects: [],
+      particles: [],
+      dpr: 1,
+      w: 1,
+      h: 1,
+      aspect: 1,
+      player: { x: 0, y: 0, tx: 0, ty: 0 },
+      playerR: settings.baseSize,
+      targetR: settings.baseSize,
+      hitFlash: 0,
+      levelFlash: 0,
+      shaderReady: false,
+      fallback: false,
+      last: performance.now()
+    };
+
+    function rand(min, max) {
+      return min + Math.random() * (max - min);
+    }
+
+    function clamp(v, min, max) {
+      return Math.max(min, Math.min(max, v));
+    }
+
+    function currentLevel() {
+      return levels[state.level % levels.length];
+    }
+
+    function otherShape(shape) {
+      const choices = [0, 1, 2, 3, 4].filter(v => v !== shape);
+      return choices[Math.floor(Math.random() * choices.length)];
+    }
+
+    function resize() {
+      state.dpr = Math.min(2, window.devicePixelRatio || 1);
+      state.w = Math.max(1, window.innerWidth);
+      state.h = Math.max(1, window.innerHeight);
+      state.aspect = state.h / state.w;
+      els.canvas.width = Math.floor(state.w * state.dpr);
+      els.canvas.height = Math.floor(state.h * state.dpr);
+      els.canvas.style.width = state.w + "px";
+      els.canvas.style.height = state.h + "px";
+      ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+      state.player.tx = clamp(state.player.tx, -0.48, 0.48);
+      state.player.ty = clamp(state.player.ty, -state.aspect * 0.48, state.aspect * 0.48);
+    }
+
+    function screenToWorld(clientX, clientY) {
+      return {
+        x: clientX / state.w - 0.5,
+        y: (0.5 - clientY / state.h) * state.aspect
+      };
+    }
+
+    function worldToScreen(x, y) {
+      return {
+        x: (x + 0.5) * state.w,
+        y: (0.5 - y / state.aspect) * state.h
+      };
+    }
+
+    function setPointerFromEvent(e) {
+      if (e.target.closest && e.target.closest("button, input, #panel, #hud, #message")) return;
+      const p = screenToWorld(e.clientX, e.clientY);
+      state.player.tx = clamp(p.x, -0.48, 0.48);
+      state.player.ty = clamp(p.y, -state.aspect * 0.48, state.aspect * 0.48);
+    }
+
+    window.addEventListener("pointermove", setPointerFromEvent, { passive: true });
+    window.addEventListener("pointerdown", setPointerFromEvent, { passive: true });
+    window.addEventListener("resize", resize);
+
+    function spawnObject(forceGood = false) {
+      const lvl = currentLevel();
+      const danger = forceGood ? false : Math.random() < settings.danger;
+      const r = rand(0.032, 0.048) * (1 + state.level * 0.018);
+      const top = state.aspect * 0.55 + r + rand(0.02, 0.18);
+      return {
+        x: rand(-0.43, 0.43),
+        y: top,
+        z: rand(-0.018, 0.018),
+        r,
+        baseR: r,
+        shape: danger ? otherShape(lvl.shape) : lvl.shape,
+        danger,
+        vy: rand(0.12, 0.20) * (1 + state.level * 0.075),
+        vx: rand(-0.012, 0.012),
+        phase: rand(0, Math.PI * 2),
+        absorbing: false,
+        dead: false,
+        pulse: 0,
+        age: 0
+      };
+    }
+
+    function resetGame() {
+      state.running = true;
+      state.gameOver = false;
+      state.level = 0;
+      state.score = 0;
+      state.lives = 3;
+      state.absorbed = 0;
+      state.objects.length = 0;
+      state.particles.length = 0;
+      state.player.x = 0;
+      state.player.y = -state.aspect * 0.26;
+      state.player.tx = 0;
+      state.player.ty = -state.aspect * 0.26;
+      state.playerR = settings.baseSize;
+      state.targetR = settings.baseSize;
+      state.hitFlash = 0;
+      state.levelFlash = 0.6;
+      for (let i = 0; i < settings.spawn; i++) {
+        const obj = spawnObject(i < 5);
+        obj.y += rand(-state.aspect * 0.9, state.aspect * 0.2);
+        state.objects.push(obj);
+      }
+      els.message.classList.add("hidden");
+      updateHud();
+    }
+
+    function updateHud() {
+      const lvl = currentLevel();
+      els.levelText.textContent = String(state.level + 1);
+      els.shapeText.textContent = lvl.name;
+      els.scoreText.textContent = String(state.score);
+      els.livesText.textContent = String(state.lives);
+      els.goalText.textContent = `Absorbeer ${TARGET} ${lvl.plural}. Vermijd rode vormen.`;
+      els.countText.textContent = `${state.absorbed}/${TARGET}`;
+      els.progressBar.style.width = `${clamp(state.absorbed / TARGET, 0, 1) * 100}%`;
+    }
+
+    function levelUp() {
+      state.level++;
+      state.absorbed = 0;
+      state.targetR = settings.baseSize + Math.min(0.018, state.level * 0.004);
+      state.levelFlash = 1.0;
+      state.score += 100;
+      state.objects.length = 0;
+      for (let i = 0; i < settings.spawn; i++) {
+        const obj = spawnObject(i < 6);
+        obj.y += rand(-state.aspect * 0.7, state.aspect * 0.24);
+        state.objects.push(obj);
+      }
+      burst(state.player.x, state.player.y, "level", 26);
+      updateHud();
+    }
+
+    function endGame() {
+      state.running = false;
+      state.gameOver = true;
+      els.message.classList.remove("hidden");
+      els.message.querySelector("h1").textContent = "Game over";
+      els.message.querySelector("p").textContent = `Score ${state.score}. Je haalde level ${state.level + 1}. Probeer alleen dezelfde liquid vorm te absorberen.`;
+      els.startBtn.textContent = "Opnieuw starten";
+    }
+
+    function absorbObject(obj) {
+      obj.dead = true;
+      state.absorbed++;
+      state.score += 10 + state.level * 3;
+      state.targetR = Math.min(0.185, state.targetR + 0.0065);
+      state.levelFlash = Math.max(state.levelFlash, 0.22);
+      burst(obj.x, obj.y, "good", 10);
+      if (state.absorbed >= TARGET) levelUp();
+      else updateHud();
+    }
+
+    function hitDanger(obj) {
+      obj.dead = true;
+      state.lives--;
+      state.hitFlash = 1.0;
+      state.targetR = Math.max(settings.baseSize * 0.72, state.targetR - 0.027);
+      burst(obj.x, obj.y, "danger", 16);
+      updateHud();
+      if (state.lives <= 0) endGame();
+    }
+
+    function burst(x, y, kind, amount) {
+      for (let i = 0; i < amount; i++) {
+        const a = rand(0, Math.PI * 2);
+        const s = rand(0.05, 0.18);
+        state.particles.push({
+          x,
+          y,
+          vx: Math.cos(a) * s,
+          vy: Math.sin(a) * s,
+          life: 1,
+          kind,
+          size: rand(2, 6)
+        });
+      }
+    }
+
+    function updateObjects(dt) {
+      const lvl = currentLevel();
+      while (state.objects.length < settings.spawn) {
+        state.objects.push(spawnObject());
+      }
+      if (state.objects.length > settings.spawn) {
+        state.objects.splice(settings.spawn);
+      }
+
+      for (const obj of state.objects) {
+        obj.age += dt;
+        obj.pulse += dt;
+        const dx = state.player.x - obj.x;
+        const dy = state.player.y - obj.y;
+        const dist = Math.hypot(dx, dy);
+        const attract = state.playerR * settings.pull * 1.45 + obj.r * 3.2;
+        const touch = state.playerR + obj.r * 1.12;
+
+        if (!obj.danger && dist < attract) obj.absorbing = true;
+
+        if (obj.absorbing && !obj.danger) {
+          const pullStrength = clamp(11.0 * dt * (1.22 - dist / Math.max(0.001, attract)), 0.10, 0.52);
+          obj.x += dx * pullStrength;
+          obj.y += dy * pullStrength;
+          obj.z *= 0.86;
+          obj.r *= 0.985;
+          if (dist < touch * 0.82 || obj.r < obj.baseR * 0.48) absorbObject(obj);
+        } else {
+          obj.y -= obj.vy * settings.speed * dt;
+          obj.x += (obj.vx + Math.sin(obj.age * 2.2 + obj.phase) * 0.014) * settings.speed * dt;
+          obj.x = clamp(obj.x, -0.48, 0.48);
+          if (obj.danger && dist < touch * 0.78) hitDanger(obj);
+        }
+
+        if (obj.y < -state.aspect * 0.62 - obj.r) {
+          obj.dead = true;
         }
       }
 
-      float fillGood = 1.0 - smoothstep(-1.0, 2.2, dGood);
-      float edgeGood = 1.0 - smoothstep(0.0, 7.0, abs(dGood));
-      float outerGood = 1.0 - smoothstep(8.0, 42.0, abs(dGood));
+      state.objects = state.objects.filter(obj => !obj.dead);
 
-      float fillBad = 1.0 - smoothstep(-0.6, 2.0, dBad);
-      float edgeBad = 1.0 - smoothstep(0.0, 6.5, abs(dBad));
-      float outerBad = 1.0 - smoothstep(8.0, 36.0, abs(dBad));
-
-      vec2 eps = vec2(1.35, 0.0);
-      float gx = shapeSdf(frag + eps.xy - u_player, u_playerR, u_playerShape) - shapeSdf(frag - eps.xy - u_player, u_playerR, u_playerShape);
-      float gy = shapeSdf(frag + eps.yx - u_player, u_playerR, u_playerShape) - shapeSdf(frag - eps.yx - u_player, u_playerR, u_playerShape);
-      vec2 normal = normalize(vec2(gx, gy) + vec2(0.0001));
-
-      float refr = fillGood * 0.02 + edgeGood * 0.012;
-      vec2 refrUv = uv + normal * refr * vec2(1.0 / aspect, 1.0);
-      vec3 refracted = bg(refrUv);
-
-      float light = dot(normalize(vec3(normal, 0.55)), normalize(vec3(-0.42, -0.78, 0.72))) * 0.5 + 0.5;
-      float sparkle = pow(max(0.0, dot(normalize(vec3(normal, 0.7)), normalize(vec3(-0.55, -0.7, 0.6)))), 32.0);
-      sparkle += pow(max(0.0, light), 18.0) * 0.35;
-      float inner = clamp(0.22 + fillGood * 0.62 + light * 0.32, 0.0, 1.0);
-      vec3 liquid = mix(refracted, goodColor(inner, edgeGood, sparkle), 0.70 + 0.18 * edgeGood);
-      liquid += vec3(0.68, 1.0, 1.0) * outerGood * 0.18;
-      liquid += vec3(1.0) * edgeGood * 0.28 * u_shine;
-
-      vec2 badN = normalize(badVec + vec2(0.0001));
-      float badLight = dot(normalize(vec3(badN, 0.52)), normalize(vec3(-0.35, -0.8, 0.65))) * 0.5 + 0.5;
-      float badSpark = pow(max(0.0, badLight), 20.0);
-      vec3 bad = badColor(clamp(0.18 + fillBad * 0.68 + badLight * 0.28, 0.0, 1.0), edgeBad, badSpark);
-      bad += vec3(1.0, 0.04, 0.12) * outerBad * 0.18;
-
-      vec3 col = base;
-      col = mix(col, liquid, clamp(fillGood * 0.74 + edgeGood * 0.42 + outerGood * 0.08, 0.0, 1.0));
-      col = mix(col, bad, clamp(fillBad * 0.78 + edgeBad * 0.44 + outerBad * 0.08, 0.0, 1.0));
-
-      for (int j = 0; j < MAX_BURSTS; j++) {
-        if (float(j) >= u_burstCount) break;
-        vec4 b = u_bursts[j];
-        float age = clamp(b.z, 0.0, 1.0);
-        float radius = mix(8.0, b.w, age);
-        float ring = 1.0 - smoothstep(0.0, 4.2 + age * 8.0, abs(length(frag - b.xy) - radius));
-        float fade = (1.0 - age) * (1.0 - age);
-        col += vec3(0.72, 1.0, 1.0) * ring * fade * 0.75;
+      for (const p of state.particles) {
+        p.life -= dt * 1.8;
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.vy -= 0.035 * dt;
       }
+      state.particles = state.particles.filter(p => p.life > 0);
 
-      col += vec3(0.7, 1.0, 1.0) * u_levelPulse * (0.18 + 0.18 * sin(uv.y * 38.0 - u_time * 7.0));
-      col = mix(col, vec3(1.0, 0.12, 0.18), u_flash * 0.33);
-      float vignette = smoothstep(0.95, 0.18, length((uv - 0.5) * vec2(aspect, 1.0)));
-      col *= 0.72 + 0.28 * vignette;
-      gl_FragColor = vec4(pow(max(col, 0.0), vec3(0.88)), 1.0);
-    }
-  `;
-
-  function compileShader(type, src) {
-    const s = gl.createShader(type);
-    gl.shaderSource(s, src);
-    gl.compileShader(s);
-    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
-      throw new Error(gl.getShaderInfoLog(s) || 'Shader compile error');
-    }
-    return s;
-  }
-
-  function createProgram() {
-    const program = gl.createProgram();
-    gl.attachShader(program, compileShader(gl.VERTEX_SHADER, vertexSource));
-    gl.attachShader(program, compileShader(gl.FRAGMENT_SHADER, fragmentSource));
-    gl.linkProgram(program);
-    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-      throw new Error(gl.getProgramInfoLog(program) || 'Program link error');
-    }
-    return program;
-  }
-
-  let program = null;
-  let loc = null;
-  let positionBuffer = null;
-  let fallback2d = null;
-
-  function setupGL() {
-    if (!gl) {
-      fallback2d = canvas.getContext('2d');
-      return;
-    }
-    try {
-      program = createProgram();
-      gl.useProgram(program);
-      positionBuffer = gl.createBuffer();
-      gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]), gl.STATIC_DRAW);
-      const posLoc = gl.getAttribLocation(program, 'a_position');
-      gl.enableVertexAttribArray(posLoc);
-      gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
-      loc = {
-        res: gl.getUniformLocation(program, 'u_res'),
-        time: gl.getUniformLocation(program, 'u_time'),
-        player: gl.getUniformLocation(program, 'u_player'),
-        playerR: gl.getUniformLocation(program, 'u_playerR'),
-        playerShape: gl.getUniformLocation(program, 'u_playerShape'),
-        count: gl.getUniformLocation(program, 'u_count'),
-        objs: gl.getUniformLocation(program, 'u_objs[0]'),
-        bursts: gl.getUniformLocation(program, 'u_bursts[0]'),
-        burstCount: gl.getUniformLocation(program, 'u_burstCount'),
-        flash: gl.getUniformLocation(program, 'u_flash'),
-        blend: gl.getUniformLocation(program, 'u_blend'),
-        shine: gl.getUniformLocation(program, 'u_shine'),
-        levelPulse: gl.getUniformLocation(program, 'u_levelPulse'),
-        shake: gl.getUniformLocation(program, 'u_shake')
-      };
-    } catch (err) {
-      console.warn(err);
-      fallback2d = canvas.getContext('2d');
-      program = null;
-    }
-  }
-
-  function resetGame() {
-    state.started = true;
-    state.paused = false;
-    state.gameOver = false;
-    state.level = 1;
-    state.shapeIndex = 0;
-    state.absorbed = 0;
-    state.score = 0;
-    state.lives = 3;
-    state.combo = 1;
-    state.comboTimer = 0;
-    state.flash = 0;
-    state.shake = 0;
-    state.levelPulse = 0;
-    state.spawnTimer = 0;
-    state.player.x = state.width * 0.5;
-    state.player.y = state.height * 0.76;
-    state.player.tx = state.player.x;
-    state.player.ty = state.player.y;
-    state.player.r = baseRadius();
-    state.player.targetR = baseRadius();
-    objects.length = 0;
-    bursts.length = 0;
-    ui.intro.style.display = 'none';
-    toast('Level 1: absorbeer bollen');
-    for (let i = 0; i < Math.min(8, settings.maxObjects); i++) spawnObject(-Math.random() * state.height);
-    updateHUD();
-  }
-
-  function endGame() {
-    state.gameOver = true;
-    state.paused = true;
-    ui.intro.style.display = '';
-    ui.intro.querySelector('h1').textContent = 'Game over';
-    ui.intro.querySelector('p').textContent = 'Je liquid werd te klein. Probeer opnieuw en ontwijk de rode vormen.';
-    ui.start.textContent = 'Opnieuw starten';
-  }
-
-  function startIntroText() {
-    ui.intro.querySelector('h1').textContent = 'Liquid Absorb';
-    ui.intro.querySelector('p').textContent = 'Beweeg het waterlichaam en absorbeer alleen dezelfde vorm. Elke 10 juiste absorpties verandert je liquid vorm en begint een nieuw level.';
-    ui.start.textContent = 'Start game';
-  }
-
-  function spawnObject(yOverride) {
-    if (objects.length >= MAX_OBJECTS) return;
-    const current = state.shapeIndex % SHAPES.length;
-    const isWrong = Math.random() < settings.wrongChance;
-    const shape = isWrong ? otherShape(current) : current;
-    const r = clamp(baseRadius() * rand(0.30, 0.49), 20, 38) * (shape === 1 ? 1.08 : 1);
-    const sideDrift = rand(-22, 22);
-    objects.push({
-      x: rand(r + 14, state.width - r - 14),
-      y: typeof yOverride === 'number' ? yOverride : -r - rand(0, state.height * 0.24),
-      r,
-      shape,
-      vy: rand(42, 82) * settings.speed * shapeDifficulty(),
-      vx: sideDrift,
-      wobble: rand(0, Math.PI * 2),
-      spin: rand(-1, 1),
-      age: 0,
-      magnet: 0,
-      pop: 0
-    });
-  }
-
-  function addBurst(x, y, radius) {
-    bursts.push({ x, y, age: 0, radius });
-    while (bursts.length > MAX_BURSTS) bursts.shift();
-  }
-
-  function absorbObject(obj, index) {
-    const correct = obj.shape === state.shapeIndex % SHAPES.length;
-    addBurst(obj.x, obj.y, obj.r * (correct ? 4.0 : 2.5));
-    objects.splice(index, 1);
-    if (correct) {
-      state.absorbed += 1;
-      state.combo = clamp(state.combo + 0.15, 1, 5);
-      state.comboTimer = 2.4;
-      const gained = Math.round((100 + state.level * 28) * state.combo);
-      state.score += gained;
-      state.player.targetR = clamp(state.player.targetR + obj.r * 0.18, baseRadius() * 0.62, baseRadius() * (1.45 + state.level * 0.035));
-      if (state.absorbed >= 10) nextLevel();
-    } else {
-      state.lives -= 1;
-      state.combo = 1;
-      state.comboTimer = 0;
-      state.flash = 1;
-      state.shake = 1;
-      state.player.targetR = Math.max(baseRadius() * 0.55, state.player.targetR * 0.72 - obj.r * 0.12);
-      toast('Verkeerde vorm. Je krimpt.');
-      if (state.lives <= 0 || state.player.targetR <= baseRadius() * 0.58) endGame();
-    }
-    updateHUD();
-  }
-
-  function nextLevel() {
-    state.level += 1;
-    state.shapeIndex = (state.shapeIndex + 1) % SHAPES.length;
-    state.absorbed = 0;
-    state.levelPulse = 1;
-    state.player.targetR = baseRadius() * (1.02 + Math.min(0.25, state.level * 0.015));
-    objects.length = 0;
-    const name = targetShape().name;
-    toast('Level ' + state.level + ': absorbeer nu ' + name);
-    for (let i = 0; i < Math.min(10, settings.maxObjects); i++) spawnObject(-Math.random() * state.height * 0.9);
-  }
-
-  function toast(text) {
-    ui.toast.textContent = text;
-    ui.toast.classList.add('show');
-    window.clearTimeout(toast.timer);
-    toast.timer = window.setTimeout(() => ui.toast.classList.remove('show'), 1800);
-  }
-
-  function updateHUD() {
-    const shape = targetShape();
-    ui.level.textContent = String(state.level);
-    ui.shape.textContent = shape.name;
-    ui.glyph.textContent = shape.glyph;
-    ui.score.textContent = String(state.score);
-    ui.size.textContent = Math.round((state.player.targetR / baseRadius()) * 100) + '%';
-    ui.life.textContent = String(state.lives);
-    ui.combo.textContent = 'x' + state.combo.toFixed(1);
-    ui.progress.style.width = clamp(state.absorbed / 10 * 100, 0, 100) + '%';
-  }
-
-  function update(dt) {
-    if (!state.started || state.paused) return;
-
-    state.time += dt;
-    state.flash = Math.max(0, state.flash - dt * 2.8);
-    state.shake = Math.max(0, state.shake - dt * 4.5);
-    state.levelPulse = Math.max(0, state.levelPulse - dt * 0.9);
-    state.comboTimer = Math.max(0, state.comboTimer - dt);
-    if (state.comboTimer <= 0) state.combo = lerp(state.combo, 1, 1 - Math.pow(0.0001, dt));
-
-    const p = state.player;
-    const margin = p.r * 0.65;
-    p.tx = clamp(p.tx, margin, state.width - margin);
-    p.ty = clamp(p.ty, state.height * 0.18, state.height - margin);
-
-    const smoothing = 1 - Math.pow(settings.smoothing, dt * 60);
-    p.x = lerp(p.x, p.tx, smoothing);
-    p.y = lerp(p.y, p.ty, smoothing);
-    p.r = lerp(p.r, p.targetR, 1 - Math.pow(0.08, dt));
-    p.wobble += dt;
-
-    if (keys.has('ArrowLeft') || keys.has('KeyA')) p.tx -= 420 * dt;
-    if (keys.has('ArrowRight') || keys.has('KeyD')) p.tx += 420 * dt;
-    if (keys.has('ArrowUp') || keys.has('KeyW')) p.ty -= 380 * dt;
-    if (keys.has('ArrowDown') || keys.has('KeyS')) p.ty += 380 * dt;
-
-    state.spawnTimer -= dt;
-    const desired = settings.maxObjects;
-    const spawnDelay = clamp(0.8 - state.level * 0.035, 0.28, 0.82) / settings.speed;
-    if (state.spawnTimer <= 0 && objects.length < desired) {
-      spawnObject();
-      state.spawnTimer = spawnDelay;
-    }
-
-    for (let i = objects.length - 1; i >= 0; i--) {
-      const o = objects[i];
-      o.age += dt;
-      o.wobble += dt * (0.8 + Math.abs(o.spin));
-      o.y += o.vy * dt;
-      o.x += Math.sin(o.wobble * 1.35) * o.vx * dt + o.spin * 8 * dt;
-      if (o.x < o.r) { o.x = o.r; o.vx *= -0.6; }
-      if (o.x > state.width - o.r) { o.x = state.width - o.r; o.vx *= -0.6; }
-
-      const d = dist(p.x, p.y, o.x, o.y);
-      const correct = o.shape === state.shapeIndex % SHAPES.length;
-      const magnetRange = correct ? p.r * 2.05 + o.r * 2.4 : p.r * 0.92 + o.r * 0.92;
-      if (correct && d < magnetRange) {
-        const pull = (1 - d / magnetRange) * (1.7 + state.level * 0.05);
-        o.x = lerp(o.x, p.x, pull * dt);
-        o.y = lerp(o.y, p.y, pull * dt);
-        o.magnet = lerp(o.magnet, 1, 0.12);
-      } else {
-        o.magnet = lerp(o.magnet, 0, 0.08);
-      }
-
-      const hitRadius = p.r * (correct ? 0.78 : 0.67) + o.r * (correct ? 0.68 : 0.56);
-      if (d < hitRadius) {
-        absorbObject(o, i);
-        continue;
-      }
-
-      if (o.y > state.height + o.r * 2) {
-        objects.splice(i, 1);
+      for (const obj of state.objects) {
+        if (!obj.danger && obj.shape !== lvl.shape) obj.shape = lvl.shape;
       }
     }
 
-    for (let i = bursts.length - 1; i >= 0; i--) {
-      bursts[i].age += dt * 1.65;
-      if (bursts[i].age >= 1) bursts.splice(i, 1);
+    function fillObjectData() {
+      objectData.fill(0);
+      const n = Math.min(MAX_OBJECTS, state.objects.length);
+      for (let i = 0; i < n; i++) {
+        const obj = state.objects[i];
+        const j = i * DATA_STRIDE;
+        objectData[j] = obj.x;
+        objectData[j + 1] = obj.y;
+        objectData[j + 2] = obj.z;
+        objectData[j + 3] = obj.r;
+        objectData[j + 4] = obj.shape;
+        objectData[j + 5] = obj.danger ? 1 : 0;
+      }
     }
 
-    updateHUD();
-  }
+    function drawBackground(t) {
+      const w = state.w;
+      const h = state.h;
+      ctx.clearRect(0, 0, w, h);
 
-  function renderGL() {
-    if (!gl || !program) return;
-    gl.useProgram(program);
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    gl.uniform2f(loc.res, canvas.width, canvas.height);
-    gl.uniform1f(loc.time, state.time);
-    gl.uniform2f(loc.player, state.player.x * state.dpr, (state.height - state.player.y) * state.dpr);
-    gl.uniform1f(loc.playerR, state.player.r * state.dpr);
-    gl.uniform1f(loc.playerShape, state.shapeIndex % SHAPES.length);
-    gl.uniform1f(loc.flash, state.flash);
-    gl.uniform1f(loc.blend, settings.blend);
-    gl.uniform1f(loc.shine, settings.shine);
-    gl.uniform1f(loc.levelPulse, state.levelPulse);
-    gl.uniform1f(loc.shake, state.shake);
+      const grad = ctx.createLinearGradient(0, 0, w, h);
+      grad.addColorStop(0, "rgba(45, 199, 255, 0.16)");
+      grad.addColorStop(0.46, "rgba(255, 255, 255, 0.035)");
+      grad.addColorStop(1, "rgba(255, 104, 225, 0.14)");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, w, h);
 
-    const objData = new Float32Array(MAX_OBJECTS * 4);
-    const count = Math.min(objects.length, MAX_OBJECTS);
-    for (let i = 0; i < count; i++) {
-      const o = objects[i];
-      objData[i * 4 + 0] = o.x * state.dpr;
-      objData[i * 4 + 1] = (state.height - o.y) * state.dpr;
-      objData[i * 4 + 2] = o.r * state.dpr;
-      objData[i * 4 + 3] = o.shape;
-    }
-    gl.uniform1f(loc.count, count);
-    gl.uniform4fv(loc.objs, objData);
+      ctx.save();
+      ctx.globalAlpha = 0.22;
+      ctx.lineWidth = 1;
+      for (let x = ((t * 18) % 94) - 94; x < w + 94; x += 94) {
+        ctx.strokeStyle = "rgba(255,255,255,0.09)";
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x + h * 0.18, h);
+        ctx.stroke();
+      }
+      ctx.restore();
 
-    const burstData = new Float32Array(MAX_BURSTS * 4);
-    const burstCount = Math.min(bursts.length, MAX_BURSTS);
-    for (let i = 0; i < burstCount; i++) {
-      const b = bursts[i];
-      burstData[i * 4 + 0] = b.x * state.dpr;
-      burstData[i * 4 + 1] = (state.height - b.y) * state.dpr;
-      burstData[i * 4 + 2] = b.age;
-      burstData[i * 4 + 3] = b.radius * state.dpr;
-    }
-    gl.uniform1f(loc.burstCount, burstCount);
-    gl.uniform4fv(loc.bursts, burstData);
+      for (const obj of state.objects) {
+        const s = worldToScreen(obj.x, obj.y);
+        const pxR = Math.max(10, obj.r * w);
+        const g = ctx.createRadialGradient(s.x, s.y, 1, s.x, s.y, pxR * 2.1);
+        if (obj.danger) {
+          g.addColorStop(0, "rgba(255, 60, 82, 0.72)");
+          g.addColorStop(0.28, "rgba(255, 60, 82, 0.22)");
+          g.addColorStop(1, "rgba(255, 60, 82, 0)");
+        } else if (obj.absorbing) {
+          g.addColorStop(0, "rgba(255,255,255,0.9)");
+          g.addColorStop(0.22, "rgba(174,252,234,0.5)");
+          g.addColorStop(1, "rgba(174,252,234,0)");
+        } else {
+          g.addColorStop(0, "rgba(255,255,255,0.34)");
+          g.addColorStop(0.32, "rgba(174,252,234,0.18)");
+          g.addColorStop(1, "rgba(174,252,234,0)");
+        }
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, pxR * 2.15, 0, Math.PI * 2);
+        ctx.fill();
 
-    gl.drawArrays(gl.TRIANGLES, 0, 6);
-  }
+        if (obj.danger) {
+          ctx.save();
+          ctx.translate(s.x, s.y);
+          ctx.rotate(Math.sin(obj.age * 2 + obj.phase) * 0.45);
+          ctx.strokeStyle = "rgba(255,255,255,0.46)";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(-pxR * 0.42, -pxR * 0.42);
+          ctx.lineTo(pxR * 0.42, pxR * 0.42);
+          ctx.moveTo(pxR * 0.42, -pxR * 0.42);
+          ctx.lineTo(-pxR * 0.42, pxR * 0.42);
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
 
-  function drawFallbackShape(ctx, x, y, r, shape, bad) {
-    ctx.save();
-    const grad = ctx.createRadialGradient(x - r * 0.35, y - r * 0.38, r * 0.1, x, y, r * 1.2);
-    if (bad) {
-      grad.addColorStop(0, 'rgba(255, 245, 250, .95)');
-      grad.addColorStop(0.28, 'rgba(255, 105, 135, .82)');
-      grad.addColorStop(1, 'rgba(120, 5, 28, .38)');
-    } else {
-      grad.addColorStop(0, 'rgba(255, 255, 255, .98)');
-      grad.addColorStop(0.36, 'rgba(220, 253, 255, .78)');
-      grad.addColorStop(1, 'rgba(80, 205, 230, .24)');
-    }
-    ctx.fillStyle = grad;
-    ctx.strokeStyle = bad ? 'rgba(255,120,150,.95)' : 'rgba(255,255,255,.95)';
-    ctx.lineWidth = Math.max(2, r * 0.08);
-    ctx.shadowColor = bad ? 'rgba(255,60,100,.55)' : 'rgba(150,250,255,.45)';
-    ctx.shadowBlur = r * 0.6;
-    ctx.beginPath();
-    if (shape === 1) {
-      ctx.arc(x, y, r, 0, Math.PI * 2);
-      ctx.moveTo(x + r * 0.42, y);
-      ctx.arc(x, y, r * 0.42, 0, Math.PI * 2, true);
-    } else if (shape === 2) {
-      ctx.roundRect(x - r * 0.95, y - r * 0.5, r * 1.9, r, r * 0.5);
-    } else if (shape === 3) {
-      ctx.moveTo(x, y - r);
-      ctx.lineTo(x + r, y);
-      ctx.lineTo(x, y + r);
-      ctx.lineTo(x - r, y);
-      ctx.closePath();
-    } else if (shape === 4) {
-      ctx.roundRect(x - r * 0.74, y - r * 0.74, r * 1.48, r * 1.48, r * 0.32);
-    } else {
-      ctx.arc(x, y, r, 0, Math.PI * 2);
-    }
-    ctx.fill('evenodd');
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  function renderFallback() {
-    if (!fallback2d) return;
-    const ctx = fallback2d;
-    ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
-    const grad = ctx.createLinearGradient(0, 0, 0, state.height);
-    grad.addColorStop(0, '#061129');
-    grad.addColorStop(1, '#03121a');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, state.width, state.height);
-    for (const o of objects) drawFallbackShape(ctx, o.x, o.y, o.r, o.shape, o.shape !== state.shapeIndex % SHAPES.length);
-    drawFallbackShape(ctx, state.player.x, state.player.y, state.player.r, state.shapeIndex % SHAPES.length, false);
-    for (const b of bursts) {
-      ctx.strokeStyle = 'rgba(170,255,255,' + (1 - b.age) + ')';
-      ctx.lineWidth = 3 + b.age * 6;
+      const ps = worldToScreen(state.player.x, state.player.y);
+      const pr = state.playerR * w;
+      const rg = ctx.createRadialGradient(ps.x, ps.y, pr * 0.2, ps.x, ps.y, pr * 2.55);
+      rg.addColorStop(0, "rgba(255,255,255,0.24)");
+      rg.addColorStop(0.35, "rgba(174,252,234,0.14)");
+      rg.addColorStop(1, "rgba(174,252,234,0)");
+      ctx.fillStyle = rg;
       ctx.beginPath();
-      ctx.arc(b.x, b.y, b.radius * b.age, 0, Math.PI * 2);
+      ctx.arc(ps.x, ps.y, pr * 2.55, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.save();
+      ctx.globalAlpha = 0.32 + Math.sin(t * 3) * 0.06;
+      ctx.strokeStyle = "rgba(255,255,255,0.42)";
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([5, 8]);
+      ctx.beginPath();
+      ctx.arc(ps.x, ps.y, pr * settings.pull, 0, Math.PI * 2);
       ctx.stroke();
-    }
-  }
+      ctx.restore();
 
-  function loop(now) {
-    const dt = Math.min(0.033, (now - state.last) / 1000 || 0.016);
-    state.last = now;
-    update(dt);
-    if (program) renderGL(); else renderFallback();
-    requestAnimationFrame(loop);
-  }
+      for (const p of state.particles) {
+        const s = worldToScreen(p.x, p.y);
+        ctx.globalAlpha = clamp(p.life, 0, 1);
+        ctx.fillStyle = p.kind === "danger" ? "rgba(255,79,112,0.95)" : p.kind === "level" ? "rgba(255,216,107,0.95)" : "rgba(222,255,249,0.95)";
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
 
-  function setPointer(clientX, clientY) {
-    state.player.tx = clientX;
-    state.player.ty = clientY;
-  }
-
-  function tapAction(clientX, clientY) {
-    if (!state.started || state.paused) return;
-    let best = -1;
-    let bestD = Infinity;
-    for (let i = 0; i < objects.length; i++) {
-      const o = objects[i];
-      const d = dist(clientX, clientY, o.x, o.y);
-      if (d < o.r * 1.55 && d < bestD) {
-        best = i;
-        bestD = d;
+      if (state.fallback) {
+        drawFallbackShapes();
       }
     }
-    if (best >= 0) {
-      absorbObject(objects[best], best);
+
+    function drawFallbackShapes() {
+      const draw = (x, y, r, shape, danger) => {
+        const s = worldToScreen(x, y);
+        const pxR = r * state.w;
+        ctx.save();
+        ctx.translate(s.x, s.y);
+        const g = ctx.createRadialGradient(-pxR * .35, -pxR * .45, 1, 0, 0, pxR * 1.4);
+        if (danger) {
+          g.addColorStop(0, "rgba(255,255,255,0.9)");
+          g.addColorStop(.42, "rgba(255,78,100,0.75)");
+          g.addColorStop(1, "rgba(255,78,100,0.16)");
+        } else {
+          g.addColorStop(0, "rgba(255,255,255,0.95)");
+          g.addColorStop(.42, "rgba(207,255,247,0.65)");
+          g.addColorStop(1, "rgba(120,255,231,0.13)");
+        }
+        ctx.fillStyle = g;
+        ctx.strokeStyle = "rgba(255,255,255,0.78)";
+        ctx.lineWidth = 2;
+        if (shape === 2) {
+          ctx.beginPath(); ctx.arc(0, 0, pxR, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+          ctx.globalCompositeOperation = "destination-out";
+          ctx.beginPath(); ctx.arc(0, 0, pxR * .42, 0, Math.PI * 2); ctx.fill();
+          ctx.globalCompositeOperation = "source-over";
+        } else if (shape === 1) {
+          roundRect(ctx, -pxR, -pxR, pxR * 2, pxR * 2, pxR * .32); ctx.fill(); ctx.stroke();
+        } else if (shape === 3) {
+          roundRect(ctx, -pxR * 1.25, -pxR * .62, pxR * 2.5, pxR * 1.24, pxR * .62); ctx.fill(); ctx.stroke();
+        } else if (shape === 4) {
+          ctx.beginPath(); ctx.moveTo(0, -pxR * 1.2); ctx.lineTo(pxR * 1.05, 0); ctx.lineTo(0, pxR * 1.2); ctx.lineTo(-pxR * 1.05, 0); ctx.closePath(); ctx.fill(); ctx.stroke();
+        } else {
+          ctx.beginPath(); ctx.arc(0, 0, pxR, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        }
+        ctx.restore();
+      };
+      draw(state.player.x, state.player.y, state.playerR, currentLevel().shape, false);
+      for (const obj of state.objects) draw(obj.x, obj.y, obj.r, obj.shape, obj.danger);
     }
-  }
 
-  function updatePauseButton() {
-    ui.pause.textContent = state.paused ? 'Verder' : 'Pauze';
-  }
-
-  window.addEventListener('resize', resize);
-  window.addEventListener('pointermove', (e) => {
-    if (!ui.settings.contains(e.target)) setPointer(e.clientX, e.clientY);
-  }, { passive: false });
-  window.addEventListener('pointerdown', (e) => {
-    if (ui.settings.contains(e.target) || ui.settingsBtn.contains(e.target) || ui.intro.contains(e.target)) return;
-    state.pointerDown = true;
-    setPointer(e.clientX, e.clientY);
-    tapAction(e.clientX, e.clientY);
-  }, { passive: false });
-  window.addEventListener('pointerup', () => { state.pointerDown = false; }, { passive: true });
-  window.addEventListener('keydown', (e) => {
-    keys.add(e.code);
-    if (e.code === 'Space') {
-      state.paused = !state.paused;
-      updatePauseButton();
+    function roundRect(ctx, x, y, w, h, r) {
+      const rr = Math.min(r, Math.abs(w) / 2, Math.abs(h) / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + rr, y);
+      ctx.arcTo(x + w, y, x + w, y + h, rr);
+      ctx.arcTo(x + w, y + h, x, y + h, rr);
+      ctx.arcTo(x, y + h, x, y, rr);
+      ctx.arcTo(x, y, x + w, y, rr);
+      ctx.closePath();
     }
-  });
-  window.addEventListener('keyup', (e) => keys.delete(e.code));
 
-  ui.start.addEventListener('click', () => resetGame());
-  ui.restart.addEventListener('click', () => {
-    startIntroText();
-    resetGame();
-  });
-  ui.pause.addEventListener('click', () => {
-    if (!state.started) return;
-    state.paused = !state.paused;
-    updatePauseButton();
-  });
-  ui.settingsBtn.addEventListener('click', () => ui.settings.classList.toggle('open'));
-  document.addEventListener('pointerdown', (e) => {
-    if (!ui.settings.contains(e.target) && !ui.settingsBtn.contains(e.target)) ui.settings.classList.remove('open');
-  });
+    function loop(now) {
+      const dt = Math.min(0.033, (now - state.last) / 1000 || 0.016);
+      state.last = now;
 
-  [ui.spawn, ui.speed, ui.shine, ui.blend, ui.wrong, ui.smooth].forEach(input => {
-    input.addEventListener('input', updateSettingsLabels);
-    input.addEventListener('pointerdown', (e) => e.stopPropagation());
-    input.addEventListener('pointermove', (e) => e.stopPropagation());
-  });
+      state.player.x += (state.player.tx - state.player.x) * 0.16;
+      state.player.y += (state.player.ty - state.player.y) * 0.16;
+      state.playerR += (state.targetR - state.playerR) * 0.08;
+      state.hitFlash += (0 - state.hitFlash) * 0.08;
+      state.levelFlash += (0 - state.levelFlash) * 0.055;
 
-  if (!CanvasRenderingContext2D.prototype.roundRect) {
-    CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
-      r = Math.min(r, Math.abs(w) / 2, Math.abs(h) / 2);
-      this.moveTo(x + r, y);
-      this.arcTo(x + w, y, x + w, y + h, r);
-      this.arcTo(x + w, y + h, x, y + h, r);
-      this.arcTo(x, y + h, x, y, r);
-      this.arcTo(x, y, x + w, y, r);
-      this.closePath();
-      return this;
-    };
-  }
+      if (state.running) updateObjects(dt);
+      fillObjectData();
+      drawBackground(now / 1000);
+      requestAnimationFrame(loop);
+    }
 
-  updateSettingsLabels();
-  resize();
-  setupGL();
-  startIntroText();
-  requestAnimationFrame(loop);
-})();
-</script>
+    function bindSettings() {
+      const pairs = [
+        ["glass", "glassVal", v => settings.glass = Number(v), v => Number(v).toFixed(2)],
+        ["scatter", "scatterVal", v => settings.sparkle = Number(v), v => Number(v).toFixed(2)],
+        ["spawn", "spawnVal", v => settings.spawn = Number(v), v => String(v)],
+        ["speed", "speedVal", v => settings.speed = Number(v), v => Number(v).toFixed(2)],
+        ["danger", "dangerVal", v => settings.danger = Number(v) / 100, v => `${v}%`],
+        ["pull", "pullVal", v => settings.pull = Number(v), v => Number(v).toFixed(2)],
+        ["baseSize", "baseSizeVal", v => {
+          settings.baseSize = Number(v);
+          if (!state.running) {
+            state.playerR = settings.baseSize;
+            state.targetR = settings.baseSize;
+          }
+        }, v => Number(v).toFixed(3)]
+      ];
+      for (const [inputId, valueId, setter, formatter] of pairs) {
+        const input = document.getElementById(inputId);
+        const out = document.getElementById(valueId);
+        const apply = () => {
+          setter(input.value);
+          out.textContent = formatter(input.value);
+        };
+        input.addEventListener("input", apply);
+        apply();
+      }
+    }
+
+    els.settingsBtn.addEventListener("click", () => els.panel.classList.toggle("open"));
+    els.restartBtn.addEventListener("click", resetGame);
+    els.startBtn.addEventListener("click", resetGame);
+
+    async function initVfx() {
+      try {
+        const mod = await import("https://esm.sh/@vfx-js/core@0.11.1");
+        const vfx = new mod.VFX({
+          postEffect: {
+            shader,
+            uniforms: {
+              player: () => [state.player.x, state.player.y],
+              playerR: () => state.playerR,
+              levelShape: () => currentLevel().shape,
+              objectData: () => objectData,
+              objectCount: () => Math.min(MAX_OBJECTS, state.objects.length),
+              glass: () => settings.glass,
+              sparkle: () => settings.sparkle,
+              hitFlash: () => state.hitFlash,
+              levelFlash: () => state.levelFlash
+            }
+          }
+        });
+        await vfx.addHTML(els.scene, { shader: "none" });
+        vfx.play();
+        state.shaderReady = true;
+        els.notice.textContent = "Echt liquid glass effect actief. Absorbeer alleen dezelfde vorm.";
+        setTimeout(() => { els.notice.style.opacity = "0"; }, 3600);
+      } catch (err) {
+        state.fallback = true;
+        els.notice.textContent = "VFX shader kon niet laden. De game draait in fallback weergave.";
+        console.warn("VFX kon niet laden", err);
+      }
+    }
+
+    resize();
+    bindSettings();
+    updateHud();
+    state.player.y = -state.aspect * 0.26;
+    state.player.ty = state.player.y;
+    state.last = performance.now();
+    requestAnimationFrame(loop);
+    initVfx();
+  </script>
 </body>
 </html>
